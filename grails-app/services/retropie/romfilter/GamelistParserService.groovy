@@ -1,17 +1,29 @@
 package retropie.romfilter
 
-import grails.transaction.Transactional
+import grails.core.GrailsApplication
 import groovy.util.slurpersupport.GPathResult
 
-@Transactional
 class GamelistParserService {
 
     /**
-     * Convert xml gamelist to Map<String, GamelistEntry>
+     * GrailsApplication (auto-injected).
+     */
+    GrailsApplication grailsApplication
+
+    /**
+     * Convert gamelistXml (contents of gamelist.xml file) to Map[String, GamelistEntry]
+     * where the key is the filename (path).
+     *
+     * Performed transformations:
+     * 1. If path starts with "./", the "./" will be stripped off.
+     * 2. if image startsWith expected location prefix, remove the location prefix.
+     *
      * @param gamelistXml
      * @return
      */
     Map<String, GamelistEntry> parseGamelist(String gamelistXml) {
+        String imagesPrefix = getImagesPrefix()
+
         // The result
         Map<String, GamelistEntry> gameslistMap = [:]
         // Start parsing the XML
@@ -32,9 +44,29 @@ class GamelistParserService {
                 romtype: game.romtype?.toString() ?: "",
                 releasedate: game.releasedate?.toString() ?: "",
             )
+            if (entry.path.startsWith('./')) {
+                entry.path -= './'
+            }
+
+            if (entry.image.startsWith(imagesPrefix)) {
+                entry.image -= imagesPrefix
+            }
+            else {
+                // Unknown location
+                entry.image = ''
+            }
+
             gameslistMap[entry.path] = entry
         }
 
         return gameslistMap
+    }
+
+    String getImagesPrefix() {
+        return grailsApplication.config.retropie.emulationStation.imagesPrefix
+    }
+
+    String getImagesPath() {
+        return grailsApplication.config.retropie.emulationStation.imagesPath
     }
 }

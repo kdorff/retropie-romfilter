@@ -17,6 +17,11 @@ class SystemController {
      */
     ResourceService resourceService
 
+    /**
+     * GamelistParserService (auto-injected).
+     */
+    GamelistParserService gamelistParserService
+
     def listSystems() {
         println "Listing systems"
         return [
@@ -26,52 +31,17 @@ class SystemController {
 
     def listRomsForSystem(String system) {
         println "Listing roms for ${system}"
-        List<String> gamelist = ['hi bingo.zip', 'there.zip', "woot.zip"]
-        String imagePrefix = grailsApplication.config.retropie.emulationStation.imagesPrefix
-        String xml =
-"""
-
-"""
-
-
-
-        Map gameslistXmlData = [
-            gameList: [
-                game : [
-                    [
-                        path: 'hi bingo.zip',
-                        name: 'brain hi bongo',
-                        image: './somepath.jpg',
-                        desc: 'description of hi bingo',
-                        hasImg: true,
-                        genre: 'genre of hi',
-                        size: 200,
-                    ],
-                    [
-                        path: 'there.zip',
-                        name: 'there',
-                        image: '',
-                        desc: 'description of there',
-                        hasImg: false,
-                        genre: 'genre of there',
-                        size: 300,
-                    ]
-                ]
-            ]
+        List<String> gamelist = [
+            '20 em 1 (Brazil).zip',
+            'Ace of Aces (Europe).zip',
+            'woot.zip'
         ]
-        Map filenameToDetails = [:]
-        gameslistXmlData.gameList.game.each { Map game ->
-            filenameToDetails[game.path] = [
-                path: game.path,
-                name: game.name,
-                image: game.image,
-                desc: game.desc,
-                hasImg: game.image?.size() > 0 ?: false,
-                genre: game.genre,
-                size: game.size,
-            ]
-        }
 
+        String imagePrefix = grailsApplication.config.retropie.emulationStation.imagesPrefix
+
+        Map<String, GamelistEntry> filenameToDetails = gamelistParserService.parseGamelist(
+            resourceService.loadResource('/XmlSamples/gamelist-sample.xml')
+        )
         return [
             system: system,
             gamelist: gamelist,

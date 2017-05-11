@@ -5,11 +5,6 @@ import groovy.json.JsonSlurper
 
 class ResourceService {
     /**
-     * XmlParserService (auto-injected).
-     */
-    GamelistParserService xmlParserService
-
-    /**
      * Load a JSON resource into a TypeConvertingMap.
      *
      * @param resourcePath the path to the resource
@@ -27,8 +22,8 @@ class ResourceService {
      * @return the resource as a String
      */
     String loadResource(String resourcePath) {
-        String json = this.getClass().getResource(resourcePath)?.text
-        return json
+        String text = this.getClass().getResource(resourcePath)?.text
+        return text
     }
 
     /**

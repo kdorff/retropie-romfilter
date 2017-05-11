@@ -16,7 +16,6 @@
                 <th>Name</th>
                 <th>Genre</th>
                 <th>Desc</th>
-                <th>Size</th>
             </tr>
         </thead>
         <tbody>
@@ -27,7 +26,6 @@
                     <td>${gameDetails?.name}</td>
                     <td>${gameDetails?.genre}</td>
                     <td>${gameDetails?.desc}</td>
-                    <td>${gameDetails?.size}</td>
                 </tr>
             </g:each>
         </tbody>
