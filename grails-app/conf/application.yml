@@ -10,7 +10,9 @@ retropie:
         romsPath: "/home/pi/RetroPie/roms"
         gamelistsPath: "/home/pi/.emulationstation/gamelists"
     romfilter:
-        somevalue: 'yes'
+        systems:
+        - 'atari2600'
+        - 'arcade'
 
 ---
 grails:

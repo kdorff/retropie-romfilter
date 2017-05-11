@@ -9,6 +9,15 @@ class UrlMappings {
             }
         }
 
+        name listSystems: "/systems" {
+            controller = 'system'
+            action = 'listSystems'
+        }
+        name listRomsForSystem: "/system/$system" {
+            controller = 'system'
+            action = 'listRomsForSystem'
+        }
+
         "/"(view:"/index")
         "500"(view:'/error')
         "404"(view:'/notFound')

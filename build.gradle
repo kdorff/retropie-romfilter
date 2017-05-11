@@ -56,6 +56,10 @@ dependencies {
     testCompile "org.grails.plugins:geb"
     testRuntime "org.seleniumhq.selenium:selenium-htmlunit-driver:2.47.1"
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
+
+    // Declared
+    compile 'org.webjars:bootstrap:3.3.7-1'
+    compile 'org.webjars:datatables:1.10.13'
 }
 
 assets {
