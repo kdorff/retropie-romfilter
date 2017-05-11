@@ -3,37 +3,34 @@
 <head>
     <meta name="layout" content="main"/>
     <title>List of Systems</title>
-
     <asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
+    <asset:javascript src="listRomsForSystem.js" asset-defer="true" />
+    <asset:stylesheet src="listRomsForSystem.css"/>
 </head>
 <body>
-<p>Listing roms for system ${system}
-    <table>
-    <g:each var="filename" in="${gamelist}">
-        <% def gameDetails = filenameToDetails[filename] %>
+    <p>Listing roms for system ${system}
+    <table id="romTable">
+        <thead>
             <tr>
-                <th>Filename</th>
-                <td>${filename}</td>
+                <th>Filename /<br/>Scrape name</th>
+                <th>Name</th>
+                <th>Genre</th>
+                <th>Desc</th>
+                <th>Size</th>
             </tr>
-            <g:if test="${gameDetails}">
+        </thead>
+        <tbody>
+            <g:each var="filename" in="${gamelist}">
                 <tr>
-                    <th width='10%'>Name</th>
-                    <td>${gameDetails.name}</td>
+                    <% def gameDetails = filenameToDetails[filename] %>
+                    <td>${filename}</td>
+                    <td>${gameDetails?.name}</td>
+                    <td>${gameDetails?.genre}</td>
+                    <td>${gameDetails?.desc}</td>
+                    <td>${gameDetails?.size}</td>
                 </tr>
-                <tr>
-                    <th>Size</th>
-                    <td>${gameDetails.size}</td>
-                </tr>
-                <tr>
-                    <th>Desc</th>
-                    <td>${gameDetails.desc}</td>
-                </tr>
-                <tr>
-                    <th>Genre</th>
-                    <td>${gameDetails.genre}</td>
-                </tr>
-            </g:if>
-    </g:each>
+            </g:each>
+        </tbody>
     </table>
 </body>
 </html>

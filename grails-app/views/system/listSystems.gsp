@@ -8,14 +8,23 @@
 </head>
 <body>
     <p>Available systems
-    <ul>
+    <table id="systemTable">
+        <thead>
+        <tr>
+            <th>System name</th>
+        </tr>
+        </thead>
+        <tbody>
         <g:each var="system" in="${systems}">
-            <li>
-                <g:link mapping="listRomsForSystem" params="[system: system]">
-                    ${system}
-                </g:link>
-            </li>
+            <tr>
+                <td>
+                    <g:link mapping="listRomsForSystem" params="[system: system]">
+                        ${system}
+                    </g:link>
+                </td>
+            </tr>
         </g:each>
-    </ul>
+        </tbody>
+    </table>
 </body>
 </html>

@@ -60,6 +60,7 @@ dependencies {
     // Declared
     compile 'org.webjars:bootstrap:3.3.7-1'
     compile 'org.webjars:datatables:1.10.13'
+    compile 'org.webjars:jquery:2.2.4'
 }
 
 assets {

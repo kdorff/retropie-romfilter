@@ -1,18 +1,22 @@
 ---
 
+retropie:
+    emulationStation:
+        romsPath: "/home/pi/RetroPie/roms"
+        gamelistsPath: "/home/pi/.emulationstation/gamelists"
+        imagesPath: "/home/pi/.emulationstation/downloaded_images"
+        imagesPrefix: ".emulationstation/downloaded_images"
+    romfilter:
+        systems:
+        - 'atari2600'
+        - 'arcade'
+---
+
 #environments:
 #    development:
 #    test:
 #    production:
 
-retropie:
-    emulationStation:
-        romsPath: "/home/pi/RetroPie/roms"
-        gamelistsPath: "/home/pi/.emulationstation/gamelists"
-    romfilter:
-        systems:
-        - 'atari2600'
-        - 'arcade'
 
 ---
 grails:
