@@ -22,10 +22,11 @@ $(document).ready(function() {
             { "bVisible": false,  "aTargets": [ 1 ] }
         ],
          "columns": [
-            { "width": "55%" },
+            { "width": "35%" },
             { "width": "0%" },
             { "width": "5%" },
-            { "width": "45%" }
+            { "width": "40%" },
+            { "width": "20%" }
         ],
         "paging":   false
     });

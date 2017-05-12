@@ -1,9 +1,7 @@
 package retropie.romfilter
 
 import grails.core.GrailsApplication
-
-import javax.imageio.ImageIO
-import java.awt.image.BufferedImage
+import org.apache.commons.io.FilenameUtils
 
 class SystemController {
 
@@ -13,57 +11,75 @@ class SystemController {
     GrailsApplication grailsApplication
 
     /**
-     * ResourceService (auto-injected).
+     * Valid rom image file extensions and their associated mime type.
      */
-    ResourceService resourceService
-
-    final static List<String> VALID_IMAGE_TYPES = ['png', 'jpg'].asImmutable()
+    final static Map<String, String> IMAGE_EXT_TO_MIME = [
+        'png':  'image/png',
+        'jpg':  'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif':  'image/gif',
+    ].asImmutable()
 
     /**
-     * GamelistParserService (auto-injected).
+     * RomfilterDataService (auto-injected).
      */
-    GamelistParserService gamelistParserService
+    RomfilterDataService romfilterDataService
 
     def listSystems() {
         println "Listing systems"
         return [
-            systems: grailsApplication.config.retropie.romfilter.systems
+            systems: romfilterDataService.listSystems().findAll { it.romCount > 0 }
         ]
     }
 
     def listRomsForSystem(String system) {
-        println "Listing roms for ${system}"
-
-
-        Map<String, File> gameFilenameToFileMap = gamelistParserService.listRomsForSystem(system)
-
-        Map<String, GamelistEntry> filenameToDetails = gamelistParserService.parseGamelistForSystem(system)
-
+        Map<String, File> gameFilenameToFileMap = romfilterDataService.listRomsForSystem(system)
         return [
             system: system,
             gamelist: gameFilenameToFileMap.keySet(),
-            filenameToDetails: filenameToDetails,
+            filenameToDetails: romfilterDataService.gamelistForSystem(system),
         ]
     }
 
-    def showRomImage(String romImagePath) {
-        String imageFilename = "${gamelistParserService.imagesPath}/${romImagePath}"
-        println "Planning to output ${imageFilename}"
-        String imageType = FilenameUtils.getExtension(imageFilename).toLowerCase()
-        if (imageType in VALID_IMAGE_TYPES) {
-            File imageFile = new File(imageFilename)
-            BufferedImage originalImage = ImageIO.read(imageFile)
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
-            ImageIO.write(originalImage, "jpg", outputStream)
-            byte[] imageInByte = outputStream.toByteArray()
-            response.setHeader("Content-Length", imageInByte.length.toString())
-            response.contentType = "image/jpg"
-            response.outputStream << imageInByte
-            response.outputStream.flush()
+    /**
+     *
+     * @param system
+     * @param id
+     * @return
+     */
+    def showRomImageForSystem(String system, Integer id) {
+        /**
+         * TODO: What if the path in gamelist.xml used .. to try to break out. Detect this?
+         * TODO: Kind of important since I am serving up data from the filesystem
+         * TODO: BUT this app isn't desiged to be exposed outside of the isolated environment.
+         */
+        println "Trying to show image for game system.id=${system}.${id}"
+        GamelistEntry game = romfilterDataService.gamelistEntryForId(system, id)
+        if (game) {
+            String fileType = FilenameUtils.getExtension(game.image).toLowerCase()
+            String mimeType = IMAGE_EXT_TO_MIME[fileType]
+            if (!mimeType) {
+                log.error("Invalid file extension for image ${fileType}")
+                response.status = 404
+            }
+            else {
+                File imageFile = new File(game.image)
+                if (imageFile.exists() && imageFile.canRead() && imageFile.isFile()) {
+                    println "Planning to output ${game.image}"
+                    FileInputStream imageStream = new FileInputStream(imageFile)
+                    response.setHeader("Content-Length", "${imageFile.length()}")
+                    response.contentType = mimeType
+                    response.outputStream << imageStream
+                    response.outputStream.flush()
+                } else {
+                    log.error("Image not found: ${imageFile}")
+                    response.status = 404
+                }
+            }
         }
         else {
-            throw new Exception("Invalid extension for image ${path}")
+            log.error("No game found for ${system} ${id}")
+            response.status = 404
         }
-
     }
 }

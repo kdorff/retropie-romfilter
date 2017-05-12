@@ -1,14 +1,13 @@
 package retropie.romfilter
 
-import grails.test.mixin.TestFor
 import spock.lang.Specification
 
-class GamelistParserServiceSpec extends Specification {
+class RomfilterDataServiceSpec extends Specification {
 
     /**
      * Service to test.
      */
-    GamelistParserService service
+    RomfilterDataService service
 
     /**
      * ResourceService For loading actual resources.
@@ -17,7 +16,7 @@ class GamelistParserServiceSpec extends Specification {
 
     def setup() {
         resourceServiceActual = new ResourceService()
-        service = new GamelistParserService() {
+        service = new RomfilterDataService() {
             @Override
             String getImagesPrefix() {
                 return "~/.emulationstation/downloaded_images/"

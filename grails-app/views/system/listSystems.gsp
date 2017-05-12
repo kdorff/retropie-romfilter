@@ -18,8 +18,8 @@
         <g:each var="system" in="${systems}">
             <tr>
                 <td>
-                    <g:link mapping="listRomsForSystem" params="[system: system]">
-                        ${system}
+                    <g:link mapping="listRomsForSystem" params="[system: system.name]">
+                        ${system.name}   ${system.romCount} roms
                     </g:link>
                 </td>
             </tr>

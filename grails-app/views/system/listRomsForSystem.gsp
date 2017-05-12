@@ -28,8 +28,8 @@
                     <td>${gameDetails?.genre}</td>
                     <td>${gameDetails?.desc}</td>
                     <td>
-                        <g:if test="${gameDetails?.image}">
-                            <img src='<g:createLink mapping="showRomImage" params="[romPath: gameDetails?.image]"/>' />
+                        <g:if test="${gameDetails && gameDetails.image && gameDetails.system && gameDetails.id}">
+                            <img width='200px' src='<g:createLink mapping="showRomImageForSystem" params="[system: gameDetails.system, id: gameDetails.id]"/>' />
                         </g:if>
                     </td>
                 </tr>

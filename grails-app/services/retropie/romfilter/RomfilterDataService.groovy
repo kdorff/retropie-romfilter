@@ -4,24 +4,39 @@ import org.apache.commons.io.FilenameUtils
 import grails.core.GrailsApplication
 import groovy.util.slurpersupport.GPathResult
 
-class GamelistParserService {
+class RomfilterDataService {
 
     /**
      * GrailsApplication (auto-injected).
      */
     GrailsApplication grailsApplication
 
-    Map<String, GamelistEntry> parseGamelistForSystem(String system) {
-        File gamelistFile = new File(getGamelistPathForSystem(system))
-        println gamelistFile
-        if (gamelistFile.exists() && 
-                gamelistFile.canRead() && 
+    Map<String, Map<String, GamelistEntry>> systemToNameGamelistCache = [:]
+
+    synchronized Map<String, GamelistEntry> gamelistForSystem(String system) {
+        Map<String, GamelistEntry> gamelist = systemToNameGamelistCache["${system}.nameToEntry"]
+
+        if (!gamelist) {
+            File gamelistFile = new File(getGamelistPathForSystem(system))
+            if (gamelistFile.exists() &&
+                gamelistFile.canRead() &&
                 gamelistFile.isFile()) {
-            return parseGamelistFromXml(gamelistFile.text)
+                gamelist = parseGamelistFromXml(system, gamelistFile.text)
+                systemToNameGamelistCache["${system}.nameToEntry"] = gamelist
+            }
+            else {
+                gamelist = [:]
+            }
         }
-        else {
-            return [:]
+        return gamelist
+    }
+
+    GamelistEntry gamelistEntryForId(String system, Integer id) {
+        Map.Entry<String, GamelistEntry> entry = gamelistForSystem(system).find {
+            GamelistEntry game = it.value
+            return (game.id == id && game.system == system)
         }
+        return entry.value
     }
 
     /**
@@ -35,7 +50,7 @@ class GamelistParserService {
      * @param gamelistXml
      * @return
      */
-    Map<String, GamelistEntry> parseGamelistFromXml(String gamelistXml) {
+    Map<String, GamelistEntry> parseGamelistFromXml(String system, String gamelistXml) {
         String imagesPrefix = imagesPrefix
 
         // The result
@@ -61,6 +76,7 @@ class GamelistParserService {
                 rating: (game.players?.toString() ?: "0.0") as double,
                 playcount: (game.players?.toString() ?: "0") as int,
                 lastplayed: game.releasedate?.toString() ?: "",
+                system: system,
             )
 
             // Transform path
@@ -69,8 +85,9 @@ class GamelistParserService {
             }
 
             // Transform image
-            if (entry.image.startsWith(imagesPrefix)) {
+            if (entry.image?.startsWith(imagesPrefix)) {
                 entry.image -= imagesPrefix
+                entry.image = "${imagesPath}/${entry.image}".toString()
             }
             else {
                 // Image in unknown location, remove it
@@ -78,8 +95,9 @@ class GamelistParserService {
             }
 
             // Transform thumbnail
-            if (entry.thumbnail.startsWith(imagesPrefix)) {
+            if (entry.thumbnail?.startsWith(imagesPrefix)) {
                 entry.thumbnail -= imagesPrefix
+                entry.thumbnail = "${imagesPath}/${entry.thumbnail}".toString()
             }
             else {
                 // Thumbnail in unknown location, remove it
@@ -92,40 +110,52 @@ class GamelistParserService {
         return gameslistMap
     }
 
-    Map<String, File> listSystems() {
-        Map<String, File> result = [:]
-        def romDirFile = new File("${romsPath}");
-        romDirFile.listFiles().each { File systemCandidateFile ->
-            if (keepCandidateSystem(systemCandidateFile)) {    
-                String systemName = FilenameUtils.getName(systemCandidateFile.toString())
-                result[systemName] = systemCandidateFile
-            }
+    List<SystemEntry> listSystems() {
+        List<SystemEntry> result = []
+        def systemsFolderFile = new File(romsPath)
+        systemsInSystemsFolder(systemsFolderFile).each { File systemFile ->
+            SystemEntry systemEntry = new SystemEntry(
+                name: FilenameUtils.getName(systemFile.toString()),
+                romCount: romsInSystemFolder(systemFile).size(),
+            )
+            result << systemEntry
         }
-        retirn result
+        return result
     }
 
-    private boolean keepCandidateSystem(File systemCandidateFile) {
-        return (systemCandidateFile.canRead() && 
-                    systemCandidateFile.isDirectory() && 
+    List<File> systemsInSystemsFolder(File systemsFolderFile) {
+        return systemsFolderFile.listFiles().findAll { File systemCandidateFile ->
+            return isSystemFolder(systemCandidateFile)
+        }
+    }
+
+    boolean isSystemFolder(File systemCandidateFile) {
+        return (systemCandidateFile.canRead() &&
+                    systemCandidateFile.isDirectory() &&
                     !systemCandidateFile.isHidden())
     }
 
     Map<String, File> listRomsForSystem(String system) {
         Map<String, File> result = [:]
-        def romsDirFile = new File("${getRomsPathForSystem(system)}");
-        romsDirFile.listFiles().each { File romCandidateFile ->
-            if (keepCandidateRom(romCandidateFile)) {    
-                String romName = FilenameUtils.getName(romCandidateFile.toString())
-                result[romName] = romCandidateFile
-            }
+        File systemFolderFile = new File(getRomsPathForSystem(system))
+        romsInSystemFolder(systemFolderFile).each { romFile ->
+            // Get rid of the path, just keep filename including ext
+            String romName = FilenameUtils.getName(romFile.toString())
+            result[romName] = romFile
         }
         return result
     }
 
-    private boolean keepCandidateRom(File romCandidateFile) {
-        return (romCandidateFile.canRead() && 
-                    romCandidateFile.isFile() && 
-                    !romCandidateFile.isHidden())
+    List<File> romsInSystemFolder(File systemFolderFile) {
+        return systemFolderFile.listFiles().findAll { File romCandidateFile ->
+            return isFileRom(romCandidateFile)
+        }
+    }
+
+    boolean isFileRom(File romCandidateFile) {
+        return (romCandidateFile.canRead() &&
+            romCandidateFile.isFile() &&
+            !romCandidateFile.isHidden())
     }
 
     String getGamelistsPath() {

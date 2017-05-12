@@ -17,9 +17,9 @@ class UrlMappings {
             controller = 'system'
             action = 'listRomsForSystem'
         }
-        name showRomImage: "/romimage/$romImagePath" {
+        name showRomImageForSystem: "/system/$system/rom/$id/image" {
             controller = 'system'
-            action = 'showRomImage'
+            action = 'showRomImageForSystem'
         }
 
         "/"(view:"/index")
