@@ -17,6 +17,10 @@ class UrlMappings {
             controller = 'system'
             action = 'listRomsForSystem'
         }
+        name showRomImage: "/romimage/$romImagePath" {
+            controller = 'system'
+            action = 'showRomImage'
+        }
 
         "/"(view:"/index")
         "500"(view:'/error')

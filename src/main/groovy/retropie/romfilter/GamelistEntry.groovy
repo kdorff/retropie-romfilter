@@ -13,6 +13,7 @@ class GamelistEntry {
     String name
     String desc
     String image
+    String thumbnail
     String developer
     String publisher
     String genre
@@ -20,8 +21,15 @@ class GamelistEntry {
     String region
     String romtype
     String releasedate
+    double rating
+    int playcount
+    String lastplayed
+
+    boolean hasThumbnail() {
+        return thumbnail != null && thumbnail != ""
+    }
 
     boolean hasImage() {
-        return image
+        return image != null && image != ""
     }
 }

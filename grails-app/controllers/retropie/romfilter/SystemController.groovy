@@ -17,6 +17,8 @@ class SystemController {
      */
     ResourceService resourceService
 
+    final static List<String> VALID_IMAGE_TYPES = ['png', 'jpg'].asImmutable()
+
     /**
      * GamelistParserService (auto-injected).
      */
@@ -31,34 +33,37 @@ class SystemController {
 
     def listRomsForSystem(String system) {
         println "Listing roms for ${system}"
-        List<String> gamelist = [
-            '20 em 1 (Brazil).zip',
-            'Ace of Aces (Europe).zip',
-            'woot.zip'
-        ]
 
-        String imagePrefix = grailsApplication.config.retropie.emulationStation.imagesPrefix
 
-        Map<String, GamelistEntry> filenameToDetails = gamelistParserService.parseGamelist(
-            resourceService.loadResource('/XmlSamples/gamelist-sample.xml')
-        )
+        Map<String, File> gameFilenameToFileMap = gamelistParserService.listRomsForSystem(system)
+
+        Map<String, GamelistEntry> filenameToDetails = gamelistParserService.parseGamelistForSystem(system)
+
         return [
             system: system,
-            gamelist: gamelist,
+            gamelist: gameFilenameToFileMap.keySet(),
             filenameToDetails: filenameToDetails,
         ]
     }
 
-    def renderImage() {
-        String imageName = params.imageName
-        File imageFile = new File("${PICTURES_DIR}/${imageName}")
-        BufferedImage originalImage = ImageIO.read(imageFile)
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
-        ImageIO.write(originalImage, "jpg", outputStream)
-        byte[] imageInByte = outputStream.toByteArray()
-        response.setHeader("Content-Length", imageInByte.length.toString())
-        response.contentType = "image/jpg"
-        response.outputStream << imageInByte
-        response.outputStream.flush()
+    def showRomImage(String romImagePath) {
+        String imageFilename = "${gamelistParserService.imagesPath}/${romImagePath}"
+        println "Planning to output ${imageFilename}"
+        String imageType = FilenameUtils.getExtension(imageFilename).toLowerCase()
+        if (imageType in VALID_IMAGE_TYPES) {
+            File imageFile = new File(imageFilename)
+            BufferedImage originalImage = ImageIO.read(imageFile)
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream()
+            ImageIO.write(originalImage, "jpg", outputStream)
+            byte[] imageInByte = outputStream.toByteArray()
+            response.setHeader("Content-Length", imageInByte.length.toString())
+            response.contentType = "image/jpg"
+            response.outputStream << imageInByte
+            response.outputStream.flush()
+        }
+        else {
+            throw new Exception("Invalid extension for image ${path}")
+        }
+
     }
 }

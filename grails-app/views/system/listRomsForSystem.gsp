@@ -12,10 +12,11 @@
     <table id="romTable">
         <thead>
             <tr>
-                <th>Filename /<br/>Scrape name</th>
+                <th>Scrape Name<br/>Filename</th>
                 <th>Name</th>
                 <th>Genre</th>
                 <th>Desc</th>
+                <th>Image</th>
             </tr>
         </thead>
         <tbody>
@@ -26,6 +27,11 @@
                     <td>${gameDetails?.name}</td>
                     <td>${gameDetails?.genre}</td>
                     <td>${gameDetails?.desc}</td>
+                    <td>
+                        <g:if test="${gameDetails?.image}">
+                            <img src='<g:createLink mapping="showRomImage" params="[romPath: gameDetails?.image]"/>' />
+                        </g:if>
+                    </td>
                 </tr>
             </g:each>
         </tbody>
