@@ -40,31 +40,31 @@ class SystemController {
 
     def listSystems() {
         println "Listing systems"
+        List<SystemEntry> systems = SystemEntry.list()
+        Map<String, Integer> systemToNumRoms = [:]
+        systems.each { SystemEntry systemEntry ->
+            systemToNumRoms[systemEntry.name] = RomEntry.countBySystem(systemEntry.name)
+        }
         return [
-            systems: SystemEntry.list()
+            systems: systems,
+            systemToNumRoms: systemToNumRoms,
         ]
     }
 
     def listRomsForSystem(String system) {
-        Map<String, Path> localRoms = romfilterDataService.listRomsForSystem(system)
-        Map<String, GamelistEntry> filenameToDetails = romfilterDataService.filenameToGamelistEntryForSystem(system)
+        List<RomEntry> romEntryList = RomEntry.findAllBySystem(system)
         return [
             system: system,
-            gamelist: localRoms.keySet(),
-            filenameToDetails: filenameToDetails,
-            romfilterDataService: romfilterDataService,
+            roms: romEntryList,
         ]
     }
 
     def showRomForSystem(String system, Long id) {
-        GamelistEntry gameDetails = GamelistEntry.get(id)
-        Map<String, GamelistEntry> filenameToDetails = romfilterDataService.filenameToGamelistEntryForSystem(system)
-        if (gameDetails) {
+        GamelistEntry gamelistEntry = GamelistEntry.get(id)
+        if (gamelistEntry) {
             return [
-                system: system,
-                gameDetails: gameDetails,
-                filenameToDetails: filenameToDetails,
-                romfilterDataService: romfilterDataService,
+                system       : system,
+                gamelistEntry: gamelistEntry,
             ]
         }
         else {
@@ -73,38 +73,38 @@ class SystemController {
         }
     }
 
-    def deleteRomForSystem(String system, String hash) {
-        Map<String, Path> roms = romfilterDataService.listRomsForSystem(system)
-        Map.Entry<String, Path> toDeleteEntry = roms.find { Map.Entry<String, Path> romEntry ->
-            // Search the filesystem for the entry whose filename has the same has
-            return romfilterDataService.hash(romEntry.key) == hash
-        }
+    def deleteRomForSystem(String system, Long id) {
+        RomEntry toDeleteEntry = RomEntry.get(id)
         if (!toDeleteEntry) {
-            log.error("ROM for hash ${hash} not found")
+            log.error("ROM for RomEntry.id ${id} not found in database")
             response.status = 404
         }
         else {
-            // Delete the file (move it to trash)
-            String trashPathStr = romfilterDataService.getTrashPathForSystem(system)
-            Path toDeletePath = toDeleteEntry.value
-            Path trashDestinationPath = Paths.get(trashPathStr, toDeletePath.fileName.toString())
+            Path toDeletePath = Paths.get(
+                romfilterDataService.getRomsPathForSystem(system),
+                toDeleteEntry.filename)
+            if (!Files.exists(toDeletePath)) {
+                log.error("ROM not found in on disc ${toDeletePath}")
+                response.status = 404
+            } else {
+                // Delete the file (move it to trash)
+                String trashPathStr = romfilterDataService.getTrashPathForSystem(system)
+                Path trashDestinationPath = Paths.get(trashPathStr, toDeletePath.fileName.toString())
 
-            try {
-                if (Files.move(toDeletePath, trashDestinationPath)) {
-                    log.trace("Moved ${toDeletePath} to ${trashDestinationPath}")
-                    response.status = 200
-                    /**
-                     * TODO: Decrement rom count in database.
-                     */
+                try {
+                    if (Files.move(toDeletePath, trashDestinationPath)) {
+                        toDeleteEntry.delete(flush: true)
+                        log.trace("Moved ${toDeletePath} to ${trashDestinationPath}")
+                        response.status = 200
+                    } else {
+                        log.error("Unable to move ${toDeletePath} to ${trashDestinationPath}. Note that this may not work across filesystems, etc.")
+                        response.status = 500
+                    }
                 }
-                else {
-                    log.error("Unable to move ${toDeletePath} to ${trashDestinationPath}. Note that this may not work across filesystems, etc.")
+                catch (IOException e) {
+                    log.error("Exception moving ${toDeletePath} to ${trashDestinationPath}. Note that may will not work across filesystems, etc.", e)
                     response.status = 500
                 }
-            }
-            catch (IOException e) {
-                log.error("Exception moving ${toDeletePath} to ${trashDestinationPath}. Note that may will not work across filesystems, etc.", e)
-                response.status = 500
             }
         }
     }

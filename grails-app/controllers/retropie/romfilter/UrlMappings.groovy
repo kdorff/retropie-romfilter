@@ -21,7 +21,7 @@ class UrlMappings {
             controller = 'system'
             action = 'showRomForSystem'
         }
-        name deleteRomForSystem: "/system/$system/rom/$hash/delete" {
+        name deleteRomForSystem: "/system/$system/rom/$id/delete" {
             controller = 'system'
             action = ['DELETE': 'deleteRomForSystem']
         }

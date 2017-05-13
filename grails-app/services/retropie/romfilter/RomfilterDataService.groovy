@@ -3,14 +3,19 @@ package retropie.romfilter
 import org.apache.commons.io.FilenameUtils
 import grails.core.GrailsApplication
 import groovy.util.slurpersupport.GPathResult
+import org.apache.log4j.Logger
 
+import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.security.MessageDigest
-import java.util.stream.Collectors
 
 class RomfilterDataService {
+    /**
+     * Logger.
+     */
+    Logger log = Logger.getLogger(getClass())
+
 
     /**
      * GrailsApplication (auto-injected).
@@ -24,31 +29,12 @@ class RomfilterDataService {
     void scanAll() {
         long start = System.currentTimeMillis()
         log.info("Beginning startup scan.")
-        scanSystems()
         scanGamelists()
+        scanSystems()
 
         log.info("Found ${SystemEntry.count()} systems")
         log.info("Found ${GamelistEntry.count()} games")
         log.info("Startup scan complete. Took ${System.currentTimeMillis() - start}ms")
-    }
-
-    /**
-     * Scan all systems to determine how many roms exact for each system.
-     */
-    void scanSystems() {
-        long start = System.currentTimeMillis()
-        log.info("Looking for systems with roms")
-        Path systemsFolderPath = Paths.get(romsPath)
-        foldersContainedWithin(systemsFolderPath).each { Path systemPath ->
-            SystemEntry systemEntry = new SystemEntry(
-                name: FilenameUtils.getName(systemPath.toString()),
-                romCount: filesContainedWithin(systemPath).size(),
-            )
-            if (systemEntry.romCount > 0) {
-                systemEntry.save(flush: true, failOnError: true)
-            }
-        }
-        log.info("System scan complete. Took ${System.currentTimeMillis() - start}ms")
     }
 
     /**
@@ -74,13 +60,63 @@ class RomfilterDataService {
         if (Files.exists(gamelistPath) &&
             Files.isReadable(gamelistPath) &&
             Files.isRegularFile(gamelistPath)) {
-            parseGamelistFromXml(system, new String(Files.readAllBytes(gamelistPath)))
+            parseGamelistFromXml(system,
+                new String(Files.readAllBytes(gamelistPath))
+            )
         }
         else {
             log.warn("... Gamelist not found")
         }
 
         log.info("gamelist.xml parsing complete. Took ${System.currentTimeMillis() - start}ms")
+    }
+
+    /**
+     * Finds all systems, scans roms for each.
+     */
+    void scanSystems() {
+        long start = System.currentTimeMillis()
+        log.info("Looking for systems with roms")
+        Path systemsFolderPath = Paths.get(romsPath)
+        List<Path> systemPaths = foldersContainedWithin(systemsFolderPath)
+        for (Path systemPath in systemPaths) {
+            String system = systemPath.fileName.toString()
+            SystemEntry systemEntry = new SystemEntry(
+                name: system,
+            )
+            int count = scanRomsForSystem(system)
+            if (count) {
+                // Only save if the system had roms.
+                systemEntry.save(flush: true, failOnError: true)
+            }
+        }
+        log.info("System scan complete. Took ${System.currentTimeMillis() - start}ms")
+    }
+
+    /**
+     * Scan roms for a system.
+     *
+     * @param system
+     * @return
+     */
+    int scanRomsForSystem(String system) {
+        Path systemFolderPath = Paths.get(getRomsPathForSystem(system))
+        String romGlob = getRomGlobForSystem(system)
+        int count = 0
+        List<Path> romPaths = filesContainedWithin(systemFolderPath, romGlob)
+        for (Path romPath in romPaths) {
+            // Get rid of the path, just keep filename including ext
+            String filename = FilenameUtils.getName(romPath.toString())
+            RomEntry romEntry = new RomEntry(
+                system: system,
+                filename: filename,
+                size: Files.size(romPath),
+            )
+            romEntry.gamelistEntry = GamelistEntry.findByPath(filename)
+            romEntry.save(flush:true, failOnError: true)
+            count++
+        }
+        return count
     }
 
     /**
@@ -151,24 +187,6 @@ class RomfilterDataService {
     }
 
     /**
-     * For a given system, search the filesystem and return all of the
-     * a map of the rom filename (without path) to that files's path.
-     *
-     * @param system system to list roms for
-     * @return
-     */
-    Map<String, Path> listRomsForSystem(String system) {
-        Map<String, Path> result = [:]
-        Path systemFolderPath = Paths.get(getRomsPathForSystem(system))
-        filesContainedWithin(systemFolderPath).each { romPath ->
-            // Get rid of the path, just keep filename including ext
-            String romName = FilenameUtils.getName(romPath.toString())
-            result[romName] = romPath
-        }
-        return result
-    }
-
-    /**
      * For a given system return a map of game.path to GameEntry.
      * This returns gamedata.xml data for a specific system.
      *
@@ -192,13 +210,15 @@ class RomfilterDataService {
     List<Path> foldersContainedWithin(Path folder) {
         List<Path> result = []
         try {
-            return Files.find(folder, 1, { path, attrs ->
-                return attrs.isDirectory() && !Files.isHidden(path)
-            }).collect(Collectors.toList());
+            DirectoryStream<Path> stream = Files.newDirectoryStream(folder)
+            List<Path> paths = stream.findAll { Path path ->
+                return Files.isDirectory(path) && !Files.isHidden(path)
+            }
+            return paths
         } catch (IOException e) {
             log.error("Exception scanning systems folder", e)
+            return []
         }
-        return result
     }
 
     /**
@@ -207,20 +227,44 @@ class RomfilterDataService {
      * @param folder folder to search
      * @return list of Path for files
      */
-    List<Path> filesContainedWithin(Path folder) {
+    List<Path> filesContainedWithin(Path folder, String glob) {
         long start = System.currentTimeMillis()
         log.info("Scanning roms folder ${folder}")
-        List<Path> result = []
         try {
-            return Files.find(folder, 1, { path, attrs ->
-                return attrs.isRegularFile() && !Files.isHidden(path)
-            }).collect(Collectors.toList());
+            DirectoryStream<Path> stream = Files.newDirectoryStream(folder, glob)
+            List<Path> paths = stream.findAll { Path path ->
+                return Files.isRegularFile(path) && !Files.isHidden(path)
+            }
+            return paths
         } catch (IOException e) {
             log.error("Exception scanning system folder for roms", e)
+            return []
         }
         finally {
             log.info("Scanning of roms folder complete. Took ${System.currentTimeMillis() - start}ms")
         }
+    }
+
+    List<String> getValidTypesSystem(String system) {
+        return grailsApplication.config.retropie.emulationStation.system[system]?.validRomTypes ?: []
+    }
+
+    /**
+     * Load a file from a resource into a String.
+     *
+     * @param resourcePath the path to the resource
+     * @return the resource as a String
+     */
+    String getRomGlobForSystem(String system) {
+        List<String> validTypes = getValidTypesSystem(system)
+        String glob
+        if (validTypes) {
+            glob = '*.{' +  validTypes.join(',') + '}'
+        }
+        else {
+            glob = "*"
+        }
+        return glob
     }
 
     /**
@@ -322,15 +366,5 @@ class RomfilterDataService {
             Files.createDirectories(systemTrashPath)
         }
         return systemTrashPathStr
-    }
-
-    /**
-     * Return an md5 has for a given string.
-     *
-     * @param s string to hash
-     * @return md5 has of string
-     */
-    String hash(String s) {
-        MessageDigest.getInstance("MD5").digest(s.bytes).encodeHex().toString()
     }
 }

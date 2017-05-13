@@ -18,16 +18,13 @@
         </thead>
         <tbody>
             <g:each var="system" in="${systems}">
-                <g:if test="${system.romCount == null || system.romCount > 0}">
-                    <tr>
-                        <td>
-                            <g:link mapping="listRomsForSystem" params="[system: system.name]">
-                                ${system.name}
-                                ~${system.romCount} ROMs
-                            </g:link>
-                        </td>
-                    </tr>
-                </g:if>
+                <tr>
+                    <td>
+                        <g:link mapping="listRomsForSystem" params="[system: system.name]">
+                            ${system.name}  ${systemToNumRoms[system.name]} roms
+                        </g:link>
+                    </td>
+                </tr>
             </g:each>
         </tbody>
     </table>

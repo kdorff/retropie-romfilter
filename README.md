@@ -10,10 +10,39 @@ You CAN run this application directly on a RetroPie, but
 you might not be pleased with the performance. Instead, I prefer to
 run RetroPie romfilter on another machine on the same network.
 
-# Installing and running from source on a Mac
+
+## Installing and running from source on a RetroPie
+
+### Fetching the source
 
 Coming soon
 
-# Installing and running from source on a RetroPie
+### Running the app
+
+Coming soon
+
+### FAQs
+
+Coming soon
+
+## Installing and running from source on a Mac
+
+### Fetching the source
+
+Coming soon
+
+### Mounting roms and configs
+
+Coming soon
+
+### Application Configuration
+
+Coming soon
+
+### Running the app
+
+Coming soon
+
+### FAQs
 
 Coming soon

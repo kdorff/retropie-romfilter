@@ -5,6 +5,48 @@ retropie:
         gamelistsPath: "/home/pi/.emulationstation/gamelists"
         imagesPath: "/home/pi/.emulationstation/downloaded_images"
         imagesPrefix: "~/.emulationstation/downloaded_images/"
+        system:
+            3do:
+                validRomTypes:
+                - 'iso'
+            amiga:
+                validRomTypes:
+                - 'asf'
+                - 'zip'
+                - 'dms'
+                - 'exe'
+                - 'adz'
+                - 'rp9'
+            atari2600:
+                validRomTypes:
+                - 'bin'
+                - 'a26'
+                - 'rom'
+                - 'zip'
+                - 'gz'
+            n64:
+                validRomTypes:
+                - 'n64'
+                - 'v64'
+                - 'z64'
+            nes:
+                validRomTypes:
+                - 'zip'
+                - 'nes'
+                - 'smc'
+                - 'sfc'
+                - 'fig'
+                - 'swc'
+                - 'mgd'
+                - 'fds'
+            snes:
+                validRomTypes:
+                - 'zip'
+                - 'smc'
+                - 'sfc'
+                - 'fig'
+                - 'swc'
+
     romfilter:
         trashPath: "/home/pi/RetroPie/roms/.trash"
 

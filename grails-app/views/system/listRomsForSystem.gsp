@@ -23,28 +23,28 @@
             </tr>
         </thead>
         <tbody>
-            <g:each var="filename" in="${gamelist}">
+            <g:each var="rom" in="${roms}">
                 <tr>
-                    <% def gameDetails = filenameToDetails[filename] %>
+                    <% def gamelistEntry = rom.gamelistEntry %>
                     <td>
-                        ${filename}
+                        ${rom.filename}
                         <p>
                             <input type="button" value="Delete / Move Trash" class="deleteRom"
-                                  data-delete-url='<g:createLink mapping="deleteRomForSystem" params="[system: system, hash: romfilterDataService.hash(filename)]"/>' />
+                                  data-delete-url='<g:createLink mapping="deleteRomForSystem" params="[system: system, id: rom.id]"/>' />
                         </p>
                     </td>
                     <td>
-                        <g:if test="${gameDetails}">
-                            <g:link mapping="romForSystem" params="[system: gameDetails.system, id: gameDetails.id]">
-                                ${gameDetails?.name}
+                        <g:if test="${gamelistEntry}">
+                            <g:link mapping="romForSystem" params="[system: gamelistEntry.system, id: gamelistEntry.id]">
+                                ${gamelistEntry?.name}
                             </g:link>
                         </g:if>
                     </td>
-                    <td>${gameDetails?.genre}</td>
-                    <td>${gameDetails?.desc}</td>
+                    <td>${gamelistEntry?.genre}</td>
+                    <td>${gamelistEntry?.desc}</td>
                     <td>
-                        <g:if test="${gameDetails && gameDetails.image && gameDetails.system && gameDetails.id}">
-                            <img width='200px' src='<g:createLink mapping="showRomImageForSystem" params="[system: gameDetails.system, id: gameDetails.id]"/>' />
+                        <g:if test="${gamelistEntry && gamelistEntry.image && gamelistEntry.system && gamelistEntry.id}">
+                            <img width='200px' src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, id: gamelistEntry.id]"/>' />
                         </g:if>
                     </td>
                 </tr>
