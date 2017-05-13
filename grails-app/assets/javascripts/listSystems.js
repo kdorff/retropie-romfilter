@@ -1,5 +1,6 @@
 $(document).ready(function() {
     $('#systemTable').DataTable({
+        searchHighlight: true,
         aLengthMenu: [
             [-1],
             ["All"]

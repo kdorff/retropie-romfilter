@@ -17,12 +17,20 @@ class UrlMappings {
             controller = 'system'
             action = 'listRomsForSystem'
         }
+        name romForSystem: "/system/$system/rom/$id" {
+            controller = 'system'
+            action = 'showRomForSystem'
+        }
+        name deleteRomForSystem: "/system/$system/rom/$hash/delete" {
+            controller = 'system'
+            action = ['DELETE': 'deleteRomForSystem']
+        }
         name showRomImageForSystem: "/system/$system/rom/$id/image" {
             controller = 'system'
             action = 'showRomImageForSystem'
         }
 
-        "/"(view:"/index")
+        "/"(view:"/systems")
         "500"(view:'/error')
         "404"(view:'/notFound')
     }

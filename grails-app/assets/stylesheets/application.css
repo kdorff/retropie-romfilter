@@ -9,6 +9,7 @@
 *
 *= require /webjars/bootstrap/3.3.7-1/css/bootstrap
 *= require /webjars/datatables/1.10.13/css/jquery.dataTables.min
+*= require searchHighlight/dataTables.searchHighlight
 *= require grails
 *= require main
 *= require mobile

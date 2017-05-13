@@ -2,13 +2,16 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>List of Systems</title>
+    <title>List of ROMS for ${system}</title>
     <asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
     <asset:javascript src="listRomsForSystem.js" asset-defer="true" />
     <asset:stylesheet src="listRomsForSystem.css"/>
 </head>
 <body>
-    <p>Listing roms for system ${system}
+    <p>Navigation:
+        <g:link mapping="listSystems">Systems</g:link> |
+        <g:link mapping="listRomsForSystem" params="[system: system]">${system}</g:link>
+
     <table id="romTable">
         <thead>
             <tr>
@@ -23,8 +26,20 @@
             <g:each var="filename" in="${gamelist}">
                 <tr>
                     <% def gameDetails = filenameToDetails[filename] %>
-                    <td>${filename}</td>
-                    <td>${gameDetails?.name}</td>
+                    <td>
+                        ${filename}
+                        <p>
+                            <input type="button" value="Delete / Move Trash" class="deleteRom"
+                                  data-delete-url='<g:createLink mapping="deleteRomForSystem" params="[system: system, hash: romfilterDataService.hash(filename)]"/>' />
+                        </p>
+                    </td>
+                    <td>
+                        <g:if test="${gameDetails}">
+                            <g:link mapping="romForSystem" params="[system: gameDetails.system, id: gameDetails.id]">
+                                ${gameDetails?.name}
+                            </g:link>
+                        </g:if>
+                    </td>
                     <td>${gameDetails?.genre}</td>
                     <td>${gameDetails?.desc}</td>
                     <td>

@@ -7,7 +7,9 @@
 //
 //= require /webjars/jquery/2.2.4/jquery.min
 //= require /webjars/bootstrap/3.3.7-1/js/bootstrap.min
-//= require /webjars/datatables/1.10.13/js/jquery.dataTables.min.js
+//= require /webjars/datatables/1.10.13/js/jquery.dataTables.min
+//= require searchHighlight/jquery.highlight
+//= require searchHighlight/dataTables.searchHighlight.min
 //= require_tree .
 //= require_self
 

@@ -7,8 +7,8 @@ import groovy.transform.ToString
  */
 @ToString(includeNames = true)
 class GamelistEntry {
-    String system   // not in gamelist.xml
-    int id          // attrib
+    String system   // not in gamelist.xml, what system this rom is for
+    String id       // attrib
     String source   // attrib
     String path
     String name

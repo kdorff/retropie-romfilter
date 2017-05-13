@@ -4,6 +4,12 @@ import org.apache.commons.io.FilenameUtils
 import grails.core.GrailsApplication
 import groovy.util.slurpersupport.GPathResult
 
+import java.nio.file.DirectoryStream
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.security.MessageDigest
+
 class RomfilterDataService {
 
     /**
@@ -15,13 +21,12 @@ class RomfilterDataService {
 
     synchronized Map<String, GamelistEntry> gamelistForSystem(String system) {
         Map<String, GamelistEntry> gamelist = systemToNameGamelistCache["${system}.nameToEntry"]
-
         if (!gamelist) {
-            File gamelistFile = new File(getGamelistPathForSystem(system))
-            if (gamelistFile.exists() &&
-                gamelistFile.canRead() &&
-                gamelistFile.isFile()) {
-                gamelist = parseGamelistFromXml(system, gamelistFile.text)
+            Path gamelistPath = Paths.get(getGamelistPathForSystem(system))
+            if (Files.exists(gamelistPath) &&
+                Files.isReadable(gamelistPath) &&
+                Files.isRegularFile(gamelistPath)) {
+                gamelist = parseGamelistFromXml(system, Files.readAllLines(gamelistPath).join('\n'))
                 systemToNameGamelistCache["${system}.nameToEntry"] = gamelist
             }
             else {
@@ -31,7 +36,7 @@ class RomfilterDataService {
         return gamelist
     }
 
-    GamelistEntry gamelistEntryForId(String system, Integer id) {
+    GamelistEntry gamelistEntryForId(String system, String id) {
         Map.Entry<String, GamelistEntry> entry = gamelistForSystem(system).find {
             GamelistEntry game = it.value
             return (game.id == id && game.system == system)
@@ -59,7 +64,7 @@ class RomfilterDataService {
         GPathResult gamelist = new XmlSlurper().parseText(gamelistXml)
         gamelist.children().each { game ->
             GamelistEntry entry = new GamelistEntry(
-                id: game.'@id'.toString() as int,
+                id: game.'@id'.toString(),
                 source: game.'@source'.toString(),
                 path: game.path?.toString() ?: "",
                 name: game.name?.toString() ?: "",
@@ -112,50 +117,71 @@ class RomfilterDataService {
 
     List<SystemEntry> listSystems() {
         List<SystemEntry> result = []
-        def systemsFolderFile = new File(romsPath)
-        systemsInSystemsFolder(systemsFolderFile).each { File systemFile ->
+        Path systemsFolderPath = Paths.get(romsPath)
+        systemsInSystemsFolder(systemsFolderPath).each { Path systemPath ->
             SystemEntry systemEntry = new SystemEntry(
-                name: FilenameUtils.getName(systemFile.toString()),
-                romCount: romsInSystemFolder(systemFile).size(),
+                name: FilenameUtils.getName(systemPath.toString()),
+                romCount: romsInSystemFolder(systemPath).size(),
             )
             result << systemEntry
         }
         return result
     }
 
-    List<File> systemsInSystemsFolder(File systemsFolderFile) {
-        return systemsFolderFile.listFiles().findAll { File systemCandidateFile ->
-            return isSystemFolder(systemCandidateFile)
-        }
-    }
-
-    boolean isSystemFolder(File systemCandidateFile) {
-        return (systemCandidateFile.canRead() &&
-                    systemCandidateFile.isDirectory() &&
-                    !systemCandidateFile.isHidden())
-    }
-
-    Map<String, File> listRomsForSystem(String system) {
-        Map<String, File> result = [:]
-        File systemFolderFile = new File(getRomsPathForSystem(system))
-        romsInSystemFolder(systemFolderFile).each { romFile ->
-            // Get rid of the path, just keep filename including ext
-            String romName = FilenameUtils.getName(romFile.toString())
-            result[romName] = romFile
+    List<Path> systemsInSystemsFolder(Path systemsFolderPath) {
+        List<Path> result = []
+        try {
+            DirectoryStream<Path> stream = Files.newDirectoryStream(systemsFolderPath)
+            for (Path systemCandidatePath : stream) {
+                if (isSystemFolder(systemCandidatePath)) {
+                    result << systemCandidatePath
+                }
+            }
+        } catch (IOException e) {
+            log.error("Exception scanning systems folder", e)
         }
         return result
     }
 
-    List<File> romsInSystemFolder(File systemFolderFile) {
-        return systemFolderFile.listFiles().findAll { File romCandidateFile ->
-            return isFileRom(romCandidateFile)
-        }
+    boolean isSystemFolder(Path systemCandidatePath) {
+        return Files.exists(systemCandidatePath) &&
+            Files.isReadable(systemCandidatePath) &&
+            Files.isDirectory(systemCandidatePath) &&
+            !Files.isHidden(systemCandidatePath) &&
+            !isDirectoryEmpty(systemCandidatePath)
     }
 
-    boolean isFileRom(File romCandidateFile) {
-        return (romCandidateFile.canRead() &&
-            romCandidateFile.isFile() &&
-            !romCandidateFile.isHidden())
+    Map<String, Path> listRomsForSystem(String system) {
+        Map<String, Path> result = [:]
+        Path systemFolderPath = Paths.get(getRomsPathForSystem(system))
+        romsInSystemFolder(systemFolderPath).each { romPath ->
+            // Get rid of the path, just keep filename including ext
+            String romName = FilenameUtils.getName(romPath.toString())
+            result[romName] = romPath
+        }
+        return result
+    }
+
+    List<Path> romsInSystemFolder(Path systemFolderPath) {
+        List<Path> result = []
+        try {
+            DirectoryStream<Path> stream = Files.newDirectoryStream(systemFolderPath)
+            for (Path romCandidatePath : stream) {
+                if (isFileRom(romCandidatePath)) {
+                    result << romCandidatePath
+                }
+            }
+        } catch (IOException e) {
+            log.error("Exception scanning system folder for roms", e)
+        }
+        return result
+    }
+
+    boolean isFileRom(Path romCandidatePath) {
+        return Files.exists(romCandidatePath) &&
+                Files.isReadable(romCandidatePath) &&
+                Files.isRegularFile(romCandidatePath) &&
+                !Files.isHidden(romCandidatePath)
     }
 
     String getGamelistsPath() {
@@ -182,7 +208,35 @@ class RomfilterDataService {
         return grailsApplication.config.retropie.emulationStation.imagesPath
     }
 
+    String getTrashPath() {
+        String trashPathStr = grailsApplication.config.retropie.romfilter.trashPath
+        Path trashPath = Paths.get(trashPathStr)
+        if (!Files.exists(trashPath)) {
+            Files.createDirectories(trashPath)
+        }
+        return trashPathStr
+    }
+
+    String getTrashPathForSystem(String system) {
+        String systemTrashPathStr = "${trashPath}/${system}"
+        Path systemTrashPath = Paths.get(systemTrashPathStr)
+        if (!Files.exists(systemTrashPath)) {
+            Files.createDirectories(systemTrashPath)
+        }
+        return systemTrashPathStr
+    }
+
     String getImagesPathForSystem(String system) {
         return "${imagesPath}/${system}"
+    }
+
+    String hash(String s) {
+        MessageDigest.getInstance("MD5").digest(s.bytes).encodeHex().toString()
+    }
+
+    boolean isDirectoryEmpty(Path directory) throws IOException {
+        DirectoryStream<Path> directoryStream = Files.newDirectoryStream(directory);
+        boolean empty = !directoryStream.iterator().hasNext();
+        return empty
     }
 }

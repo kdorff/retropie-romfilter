@@ -1,5 +1,6 @@
 $(document).ready(function() {
     $('#romTable').DataTable({
+        searchHighlight: true,
         aLengthMenu: [
             [-1],
             ["All"]
@@ -30,4 +31,26 @@ $(document).ready(function() {
         ],
         "paging":   false
     });
+});
+
+$(document).on('click', '.deleteRom', function () {
+    var button = $(this);
+    var deleteUrl = button.data('delete-url');
+    if (deleteUrl) {
+        button.css("background", "yellow");
+        $.ajax({
+            url: deleteUrl,
+            type: 'DELETE',
+            success: function (result) {
+                button.attr('value', 'ROM Moved To Trash');
+                button.prop('disabled', true);
+                button.css("background", "green");
+                console.log("ROM deleted");
+            },
+            error: function (result) {
+                button.css("background", "red");
+                alert('There was an error deleting the ROM.');
+            }
+        });
+    }
 });

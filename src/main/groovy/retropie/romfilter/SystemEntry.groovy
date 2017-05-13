@@ -5,5 +5,5 @@ import groovy.transform.ToString
 @ToString(includeNames = true)
 class SystemEntry {
     String name
-    int romCount
+    Integer romCount
 }

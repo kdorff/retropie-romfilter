@@ -6,6 +6,8 @@ retropie:
         gamelistsPath: "/home/pi/.emulationstation/gamelists"
         imagesPath: "/home/pi/.emulationstation/downloaded_images"
         imagesPrefix: "~/.emulationstation/downloaded_images/"
+    romfilter:
+        trashPath: "/home/pi/RetroPie/roms/.trash"
 
 ---
 
