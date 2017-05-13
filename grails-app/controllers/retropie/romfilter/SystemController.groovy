@@ -10,7 +10,12 @@ import java.nio.file.Paths
 class SystemController {
 
     /**
-     * TODO: ALL calls sending system should validate it is one of the valid systems.
+     * TODO: Use endless scrolling datatables to load and filter the data on demand. Much more responsive.
+     * TODO: Search box should support field search.
+     * TODO: Show name/filename similarity?
+     * TODO: Filter to show dissimilar name/filenames
+     * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
+     * TODO: A "delete all visible" button?
      */
 
     /**
@@ -36,27 +41,29 @@ class SystemController {
     def listSystems() {
         println "Listing systems"
         return [
-            systems: romfilterDataService.listSystems()   // .findAll { it.romCount > 0 }
+            systems: SystemEntry.list()
         ]
     }
 
     def listRomsForSystem(String system) {
-        Map<String, Path> gameFilenameToPathMap = romfilterDataService.listRomsForSystem(system)
+        Map<String, Path> localRoms = romfilterDataService.listRomsForSystem(system)
+        Map<String, GamelistEntry> filenameToDetails = romfilterDataService.filenameToGamelistEntryForSystem(system)
         return [
             system: system,
-            gamelist: gameFilenameToPathMap.keySet(),
-            filenameToDetails: romfilterDataService.gamelistForSystem(system),
+            gamelist: localRoms.keySet(),
+            filenameToDetails: filenameToDetails,
             romfilterDataService: romfilterDataService,
         ]
     }
 
-    def showRomForSystem(String system, String id) {
-        GamelistEntry gameDetails = romfilterDataService.gamelistEntryForId(system, id)
+    def showRomForSystem(String system, Long id) {
+        GamelistEntry gameDetails = GamelistEntry.get(id)
+        Map<String, GamelistEntry> filenameToDetails = romfilterDataService.filenameToGamelistEntryForSystem(system)
         if (gameDetails) {
             return [
                 system: system,
                 gameDetails: gameDetails,
-                filenameToDetails: romfilterDataService.gamelistForSystem(system),
+                filenameToDetails: filenameToDetails,
                 romfilterDataService: romfilterDataService,
             ]
         }
@@ -69,6 +76,7 @@ class SystemController {
     def deleteRomForSystem(String system, String hash) {
         Map<String, Path> roms = romfilterDataService.listRomsForSystem(system)
         Map.Entry<String, Path> toDeleteEntry = roms.find { Map.Entry<String, Path> romEntry ->
+            // Search the filesystem for the entry whose filename has the same has
             return romfilterDataService.hash(romEntry.key) == hash
         }
         if (!toDeleteEntry) {
@@ -85,6 +93,9 @@ class SystemController {
                 if (Files.move(toDeletePath, trashDestinationPath)) {
                     log.trace("Moved ${toDeletePath} to ${trashDestinationPath}")
                     response.status = 200
+                    /**
+                     * TODO: Decrement rom count in database.
+                     */
                 }
                 else {
                     log.error("Unable to move ${toDeletePath} to ${trashDestinationPath}. Note that this may not work across filesystems, etc.")
@@ -106,13 +117,8 @@ class SystemController {
      * @param id id of rom.
      * @return
      */
-    def showRomImageForSystem(String system, String id) {
-        /**
-         * TODO: What if the path in gamelist.xml used .. to try to break out. Detect this?
-         * TODO: Kind of important since I am serving up data from the filesystem
-         * TODO: BUT this app isn't desiged to be exposed outside of the isolated environment.
-         */
-        GamelistEntry game = romfilterDataService.gamelistEntryForId(system, id)
+    def showRomImageForSystem(String system, Long id) {
+        GamelistEntry game = GamelistEntry.get(id)
         if (game) {
             String fileType = FilenameUtils.getExtension(game.image).toLowerCase()
             String mimeType = IMAGE_EXT_TO_MIME[fileType]

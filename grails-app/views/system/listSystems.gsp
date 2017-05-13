@@ -23,9 +23,7 @@
                         <td>
                             <g:link mapping="listRomsForSystem" params="[system: system.name]">
                                 ${system.name}
-                                <g:if test="${system.romCount != null}">
-                                    ~${system.romCount} roms
-                                </g:if>
+                                ~${system.romCount} ROMs
                             </g:link>
                         </td>
                     </tr>

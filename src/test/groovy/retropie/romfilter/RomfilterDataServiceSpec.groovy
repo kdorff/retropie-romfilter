@@ -41,8 +41,8 @@ class RomfilterDataServiceSpec extends Specification {
         then:
         gamesMap.size() == 2
 
-        game1.id == 3129
-        game1.source == 'theGamesDB.net'
+        game1.scrapeId == 3129
+        game1.scrapeSource == 'theGamesDB.net'
         game1.path == '20 em 1 (Brazil).zip'
         game1.name == '20 em 1 (Brazil)'
         game1.desc == '20 em 1 (20 in 1) is a compilation of twenty previously unreleased games in a single cartridge, which came bundled with Tec Toy...'
@@ -55,8 +55,8 @@ class RomfilterDataServiceSpec extends Specification {
         game1.region == 'Brazil'
         game1.romtype == 'Original'
 
-        game2.id == 2676
-        game2.source == 'theGamesDB.net'
+        game2.scrapeId == 2676
+        game2.scrapeSource == 'theGamesDB.net'
         game2.path == 'Ace of Aces (Europe).zip'
         game2.name == 'Ace of Aces (Europe)'
         game2.desc == 'Ace of Aces is a 1st person, 2D flight simulation. You are onboard a British RAF Mosquito, maverick fighter bomber. Your mission? ...'

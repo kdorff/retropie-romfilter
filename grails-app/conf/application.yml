@@ -1,5 +1,4 @@
 ---
-
 retropie:
     emulationStation:
         romsPath: "/home/pi/RetroPie/roms"
@@ -10,12 +9,25 @@ retropie:
         trashPath: "/home/pi/RetroPie/roms/.trash"
 
 ---
+hibernate:
+    cache:
+        queries: false
+        use_second_level_cache: true
+        use_query_cache: false
+        region.factory_class: org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory
 
-#environments:
-#    development:
-#    test:
-#    production:
+dataSource:
+    pooled: true
+    jmxExport: true
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
 
+environments:
+    dataSource:
+        # Always work with an fresh in-memory database. What is in gamelist.xml is the most critical piece
+        dbCreate: create-drop
+        url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
 
 ---
 grails:

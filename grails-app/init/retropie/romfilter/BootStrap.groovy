@@ -11,13 +11,21 @@ class BootStrap {
     Logger log = Logger.getLogger(getClass())
 
     /**
-     * GrailsApplication (injected).
+     * GrailsApplication (auto-injected).
      */
     GrailsApplication grailsApplication
+
+    /**
+     * RomfilterDataService (auto-injected).
+     */
+    RomfilterDataService romfilterDataService
+
 
     def init = { servletContext ->
         log.info("retropie-romfilter configuration:")
         showConfig(grailsApplication.config.retropie, "retropie.")
+
+        romfilterDataService.scanAll()
     }
 
     def destroy = {
