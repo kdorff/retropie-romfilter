@@ -18,14 +18,14 @@ class BootStrap {
     /**
      * RomfilterDataService (auto-injected).
      */
-    RomfilterDataService romfilterDataService
+    RomfilterSyncService romfilterSyncService
 
 
     def init = { servletContext ->
         log.info("retropie-romfilter configuration:")
         showConfig(grailsApplication.config.retropie, "retropie.")
 
-        romfilterDataService.scanAll()
+        //romfilterSyncService.scanAll()
     }
 
     def destroy = {

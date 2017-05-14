@@ -24,6 +24,16 @@ class SystemController {
     GrailsApplication grailsApplication
 
     /**
+     * RomfilterDataService (auto-injected).
+     */
+    RomfilterDataService romfilterDataService
+
+    /**
+     * ConfigService (auto-injected).
+     */
+    ConfigService configService
+
+    /**
      * Valid rom image file extensions and their associated mime type.
      */
     final static Map<String, String> IMAGE_EXT_TO_MIME = [
@@ -33,10 +43,6 @@ class SystemController {
         'gif':  'image/gif',
     ].asImmutable()
 
-    /**
-     * RomfilterDataService (auto-injected).
-     */
-    RomfilterDataService romfilterDataService
 
     def listSystems() {
         println "Listing systems"
@@ -88,7 +94,7 @@ class SystemController {
                 response.status = 404
             } else {
                 // Delete the file (move it to trash)
-                String trashPathStr = romfilterDataService.getTrashPathForSystem(system)
+                String trashPathStr = configService.getTrashPathForSystem(system)
                 Path trashDestinationPath = Paths.get(trashPathStr, toDeletePath.fileName.toString())
 
                 try {
