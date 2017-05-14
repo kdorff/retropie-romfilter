@@ -30,8 +30,8 @@ On the system you intend to run the application, mount RetroPie's "roms" and "co
 The simplest way to do this to run Finder and press Command-K and mount both of
 
 ```
-smb://192.168.1.22/roms/
-smb://192.168.1.22/configs/
+smb://YOUR_RETRO_PIE_IP_ADDRESS/roms/
+smb://YOUR_RETRO_PIE_IP_ADDRESS/configs/
 ```
 
 You should now be able to find the data from your RetroPie in 
@@ -86,6 +86,10 @@ A: Currently it scans the roms and gamelist.xml files at first startup. This tak
 Q: I'm having a problem
 
 A: Wait for the app to become more stable. Try deleting the database file stored in the app directory.
+
+Q: Should I open this port up in my router so I can browse my roms while I am away from home or let me cousin look at it?
+
+A: No. This app has very little security baked in. Don't do it. Run this on your private network, only.
 
 ## Installing and running from source on a RetroPie
 
