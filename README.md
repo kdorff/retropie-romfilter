@@ -37,7 +37,8 @@ git clone https://github.com/kdorff/retropie-romfilter.git
 ### Mounting roms and configs
 
 On the system you intend to run the application, mount RetroPie's "roms" and "config" shares. 
-The simplest way to do this to run Finder and press Command-K and mount both of
+The simplest way to do this to run Finder and press Command-K and mount both
+of the following shares as Guest.
 
 ```
 smb://YOUR_RETRO_PIE_IP_ADDRESS/roms/
