@@ -17,6 +17,16 @@ This code is a work in progress and is not ready for public consumption.
 The first time you run the app it will need to scan your system. This can take several minutes
 depending on how many roms you have.
 
+## A quick note about scraping
+
+Not all scrapers are the same. The scraper that you can run directly within
+EmulationStation is not work doing across all of your roms unless you are
+going to give the Yes / No for EACH rom. Who has the desire to do this?
+
+Instead, use [Steven Selph's Scraper](https://github.com/retropie/retropie-setup/wiki/scraper)
+for bulk scraping and then use the built-in scraper for individual roms
+that Steven's scraper didn't identify.
+
 ## Installing and running from source on a Mac
 
 ### Fetching the source

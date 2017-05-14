@@ -2,6 +2,9 @@
 retropie:
     romfilter:
         trashPath: "/home/pi/RetroPie/roms/.trash"
+        skipSystems:
+        - retropie
+
     emulationStation:
         romsPath: "/home/pi/RetroPie/roms"
         gamelistsPath: "/home/pi/.emulationstation/gamelists"
@@ -89,7 +92,7 @@ environments:
     development:
         dataSource:
             dbCreate: update
-            url: jdbc:h2:./romfilter-dev;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+            url: jdbc:h2:./romfilter-database-dev;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
     test:
         dataSource:
             dbCreate: create-drop
@@ -97,7 +100,7 @@ environments:
     production:
         dataSource:
             dbCreate: update
-            url: jdbc:h2:./romfilter-prod;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+            url: jdbc:h2:./romfilter-database-prod;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
 
 ---
 grails:

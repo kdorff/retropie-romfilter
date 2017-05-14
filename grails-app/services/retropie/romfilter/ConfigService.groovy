@@ -13,6 +13,9 @@ class ConfigService {
      */
     GrailsApplication grailsApplication
 
+    List<String> getSystemsToSkip() {
+        return grailsApplication.config.retropie.romfilter.skipSystems
+    }
 
     List<String> getValidTypesSystem(String system) {
         return grailsApplication.config.retropie.emulationStation.system[system]?.validRomTypes ?: []

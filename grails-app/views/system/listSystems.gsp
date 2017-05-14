@@ -21,8 +21,9 @@
                 <tr>
                     <td>
                         <g:link mapping="listRomsForSystem" params="[system: system.name]">
-                            ${system.name}  ${systemToNumRoms[system.name]} roms
+                            ${system.name}
                         </g:link>
+                        (${systemToNumRoms[system.name]} roms)
                     </td>
                 </tr>
             </g:each>

@@ -25,7 +25,9 @@ class BootStrap {
         log.info("retropie-romfilter configuration:")
         showConfig(grailsApplication.config.retropie, "retropie.")
 
-        //romfilterSyncService.scanAll()
+        if (!SystemEntry.count() && !RomEntry.count() && !GamelistEntry.count()) {
+            romfilterSyncService.scanAll()
+        }
     }
 
     def destroy = {

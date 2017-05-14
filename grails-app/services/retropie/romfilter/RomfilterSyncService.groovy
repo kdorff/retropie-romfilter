@@ -55,19 +55,25 @@ class RomfilterSyncService {
      */
     void scanGamelist(String system, Path gamelistPath) {
         long start = System.currentTimeMillis()
-        log.info("Parsing gamelist.xml ${gamelistPath}")
-        if (Files.exists(gamelistPath) &&
-            Files.isReadable(gamelistPath) &&
-            Files.isRegularFile(gamelistPath)) {
-            parseGamelistFromXml(system,
-                new String(Files.readAllBytes(gamelistPath))
-            )
+        List<String> skipSystems = configService.getSystemsToSkip()
+        if (system in skipSystems) {
+            log.info("Skipping gamelist parsing for ${system}")
         }
         else {
-            log.warn("... Gamelist not found")
-        }
+            log.info("Parsing gamelist for ${system}")
+            if (Files.exists(gamelistPath) &&
+                Files.isReadable(gamelistPath) &&
+                Files.isRegularFile(gamelistPath)) {
+                parseGamelistFromXml(system,
+                    new String(Files.readAllBytes(gamelistPath))
+                )
+            }
+            else {
+                log.warn("... Gamelist not found")
+            }
 
-        log.info("gamelist.xml parsing complete. Took ${System.currentTimeMillis() - start}ms")
+            log.info("Gamelist for ${system} parsing complete. Took ${System.currentTimeMillis() - start}ms")
+        }
     }
 
     /**
@@ -78,18 +84,24 @@ class RomfilterSyncService {
         log.info("Looking for systems with roms")
         Path systemsFolderPath = Paths.get(configService.romsPath)
         List<Path> systemPaths = foldersContainedWithin(systemsFolderPath)
+        List<String> skipSystems = configService.getSystemsToSkip()
         for (Path systemPath in systemPaths) {
             String system = systemPath.fileName.toString()
-            SystemEntry systemEntry = new SystemEntry(
-                name: system,
-            )
-            int count = scanRomsForSystem(system)
-            if (count) {
-                // Only save if the system had roms.
-                systemEntry.save(flush: true, failOnError: true)
+            if (system in skipSystems) {
+                log.info("Skipping system ${system}.")
+            }
+            else {
+                SystemEntry systemEntry = new SystemEntry(
+                    name: system,
+                )
+                int count = scanRomsForSystem(system)
+                if (count) {
+                    // Only save if the system had roms.
+                    systemEntry.save(flush: true, failOnError: true)
+                }
             }
         }
-        log.info("System scan complete. Took ${System.currentTimeMillis() - start}ms")
+        log.info("Finished looking for systems. Took ${System.currentTimeMillis() - start}ms")
     }
 
     /**
@@ -102,6 +114,11 @@ class RomfilterSyncService {
         Path systemFolderPath = Paths.get(configService.getRomsPathForSystem(system))
         String romGlob = configService.getRomGlobForSystem(system)
         int count = 0
+        /**
+         * One could put the RomEntry creation within the stream processing
+         * of filesContainedWithin. But is it worth it? filesContainedWithin()
+         * likely has other utility.
+         */
         List<Path> romPaths = filesContainedWithin(systemFolderPath, romGlob)
         for (Path romPath in romPaths) {
             // Get rid of the path, just keep filename including ext
@@ -212,19 +229,22 @@ class RomfilterSyncService {
      */
     List<Path> filesContainedWithin(Path folder, String glob) {
         long start = System.currentTimeMillis()
-        log.info("Scanning roms folder ${folder}")
+        String system = folder.fileName.toString()
+        log.info("Scanning for ${system} roms")
+        int romsFound = 0
         try {
             DirectoryStream<Path> stream = Files.newDirectoryStream(folder, glob)
             List<Path> paths = stream.findAll { Path path ->
                 return Files.isRegularFile(path) && !Files.isHidden(path)
             }
+            romsFound = paths.size()
             return paths
         } catch (IOException e) {
             log.error("Exception scanning system folder for roms", e)
             return []
         }
         finally {
-            log.info("Scanning of roms folder complete. Took ${System.currentTimeMillis() - start}ms")
+            log.info("Scan for ${system} roms complete, found ${romsFound}. Took ${System.currentTimeMillis() - start}ms")
         }
     }
 }
