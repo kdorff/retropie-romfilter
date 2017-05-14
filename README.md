@@ -91,7 +91,11 @@ http://localhost:8080/systems
 
 Q: When I first start the app it takes forever before it responds.
 
-A: Currently it scans the roms and gamelist.xml files at first startup. This takes time. I'll make this nicer in the future (maybe).
+A: Currently it scans the roms and gamelist.xml files at first startup. This takes time. I'll make this nicer in the future.
+
+Q: Things changed in the filesystem or I have re-scraped but I don't see the changes in romfilter
+
+A: Yeah, I need to add on-demand re-scan. Stop the app, delete the database in the app's local directory, and start the app again. Sorry. I'll do something about this soon.
 
 Q: I'm having a problem
 
