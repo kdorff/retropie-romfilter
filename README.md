@@ -48,7 +48,7 @@ in the default location for running the application on a RetroPie. But, we want 
 "/Volumes/roms" and "/Volumes/config" to find the data the application will use.
 
 To override the configuration to use the mounts, create a file in your home directory 
-named ".retropie-romfilter.yml". The contents of this file should be similar to
+named ```.retropie-romfilter.yml``` The contents of this file should be similar to
 
 ```
 retropie:
@@ -60,7 +60,7 @@ retropie:
         trashPath: "/Volumes/roms/.trash"
 ```        
 
-Note the trashPath here. When you "Delete" a rom using RetroPie-romfilter it will move the 
+Note the trashPath here. When you "Delete" a rom using RetroPie romfilter it will move the 
 ROM file to a system folder within the trashPath.
 
 ### Running the app
