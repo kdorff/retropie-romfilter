@@ -38,7 +38,7 @@ You should now be able to find the data from your RetroPie in
 
 ```
 /Volumes/roms
-Volumes/configs
+/Volumes/configs
 ```
 
 ### Application Configuration
