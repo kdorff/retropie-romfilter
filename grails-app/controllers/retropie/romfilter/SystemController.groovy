@@ -14,8 +14,11 @@ class SystemController {
      * TODO: Search box should support field search.
      * TODO: Show name/filename similarity?
      * TODO: Filter to show dissimilar name/filenames
+     * TODO: One search for all systems, eliminating the system screen?
+     * TODO: Filter those without gamelistEntry
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: A "delete all visible" button?
+     * TODO: Filtering should set the URL? And if you go there, apply the filter.
      */
 
     /**
@@ -87,10 +90,12 @@ class SystemController {
         }
         else {
             Path toDeletePath = Paths.get(
-                romfilterDataService.getRomsPathForSystem(system),
+                configService.getRomsPathForSystem(system),
                 toDeleteEntry.filename)
             if (!Files.exists(toDeletePath)) {
                 log.error("ROM not found in on disc ${toDeletePath}")
+                toDeleteEntry.delete(flush: true)
+                log.error("Deleted missing from from database")
                 response.status = 404
             } else {
                 // Delete the file (move it to trash)

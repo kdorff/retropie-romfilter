@@ -56,10 +56,10 @@ dependencies {
     profile "org.grails.profiles:web"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.8.2"
 
-    runtime "com.h2database:h2"
+//    runtime "com.h2database:h2"
 
-    //runtime 'org.xerial:sqlite-jdbc:3.16.1'
-    //compile group: 'com.enigmabridge', name: 'hibernate4-sqlite-dialect', version: '0.1.2'
+    runtime 'org.xerial:sqlite-jdbc:3.16.1'
+    compile group: 'com.enigmabridge', name: 'hibernate4-sqlite-dialect', version: '0.1.2'
 
     testCompile "org.grails:grails-plugin-testing"
     testCompile "org.grails.plugins:geb"
@@ -67,6 +67,7 @@ dependencies {
     testRuntime "net.sourceforge.htmlunit:htmlunit:2.18"
 
     // Declared
+    compile 'org.grails.plugins:quartz:2.0.12'
     compile 'org.apache.commons:commons-io:1.3.2'
     compile 'org.webjars:bootstrap:3.3.7-1'
     compile 'org.webjars:datatables:1.10.13'

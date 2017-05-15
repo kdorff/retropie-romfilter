@@ -60,39 +60,18 @@ hibernate:
         use_query_cache: false
         region.factory_class: org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory
 
-#dataSource:
-#    pooled: true
-#    jmxExport: true
-#    driverClassName: org.sqlite.JDBC
-#    logSql: true
-#    dialect: hibernate.SQLiteDialect
-#
-#environments:
-#    development:
-#        dataSource:
-#            dbCreate: update
-#            url: jdbc:sqlite:./romfilter-dev-sqlite.db
-#    test:
-#        dataSource:
-#            dbCreate: create-drop
-#            url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-#    production:
-#        dataSource:
-#            dbCreate: update
-#            url: jdbc:sqlite:./romfilter-prod-sqlite.db
-
 dataSource:
     pooled: true
     jmxExport: true
-    driverClassName: org.h2.Driver
-    username: sa
-    password:
+    driverClassName: org.sqlite.JDBC
+    logSql: false
+    dialect: com.enigmabridge.hibernate.dialect.SQLiteDialect
 
 environments:
     development:
         dataSource:
             dbCreate: update
-            url: jdbc:h2:./romfilter-database-dev;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+            url: jdbc:sqlite:./romfilter-database-dev.sqlite.db
     test:
         dataSource:
             dbCreate: create-drop
@@ -100,7 +79,38 @@ environments:
     production:
         dataSource:
             dbCreate: update
-            url: jdbc:h2:./romfilter-database-prod;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+            url: jdbc:sqlite:./romfilter-database-prod.sqlite.d
+
+#dataSource:
+#    pooled: true
+#    jmxExport: true
+#    driverClassName: org.h2.Driver
+#    username: sa
+#    password:
+#
+#environments:
+#    development:
+#        dataSource:
+#            dbCreate: update
+#            url: jdbc:h2:./romfilter-database-dev;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+#    test:
+#        dataSource:
+#            dbCreate: create-drop
+#            url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+#    production:
+#        dataSource:
+#            dbCreate: update
+#            url: jdbc:h2:./romfilter-database-prod;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
+
+---
+quartz:
+    autoStartup: true
+    jdbcStore: false
+
+environments:
+    test:
+        quartz:
+            autoStartup: false
 
 ---
 grails:
