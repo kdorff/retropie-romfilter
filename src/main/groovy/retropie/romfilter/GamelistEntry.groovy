@@ -1,8 +1,10 @@
 package retropie.romfilter
 
+import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
+import org.apache.lucene.document.LongPoint
 import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.IntPoint
 import org.apache.lucene.document.DoublePoint
@@ -12,6 +14,7 @@ import org.apache.lucene.document.TextField
  * Entry for one game from gamelist.xml.
  */
 @ToString(includeNames = true)
+@EqualsAndHashCode
 class GamelistEntry {
     /**
      * The system this rom is for (example 'atari2600').
@@ -92,8 +95,9 @@ class GamelistEntry {
 
     /**
      * The date the rom was released.
+     * The long value is in the format 20140418  for April 18, 2014.
      */
-    String releasedate
+    long releasedate
 
     /**
      * The rating of the rom..
@@ -109,8 +113,15 @@ class GamelistEntry {
 
     /**
      * The date the rom was last played.
+     * The long value is in the format 20140418  for April 18, 2014.
      */
-    String lastplayed
+    long lastplayed
+
+    /**
+     * The document that was used to create this entry.
+     * Null if the document wasn't reconstituted from the indexer.
+     */
+    Document document
 
     /**
      * Default constructor.
@@ -122,6 +133,7 @@ class GamelistEntry {
      * From a Document constructor.
      */
     GamelistEntry(Document document) {
+        this()
         system = document.system
         scrapeId = document.scrapeId ?: ''
         scrapeSource = document.scrapeSource ?: ''
@@ -136,10 +148,11 @@ class GamelistEntry {
         players = document.players?.toInteger() ?: 1
         region = document.region ?: ''
         romtype = document.romtype ?: ''
-        releasedate = document.releasedate ?: ''
+        releasedate = document.releasedate?.toLong() ?: 0
         rating = document.rating?.toDouble() ?: 0.0
         playcount = document.playcount?.toInteger() ?: 0
-        lastplayed = document.lastplayed ?: ''
+        lastplayed = document.lastplayed?.toLong() ?: 0
+        this.document = document
     }
 
     /**
@@ -164,12 +177,21 @@ class GamelistEntry {
         doc.add(new StoredField("players", players))
         if (region) doc.add(new TextField("region", region, Field.Store.YES))
         if (romtype) doc.add(new TextField("romtype", romtype, Field.Store.YES))
-        if (releasedate) doc.add(new TextField("releasedate", releasedate, Field.Store.YES))
+
+        if (releasedate) {
+            doc.add(new LongPoint("releasedate", releasedate))
+            doc.add(new StoredField("releasedate", releasedate))
+        }
+
         doc.add(new DoublePoint("rating", rating))
         doc.add(new StoredField("rating", rating))
         doc.add(new IntPoint("playcount", playcount))
         doc.add(new StoredField("playcount", playcount))
-        if (lastplayed) doc.add(new TextField("lastplayed", lastplayed, Field.Store.YES))
+
+        if (lastplayed) {
+            doc.add(new LongPoint("lastplayed", lastplayed))
+            doc.add(new StoredField("lastplayed", lastplayed))
+        }
         return doc
     }
 

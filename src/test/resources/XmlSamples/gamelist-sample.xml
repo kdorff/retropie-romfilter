@@ -3,7 +3,7 @@
         <path>./20 em 1 (Brazil).zip</path>
         <name>20 em 1 (Brazil)</name>
         <desc>20 em 1 (20 in 1) is a compilation of twenty previously unreleased games in a single cartridge, which came bundled with Tec Toy...</desc>
-        <image>~/.emulationstation/downloaded_images/20 em 1 (Brazil)-image.jpg</image>
+        <image>~/.emulationstation/downloaded_images/arcade/20 em 1 (Brazil)-image.jpg</image>
         <releasedate>19970101T000000</releasedate>
         <developer>Tec Toy Indústria de Brinquedos S.A.</developer>
         <publisher>Tec Toy Indústria de Brinquedos S.A.</publisher>
@@ -15,13 +15,17 @@
         <path>./Ace of Aces (Europe).zip</path>
         <name>Ace of Aces (Europe)</name>
         <desc>Ace of Aces is a 1st person, 2D flight simulation. You are onboard a British RAF Mosquito, maverick fighter bomber. Your mission? ...</desc>
-        <image>~/.emulationstation/downloaded_images/Ace of Aces (Europe)-image.jpg</image>
+        <image>~/.emulationstation/downloaded_images/arcade/Ace of Aces (Europe)-image.jpg</image>
+        <thumbnail>~/.emulationstation/downloaded_images/arcade/Ace of Aces (Europe)-thumb.jpg</thumbnail>
         <releasedate>19910101T000000</releasedate>
         <developer>Artech Digital Entertainment</developer>
         <publisher>SEGA</publisher>
         <genre>Flight Simulator</genre>
-        <players>1</players>
+        <players>2</players>
         <region>Europe</region>
         <romtype>Original</romtype>
+        <rating>0.5</rating>
+        <playcount>5</playcount>
+        <lastplayed>20100101T000000</lastplayed>
     </game>
 </gameList>

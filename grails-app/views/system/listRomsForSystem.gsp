@@ -35,7 +35,7 @@
                     </td>
                     <td>
                         <g:if test="${gamelistEntry}">
-                            <g:link mapping="romForSystem" params="[system: gamelistEntry.system, id: gamelistEntry.scrapeId]">
+                            <g:link mapping="romForSystem" params="[system: gamelistEntry.system, scrapeId: gamelistEntry.scrapeId]">
                                 ${gamelistEntry?.name}
                             </g:link>
                         </g:if>
@@ -44,7 +44,7 @@
                     <td>${gamelistEntry?.desc}</td>
                     <td>
                         <g:if test="${gamelistEntry && gamelistEntry.image && gamelistEntry.system && gamelistEntry.scrapeId}">
-                            <img width='200px' src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, id: gamelistEntry.scrapeId]"/>' />
+                            <img width='200px' src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, scrapeId: gamelistEntry.scrapeId]"/>' />
                         </g:if>
                     </td>
                 </tr>

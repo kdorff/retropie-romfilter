@@ -1,6 +1,7 @@
 package retropie.romfilter
 
 import groovy.util.slurpersupport.GPathResult
+import groovyx.gpars.GParsPool
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 
@@ -8,6 +9,7 @@ import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.concurrent.atomic.AtomicInteger
 
 class RomfilterSyncService {
     /**
@@ -23,7 +25,17 @@ class RomfilterSyncService {
     /**
      * IndexerService (auto-injected).
      */
-    IndexerService indexerService
+    IndexerIndexingService indexerIndexingService
+
+    /**
+     * IndexerService (auto-injected).
+     */
+    IndexerDataService indexerDataService
+
+    /**
+     * HashService.
+     */
+    HashService hashService
 
     /**
      * At startup or on demand. Scan all system and gamelist data,
@@ -35,9 +47,9 @@ class RomfilterSyncService {
         log.info("Beginning startup scan.")
         scanGamelists()
         scanSystems()
-        log.info("Found ${indexerService.systemEntryCount} systems")
-        log.info("Found ${indexerService.gamelistEntryCount} gamelist.xml entries")
-        log.info("Found ${indexerService.romEntryCount} roms")
+        log.info("Found ${indexerDataService.systemEntryCount} systems")
+        log.info("Found ${indexerDataService.gamelistEntryCount} gamelist.xml entries")
+        log.info("Found ${indexerDataService.romEntryCount} roms")
         log.info("Startup scan complete. Took ${System.currentTimeMillis() - start}ms")
     }
 
@@ -48,9 +60,11 @@ class RomfilterSyncService {
         long start = System.currentTimeMillis()
         log.info("Finding gamelists.xml files")
         Path gamelistsPath = Paths.get(configService.gamelistsPath)
-        foldersContainedWithin(gamelistsPath).each { Path gamelistFolderPath ->
-            scanGamelist(gamelistFolderPath.getFileName().toString(),
-                Paths.get(gamelistFolderPath.toString(), 'gamelist.xml'))
+        GParsPool.withPool {
+            foldersContainedWithin(gamelistsPath).eachParallel { Path gamelistFolderPath ->
+                scanGamelist(gamelistFolderPath.getFileName().toString(),
+                    Paths.get(gamelistFolderPath.toString(), 'gamelist.xml'))
+            }
         }
         log.info("All gamelist.xml files found. Took ${System.currentTimeMillis() - start}ms")
     }
@@ -88,22 +102,22 @@ class RomfilterSyncService {
         long start = System.currentTimeMillis()
         log.info("Looking for systems with roms")
         Path systemsFolderPath = Paths.get(configService.romsPath)
-        List<Path> systemPaths = foldersContainedWithin(systemsFolderPath)
         List<String> skipSystems = configService.getSystemsToSkip()
-        for (Path systemPath in systemPaths) {
-            String system = systemPath.fileName.toString()
-            if (system in skipSystems) {
-                log.info("Skipping system ${system}.")
-            }
-            else {
-                SystemEntry systemEntry = new SystemEntry(
-                    name: system,
-                )
-                int count = scanRomsForSystem(system)
-                if (count) {
-                    // Only save if the system had roms.
-                    indexerService.saveSystemEntry(systemEntry)
-
+        GParsPool.withPool {
+            foldersContainedWithin(systemsFolderPath).eachParallel { Path systemPath ->
+                String system = systemPath.fileName.toString()
+                if (system in skipSystems) {
+                    log.info("Skipping system ${system}.")
+                }
+                else {
+                    SystemEntry systemEntry = new SystemEntry(
+                        name: system,
+                    )
+                    int count = scanRomsForSystem(system)
+                    if (count) {
+                        // Only save if the system had roms.
+                        indexerIndexingService.saveSystemEntry(systemEntry)
+                    }
                 }
             }
         }
@@ -112,6 +126,8 @@ class RomfilterSyncService {
 
     /**
      * Scan roms for a system.
+     * gamelist.xml for this system MUST already be scanned since we look up the rom's gamelistEntry when
+     * creating the RomEntry.
      *
      * @param system
      * @return
@@ -119,9 +135,8 @@ class RomfilterSyncService {
     int scanRomsForSystem(String system) {
         Path systemFolderPath = Paths.get(configService.getRomsPathForSystem(system))
         String romGlob = configService.getRomGlobForSystem(system)
-        int count = 0
-        List<Path> romPaths = filesContainedWithin(systemFolderPath, romGlob)
-        for (Path romPath in romPaths) {
+        AtomicInteger count = new AtomicInteger(0)
+        filesContainedWithin(systemFolderPath, romGlob).each { Path romPath ->
             // Get rid of the path, just keep filename including ext
             String filename = FilenameUtils.getName(romPath.toString())
             RomEntry romEntry = new RomEntry(
@@ -129,11 +144,13 @@ class RomfilterSyncService {
                 filename: filename,
                 size: Files.size(romPath),
             )
+            romEntry.hash = hashService.hash(romEntry.filename)
+            // The gamelistEntry for this system MUST already be scanned
             romEntry.hasGamelistEntry = romEntry.gamelistEntry != null
-            indexerService.saveRomEntry(romEntry)
-            count++
+            indexerIndexingService.saveRomEntry(romEntry)
+            count.incrementAndGet()
         }
-        return count
+        return count.get()
     }
 
     /**
@@ -154,6 +171,7 @@ class RomfilterSyncService {
         GPathResult gamelist = new XmlSlurper().parseText(gamelistXml)
         gamelist.children().each { game ->
             GamelistEntry entry = new GamelistEntry(
+                system: system,
                 scrapeId: game.'@id'.toString(),
                 scrapeSource: game.'@source'.toString(),
                 path: game.path?.toString() ?: "",
@@ -167,11 +185,10 @@ class RomfilterSyncService {
                 players: (game.players?.toString() ?: "1") as int,
                 region: game.region?.toString() ?: "",
                 romtype: game.romtype?.toString() ?: "",
-                releasedate: game.releasedate?.toString() ?: "",
-                rating: (game.players?.toString() ?: "0.0") as double,
-                playcount: (game.players?.toString() ?: "0") as int,
-                lastplayed: game.releasedate?.toString() ?: "",
-                system: system,
+                releasedate: convertDateTimeToLong(game.releasedate?.toString() ?: ""),
+                rating: (game.rating?.toString() ?: "0.0") as double,
+                playcount: (game.playcount?.toString() ?: "0") as int,
+                lastplayed: convertDateTimeToLong(game.lastplayed?.toString() ?: ""),
             )
 
             // Transform path
@@ -183,8 +200,7 @@ class RomfilterSyncService {
             if (entry.image?.startsWith(imagesPrefix)) {
                 entry.image -= imagesPrefix
                 entry.image = "${configService.imagesPath}/${entry.image}".toString()
-            }
-            else {
+            } else {
                 // Image in unknown location, remove it
                 entry.image = ''
             }
@@ -193,13 +209,12 @@ class RomfilterSyncService {
             if (entry.thumbnail?.startsWith(imagesPrefix)) {
                 entry.thumbnail -= imagesPrefix
                 entry.thumbnail = "${configService.imagesPath}/${entry.thumbnail}".toString()
-            }
-            else {
+            } else {
                 // Thumbnail in unknown location, remove it
                 entry.thumbnail = ''
             }
 
-            indexerService.saveGamelistEntry(entry)
+            indexerIndexingService.saveGamelistEntry(entry)
         }
     }
 
@@ -247,5 +262,23 @@ class RomfilterSyncService {
         finally {
             log.info("Scan for ${system} roms complete, found ${romsFound}. Took ${System.currentTimeMillis() - start}ms")
         }
+    }
+
+    /**
+     * Convert an emulation station date to a long that just contains
+     * yyyymmdd.
+     *
+     * @param dateTime
+     * @return
+     */
+    long convertDateTimeToLong(String dateTime) {
+        long result = 0
+        if (dateTime) {
+            String[] parts = dateTime.split('T')
+            if (parts.length > 0 && parts[0].isLong()) {
+                result = parts[0].toLong()
+            }
+        }
+        return result
     }
 }
