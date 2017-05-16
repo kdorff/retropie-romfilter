@@ -21,6 +21,11 @@ class RomfilterSyncService {
     ConfigService configService
 
     /**
+     * IndexerService (auto-injected).
+     */
+    IndexerService indexerService
+
+    /**
      * At startup or on demand. Scan all system and gamelist data,
      * TODO: Add on-demand.
      * TODO: Transaction sync by [system, per gamelist, romlist]
@@ -30,9 +35,9 @@ class RomfilterSyncService {
         log.info("Beginning startup scan.")
         scanGamelists()
         scanSystems()
-
-        log.info("Found ${SystemEntry.count()} systems")
-        log.info("Found ${GamelistEntry.count()} games")
+        log.info("Found ${indexerService.systemEntryCount} systems")
+        log.info("Found ${indexerService.gamelistEntryCount} gamelist.xml entries")
+        log.info("Found ${indexerService.romEntryCount} roms")
         log.info("Startup scan complete. Took ${System.currentTimeMillis() - start}ms")
     }
 
@@ -97,7 +102,8 @@ class RomfilterSyncService {
                 int count = scanRomsForSystem(system)
                 if (count) {
                     // Only save if the system had roms.
-                    systemEntry.save(flush: true, failOnError: true)
+                    indexerService.saveSystemEntry(systemEntry)
+
                 }
             }
         }
@@ -114,11 +120,6 @@ class RomfilterSyncService {
         Path systemFolderPath = Paths.get(configService.getRomsPathForSystem(system))
         String romGlob = configService.getRomGlobForSystem(system)
         int count = 0
-        /**
-         * One could put the RomEntry creation within the stream processing
-         * of filesContainedWithin. But is it worth it? filesContainedWithin()
-         * likely has other utility.
-         */
         List<Path> romPaths = filesContainedWithin(systemFolderPath, romGlob)
         for (Path romPath in romPaths) {
             // Get rid of the path, just keep filename including ext
@@ -128,8 +129,8 @@ class RomfilterSyncService {
                 filename: filename,
                 size: Files.size(romPath),
             )
-            romEntry.gamelistEntry = GamelistEntry.findByPath(filename)
-            romEntry.save(flush:true, failOnError: true)
+            romEntry.hasGamelistEntry = romEntry.gamelistEntry != null
+            indexerService.saveRomEntry(romEntry)
             count++
         }
         return count
@@ -198,7 +199,7 @@ class RomfilterSyncService {
                 entry.thumbnail = ''
             }
 
-            entry.save(flush: true, failOnError: true)
+            indexerService.saveGamelistEntry(entry)
         }
     }
 

@@ -3,6 +3,7 @@ package retropie.romfilter
 import grails.boot.GrailsApp
 import grails.boot.config.GrailsAutoConfiguration
 import org.apache.log4j.Logger
+import org.apache.lucene.index.IndexWriter
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean
 import org.springframework.context.EnvironmentAware
 import org.springframework.core.env.Environment
@@ -19,6 +20,21 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
 
     static void main(String[] args) {
         GrailsApp.run(Application, args)
+    }
+
+    @Override
+    Closure doWithSpring() {
+    }
+
+    @Override
+    void onStartup(Map<String, Object> event) {
+    }
+
+    @Override
+    void onShutdown(Map<String, Object> event) {
+        applicationContext.getBean('systemsIndexWriter', IndexWriter)?.close()
+        applicationContext.getBean('gamesIndexWriter', IndexWriter)?.close()
+        applicationContext.getBean('romsIndexWriter', IndexWriter)?.close()
     }
 
     /**

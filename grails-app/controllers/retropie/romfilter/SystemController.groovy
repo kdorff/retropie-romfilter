@@ -1,5 +1,6 @@
 package retropie.romfilter
 
+import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.apache.commons.io.FilenameUtils
 
@@ -10,6 +11,20 @@ import java.nio.file.Paths
 class SystemController {
 
     /**
+     * TODO: Indexing:
+     * TODO: Why is the gamelist.name field missing?
+     * TODO: Add an all field that isn't stored for multi-field search for all the cards
+     * TODO: Any fields to not tokenize? I think even filenames should be tokenized
+     * TODO: Can I re-use (make a bean for) StandardQueryParser and IndexSearcher?
+     * TODO: Fix image
+     * TODO: Fix rom details
+     * TODO: Fix delete
+     * TODO: How do I use config value or service method value in resources.groovy to specify paths for indexes.
+     * TODO: Multiple indexes in a directory?
+     * TODO: Highlight?
+     * TODO: Card View?
+     * TODO: Is there a native date format for Lucene for release date and last played?
+     *
      * TODO: Use endless scrolling datatables to load and filter the data on demand. Much more responsive.
      * TODO: Search box should support field search.
      * TODO: Show name/filename similarity?
@@ -19,6 +34,7 @@ class SystemController {
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: A "delete all visible" button?
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
+     * TODO: Break out data access from IndexerService
      */
 
     /**
@@ -29,7 +45,7 @@ class SystemController {
     /**
      * RomfilterDataService (auto-injected).
      */
-    RomfilterDataService romfilterDataService
+    IndexerService indexerService
 
     /**
      * ConfigService (auto-injected).
@@ -49,10 +65,10 @@ class SystemController {
 
     def listSystems() {
         println "Listing systems"
-        List<SystemEntry> systems = SystemEntry.list()
+        List<SystemEntry> systems = indexerService.systemEntries()
         Map<String, Integer> systemToNumRoms = [:]
         systems.each { SystemEntry systemEntry ->
-            systemToNumRoms[systemEntry.name] = RomEntry.countBySystem(systemEntry.name)
+            systemToNumRoms[systemEntry.name] = 1 // RomEntry.countBySystem(systemEntry.name)
         }
         return [
             systems: systems,
@@ -61,7 +77,7 @@ class SystemController {
     }
 
     def listRomsForSystem(String system) {
-        List<RomEntry> romEntryList = RomEntry.findAllBySystem(system)
+        List<RomEntry> romEntryList = indexerService.romEntriesForSystem(system)
         return [
             system: system,
             roms: romEntryList,

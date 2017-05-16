@@ -16,16 +16,21 @@ class BootStrap {
     GrailsApplication grailsApplication
 
     /**
-     * RomfilterDataService (auto-injected).
+     * RomfilterSyncService (auto-injected).
      */
     RomfilterSyncService romfilterSyncService
+
+    /**
+     * IndexerService (auto-injected).
+     */
+    IndexerService indexerService
 
 
     def init = { servletContext ->
         log.info("retropie-romfilter configuration:")
         showConfig(grailsApplication.config.retropie, "retropie.")
 
-        if (!SystemEntry.count() && !RomEntry.count() && !GamelistEntry.count()) {
+        if (indexerService.romEntryCount + indexerService.systemEntryCount + indexerService.gamelistEntryCount == 0) {
             romfilterSyncService.scanAll()
         }
     }

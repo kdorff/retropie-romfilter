@@ -139,4 +139,31 @@ class ConfigService {
         }
         return systemTrashPathStr
     }
+
+    /**
+     * Return the path to the systems index folder.
+     *
+     * @return
+     */
+    String getSystemsIndexPath() {
+        return grailsApplication.config.retropie.romfilter.systemsIndexPath
+    }
+
+    /**
+     * Return the path to the games index folder.
+     *
+     * @return
+     */
+    String getGamesIndexPath() {
+        return grailsApplication.config.retropie.romfilter.gamesIndexPath
+    }
+
+    /**
+     * Return the path to the games index folder.
+     *
+     * @return
+     */
+    String getRomsIndexPath() {
+        return grailsApplication.config.retropie.romfilter.romsIndexPath
+    }
 }

@@ -2,6 +2,9 @@
 retropie:
     romfilter:
         trashPath: "/home/pi/RetroPie/roms/.trash"
+        systemsIndexPath: "./romfilter-systems.index"
+        gamesIndexPath: "./romfilter-games.index"
+        romsIndexPath: "./romfilter-roms.index"
         skipSystems:
         - retropie
 
@@ -51,56 +54,6 @@ retropie:
                 - 'sfc'
                 - 'fig'
                 - 'swc'
-
----
-hibernate:
-    cache:
-        queries: false
-        use_second_level_cache: true
-        use_query_cache: false
-        region.factory_class: org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory
-
-dataSource:
-    pooled: true
-    jmxExport: true
-    driverClassName: org.sqlite.JDBC
-    logSql: false
-    dialect: com.enigmabridge.hibernate.dialect.SQLiteDialect
-
-environments:
-    development:
-        dataSource:
-            dbCreate: update
-            url: jdbc:sqlite:./romfilter-database-dev.sqlite.db
-    test:
-        dataSource:
-            dbCreate: create-drop
-            url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-    production:
-        dataSource:
-            dbCreate: update
-            url: jdbc:sqlite:./romfilter-database-prod.sqlite.d
-
-#dataSource:
-#    pooled: true
-#    jmxExport: true
-#    driverClassName: org.h2.Driver
-#    username: sa
-#    password:
-#
-#environments:
-#    development:
-#        dataSource:
-#            dbCreate: update
-#            url: jdbc:h2:./romfilter-database-dev;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-#    test:
-#        dataSource:
-#            dbCreate: create-drop
-#            url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-#    production:
-#        dataSource:
-#            dbCreate: update
-#            url: jdbc:h2:./romfilter-database-prod;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
 
 ---
 quartz:
