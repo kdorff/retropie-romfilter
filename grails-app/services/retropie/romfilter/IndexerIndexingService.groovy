@@ -3,8 +3,12 @@ package retropie.romfilter
 import org.apache.log4j.Logger
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
+import org.apache.lucene.document.IntPoint
 import org.apache.lucene.index.IndexWriter
+import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser
+import org.apache.lucene.search.BooleanClause
+import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
 
 class IndexerIndexingService {
@@ -77,9 +81,15 @@ class IndexerIndexingService {
      * @param queryStr query the defines the documents to delete
      * @return the sequence number for the delete operation
      */
-    long deleteRomEntriesForQuery(String queryStr) {
+    long deleteRomEntriesForQuery(String queryStr, Query moreQuery) {
         StandardQueryParser queryParser = new StandardQueryParser(queryAnalyzer)
         Query query = queryParser.parse(queryStr, "")
+        if (moreQuery) {
+            query = new BooleanQuery.Builder().
+                add(query, BooleanClause.Occur.MUST).
+                add(moreQuery, BooleanClause.Occur.MUST).
+                build()
+        }
         return romsIndexWriter.deleteDocuments(query)
     }
 
@@ -90,6 +100,7 @@ class IndexerIndexingService {
      * @return
      */
     long deleteRomEntry(RomEntry romEntry) {
-        deleteRomEntriesForQuery(/system:"${romEntry.system}" hash:"${romEntry.hash}"/)
+        deleteRomEntriesForQuery(/+system:${indexerDataService.escapeSpaces(QueryParser.escape(romEntry.system))}/,
+            IntPoint.newExactQuery('hash', romEntry.hash))
     }
 }

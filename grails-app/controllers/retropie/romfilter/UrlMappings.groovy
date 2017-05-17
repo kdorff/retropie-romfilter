@@ -17,7 +17,7 @@ class UrlMappings {
             controller = 'system'
             action = 'listRomsForSystem'
         }
-        name romForSystem: "/system/$system/rom/$scrapeId" {
+        name romForSystem: "/system/$system/rom/$hash" {
             controller = 'system'
             action = 'showRomForSystem'
         }
@@ -25,7 +25,7 @@ class UrlMappings {
             controller = 'system'
             action = ['DELETE': 'deleteRomForSystem']
         }
-        name showRomImageForSystem: "/system/$system/rom/$scrapeId/image" {
+        name showRomImageForSystem: "/system/$system/rom/$hash/image" {
             controller = 'system'
             action = 'showRomImageForSystem'
         }

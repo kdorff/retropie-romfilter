@@ -5,9 +5,10 @@ import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
+import org.apache.lucene.document.IntPoint
 import org.apache.lucene.document.LongPoint
 import org.apache.lucene.document.StoredField
-import org.apache.lucene.document.TextField
+import org.apache.lucene.document.StringField
 
 @ToString(includeNames = true)
 @EqualsAndHashCode
@@ -28,11 +29,6 @@ class RomEntry {
     long size
 
     /**
-     * Hash of RomEntry (currently md5 hash of filename).
-     */
-    String hash
-
-    /**
      * If the rom has a gamelistEntry.
      */
     boolean hasGamelistEntry
@@ -44,23 +40,42 @@ class RomEntry {
     Document document
 
     /**
-     * I cannot decide if I love or at this. I think it's staying.
+     * Number to uniquely identify this RomEntry.
+     */
+    int hash
+
+    /**
+     * Store the associate GamelistEntry if we've already looked it up.
+     */
+    transient GamelistEntry gamelistEntry
+
+    /**
+     * Fetch the associated GamelistEntry.
      */
     GamelistEntry getGamelistEntry() {
-        return Holders.getApplicationContext()?.getBean('indexerDataService')?.
-            gamelistEntryForQuery(/system:"${system}" AND path:"${filename}"/)
+        if (gamelistEntry == null) {
+            gamelistEntry = Holders.getApplicationContext()?.getBean('indexerDataService')?.
+                gamelistEntryForSystemAndPath(system, filename)
+        }
+        return gamelistEntry
     }
 
+    /**
+     * Default constructor.
+     */
     RomEntry() {
     }
 
+    /**
+     * Restore from Index constructor.
+     */
     RomEntry(Document document) {
         this()
         system = document.system
         filename = document.filename
         size = document.size.toLong() ?: 0
         hasGamelistEntry = document.hasGamelistEntry == 'true' ?: false
-        hash = filename
+        hash = document.hash.toInteger() ?: 0
         this.document = document
     }
 
@@ -71,11 +86,13 @@ class RomEntry {
      */
     Document makeDocument() {
         Document doc = new Document();
-        doc.add(new TextField("system", system, Field.Store.YES))
-        doc.add(new TextField("filename", filename, Field.Store.YES))
+        doc.add(new StringField("system", system, Field.Store.YES))
+        doc.add(new StringField("filename", filename, Field.Store.YES))
         doc.add(new LongPoint("size", size))
         doc.add(new StoredField("size", size))
-        doc.add(new TextField("hasGamelistEntry", hasGamelistEntry.toString(), Field.Store.YES))
+        doc.add(new StringField("hasGamelistEntry", hasGamelistEntry.toString(), Field.Store.YES))
+        doc.add(new IntPoint("hash", hash))
+        doc.add(new StoredField("hash", hash))
         return doc
     }
 }

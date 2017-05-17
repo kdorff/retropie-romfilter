@@ -2,12 +2,14 @@ package retropie.romfilter
 
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import org.apache.commons.lang.builder.ToStringBuilder
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.LongPoint
 import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.IntPoint
 import org.apache.lucene.document.DoublePoint
+import org.apache.lucene.document.StringField
 import org.apache.lucene.document.TextField
 
 /**
@@ -124,13 +126,18 @@ class GamelistEntry {
     Document document
 
     /**
+     * Number to uniquely identify this GamelistEntry.
+     */
+    int hash
+
+    /**
      * Default constructor.
      */
     GamelistEntry() {
     }
 
     /**
-     * From a Document constructor.
+     * Restore from Index constructor.
      */
     GamelistEntry(Document document) {
         this()
@@ -152,6 +159,7 @@ class GamelistEntry {
         rating = document.rating?.toDouble() ?: 0.0
         playcount = document.playcount?.toInteger() ?: 0
         lastplayed = document.lastplayed?.toLong() ?: 0
+        hash = document.hash?.toInteger() ?: 0
         this.document = document
     }
 
@@ -162,14 +170,14 @@ class GamelistEntry {
      */
     Document makeDocument() {
         Document doc = new Document();
-        doc.add(new TextField("system", system, Field.Store.YES))
-        if (scrapeId) doc.add(new TextField("scrapeId", scrapeId, Field.Store.YES))
-        if (scrapeSource) doc.add(new TextField("scrapeSource", scrapeSource, Field.Store.YES))
-        if (path) doc.add(new TextField("path", path, Field.Store.YES))
+        doc.add(new StringField("system", system, Field.Store.YES))
+        if (scrapeId) doc.add(new StringField("scrapeId", scrapeId, Field.Store.YES))
+        if (scrapeSource) doc.add(new StringField("scrapeSource", scrapeSource, Field.Store.YES))
+        if (path) doc.add(new StringField("path", path, Field.Store.YES))
         if (name) doc.add(new TextField("name", name, Field.Store.YES))
         if (desc) doc.add(new TextField("desc", desc, Field.Store.YES))
-        if (image) doc.add(new TextField("image", image, Field.Store.YES))
-        if (thumbnail) doc.add(new TextField("thumbnail", thumbnail, Field.Store.YES))
+        if (image) doc.add(new StringField("image", image, Field.Store.YES))
+        if (thumbnail) doc.add(new StringField("thumbnail", thumbnail, Field.Store.YES))
         if (developer) doc.add(new TextField("developer", developer, Field.Store.YES))
         if (publisher) doc.add(new TextField("publisher", publisher, Field.Store.YES))
         if (genre) doc.add(new TextField("genre", genre, Field.Store.YES))
@@ -192,6 +200,12 @@ class GamelistEntry {
             doc.add(new LongPoint("lastplayed", lastplayed))
             doc.add(new StoredField("lastplayed", lastplayed))
         }
+        doc.add(new IntPoint("hash", hash))
+        doc.add(new StoredField("hash", hash))
+
+        String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${hash}"
+        doc.add(new TextField("all", all, Field.Store.NO))
+
         return doc
     }
 

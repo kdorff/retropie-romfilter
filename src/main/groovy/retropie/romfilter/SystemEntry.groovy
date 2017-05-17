@@ -4,11 +4,14 @@ import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
-import org.apache.lucene.document.TextField
+import org.apache.lucene.document.StringField
 
 @ToString(includeNames = true)
 @EqualsAndHashCode
 class SystemEntry {
+    /**
+     * The name of the system (such as atari2600).
+     */
     String name
 
     /**
@@ -17,9 +20,15 @@ class SystemEntry {
      */
     Document document
 
+    /**
+     * Default constructor.
+     */
     SystemEntry() {
     }
 
+    /**
+     * Restore from Index constructor.
+     */
     SystemEntry(Document document) {
         this()
         name = document.name
@@ -33,7 +42,7 @@ class SystemEntry {
      */
     Document makeDocument() {
         Document doc = new Document();
-        doc.add(new TextField("name", name, Field.Store.YES))
+        doc.add(new StringField("name", name, Field.Store.YES))
         return doc
     }
 }

@@ -144,8 +144,7 @@ class RomfilterSyncService {
                 filename: filename,
                 size: Files.size(romPath),
             )
-            romEntry.hash = hashService.hash(romEntry.filename)
-            // The gamelistEntry for this system MUST already be scanned
+            romEntry.hash = romEntry.hashCode()
             romEntry.hasGamelistEntry = romEntry.gamelistEntry != null
             indexerIndexingService.saveRomEntry(romEntry)
             count.incrementAndGet()
@@ -190,6 +189,7 @@ class RomfilterSyncService {
                 playcount: (game.playcount?.toString() ?: "0") as int,
                 lastplayed: convertDateTimeToLong(game.lastplayed?.toString() ?: ""),
             )
+            entry.hash = entry.hashCode()
 
             // Transform path
             if (entry.path.startsWith('./')) {

@@ -30,12 +30,12 @@
                         ${rom.filename}
                         <p>
                             <input type="button" value="Delete / Move Trash" class="deleteRom"
-                                  data-delete-url='<g:createLink mapping="deleteRomForSystem" params="[system: system, id: 1]"/>' />
+                                  data-delete-url='<g:createLink mapping="deleteRomForSystem" params="[system: system, hash: rom.hash]"/>' />
                         </p>
                     </td>
                     <td>
                         <g:if test="${gamelistEntry}">
-                            <g:link mapping="romForSystem" params="[system: gamelistEntry.system, scrapeId: gamelistEntry.scrapeId]">
+                            <g:link mapping="romForSystem" params="[system: gamelistEntry.system, hash: gamelistEntry.hash]">
                                 ${gamelistEntry?.name}
                             </g:link>
                         </g:if>
@@ -43,8 +43,8 @@
                     <td>${gamelistEntry?.genre}</td>
                     <td>${gamelistEntry?.desc}</td>
                     <td>
-                        <g:if test="${gamelistEntry && gamelistEntry.image && gamelistEntry.system && gamelistEntry.scrapeId}">
-                            <img width='200px' src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, scrapeId: gamelistEntry.scrapeId]"/>' />
+                        <g:if test="${gamelistEntry && gamelistEntry.image}">
+                            <img width='200px' src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, hash: gamelistEntry.hash]"/>' />
                         </g:if>
                     </td>
                 </tr>

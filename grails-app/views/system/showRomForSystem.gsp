@@ -11,7 +11,7 @@
     <p>Navigation:
         <g:link mapping="listSystems">Systems</g:link> |
         <g:link mapping="listRomsForSystem" params="[system: system]">${system}</g:link> |
-        <g:link mapping="romForSystem" params="[system: system, id: gamelistEntry.scrapeId]">${gamelistEntry.name}</g:link>
+        <g:link mapping="romForSystem" params="[system: system, hash: gamelistEntry.hash]">${gamelistEntry.name}</g:link>
 
     <table id="singleRomTable">
             <tr><th>System</th><td>${gamelistEntry?.system}</td></tr>
@@ -32,7 +32,7 @@
             <tr><th>Scrape Source</th><td>${gamelistEntry?.scrapeSource}</td></tr>
             <tr><th>Image</th><td>
                 <g:if test="${gamelistEntry && gamelistEntry.image && gamelistEntry.system && gamelistEntry.scrapeId}">
-                    <img src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, id: gamelistEntry.id]"/>' />
+                    <img src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, hash: gamelistEntry.hash]"/>' />
                 </g:if>
             </td></tr>
     </table>

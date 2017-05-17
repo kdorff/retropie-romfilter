@@ -23,7 +23,10 @@ class SystemController {
      * TODO: Card View?
      * TODO: Is there a native date format for Lucene for release date and last played?
      * TODO: Data access methods so things outside the data access service don't pass raw queries.
-     * TODO: Count roms on system list. Or are we going to a consolidated view?
+     * TODO: Move to a consolidated view of systems instead of view of one system?
+     * TODO: Store the hash of the gamelist instead of the boolean?
+     * TODO: Integration tests.
+     * TODO: Move to Luceue 5. Lucene 6 IntPoint isn't integrated into querying?
      *
      * TODO: Use endless scrolling datatables to load and filter the data on demand. Much more responsive.
      * TODO: Search box should support field search.
@@ -34,6 +37,7 @@ class SystemController {
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: A "delete all visible" button?
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
+     * TODO: Add remaining file extensions to the various systems to config
      */
 
     /**
@@ -66,13 +70,17 @@ class SystemController {
         'gif':  'image/gif',
     ].asImmutable()
 
-
+    /**
+     * List all systems that have roms.
+     *
+     * @return
+     */
     def listSystems() {
         println "Listing systems"
         List<SystemEntry> systems = indexerDataService.systemEntries()
         Map<String, Integer> systemToNumRoms = [:]
         systems.each { SystemEntry systemEntry ->
-            systemToNumRoms[systemEntry.name] = 1 // RomEntry.countBySystem(systemEntry.name)
+            systemToNumRoms[systemEntry.name] = indexerDataService.getRomEntryCountForSystem(systemEntry.name)
         }
         return [
             systems: systems,
@@ -80,6 +88,12 @@ class SystemController {
         ]
     }
 
+    /**
+     * List all all roms for a single system.
+     *
+     * @param system
+     * @return
+     */
     def listRomsForSystem(String system) {
         List<RomEntry> romEntryList = indexerDataService.romEntriesForSystem(system)
         return [
@@ -88,8 +102,15 @@ class SystemController {
         ]
     }
 
-    def showRomForSystem(String system, String scrapeId) {
-        GamelistEntry gamelistEntry = indexerDataService.gamelistEntryForQuery(/system:"${system}" AND scrapeId:"${scrapeId}"/)
+    /**
+     * Show details for a single rom.
+     *
+     * @param system
+     * @param hash
+     * @return
+     */
+    def showRomForSystem(String system, int hash) {
+        GamelistEntry gamelistEntry = indexerDataService.gamelistEntryForSystemAndHash(system, hash)
         if (gamelistEntry) {
             return [
                 system       : system,
@@ -97,13 +118,20 @@ class SystemController {
             ]
         }
         else {
-            log.error("No game found for ${system} ${id}")
+            log.error("No game found for ${system} ${hash}")
             response.status = 404
         }
     }
 
-    def deleteRomForSystem(String system, String hash) {
-        RomEntry toDeleteEntry = indexerDataService.romEntryForQuery(/system:"${system}" AND hash:"${hash}"/)
+    /**
+     * Try to delete a single rom (move it to trash).
+     *
+     * @path system
+     * @path hash
+     * @return
+     */
+    def deleteRomForSystem(String system, int hash) {
+        RomEntry toDeleteEntry = indexerDataService.romEntryForSystemAndHash(system, hash)
         if (!toDeleteEntry) {
             log.error("ROM for RomEntry.id ${id} not found in database")
             response.status = 404
@@ -143,14 +171,14 @@ class SystemController {
 
     /**
      *
-     * Output the rom image for the specified system, rom id.
+     * Output the rom image for the specified system, hash.
      *
      * @param system system name (atari2600)
-     * @param id id of rom.
+     * @param hash
      * @return
      */
-    def showRomImageForSystem(String system, String scrapeId) {
-        GamelistEntry game = indexerDataService.gamelistEntryForQuery(/system:"${system}" AND scrapeId:"${scrapeId}"/)
+    def showRomImageForSystem(String system, int hash) {
+        GamelistEntry game = indexerDataService.gamelistEntryForSystemAndHash(system, hash)
         if (game) {
             String fileType = FilenameUtils.getExtension(game.image).toLowerCase()
             String mimeType = IMAGE_EXT_TO_MIME[fileType]
@@ -169,7 +197,7 @@ class SystemController {
             }
         }
         else {
-            log.error("No game found for ${system} ${id}")
+            log.error("No game (for image) found for ${system} ${hash}")
             response.status = 404
         }
     }

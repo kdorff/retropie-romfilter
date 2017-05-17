@@ -9,19 +9,19 @@ import java.nio.file.Paths
 beans = {
     queryAnalyzer(StandardAnalyzer)
 
-    systemsIndexDir(SimpleFSDirectory, Paths.get('./romfilter-systems.index'))
+    systemsIndexDir(SimpleFSDirectory, Paths.get(application.config.retropie.romfilter.systemsIndexPath))
     systemsWriterConfig(IndexWriterConfig,
         ref('queryAnalyzer'))
     systemsIndexWriter(IndexWriter,
         ref('systemsIndexDir'), ref('systemsWriterConfig'))
 
-    gamesIndexDir(SimpleFSDirectory, Paths.get('./romfilter-games.index'))
+    gamesIndexDir(SimpleFSDirectory, Paths.get(application.config.retropie.romfilter.gamesIndexPath))
     gamesWriterConfig(IndexWriterConfig,
         ref('queryAnalyzer'))
     gamesIndexWriter(IndexWriter,
         ref('gamesIndexDir'), ref('gamesWriterConfig'))
 
-    romsIndexDir(SimpleFSDirectory, Paths.get('./romfilter-roms.index'))
+    romsIndexDir(SimpleFSDirectory, Paths.get(application.config.retropie.romfilter.romsIndexPath))
     romsWriterConfig(IndexWriterConfig,
         ref('queryAnalyzer'))
     romsIndexWriter(IndexWriter,
