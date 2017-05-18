@@ -25,9 +25,9 @@
         <tbody>
             <g:each var="rom" in="${roms}">
                 <tr>
-                    <% def gamelistEntry = rom.gamelistEntry %>
+                    <% def gamelistEntry = rom.getGamelistEntry() %>
                     <td>
-                        ${rom.filename}
+                        ${rom.path}
                         <p>
                             <input type="button" value="Delete / Move Trash" class="deleteRom"
                                   data-delete-url='<g:createLink mapping="deleteRomForSystem" params="[system: system, hash: rom.hash]"/>' />

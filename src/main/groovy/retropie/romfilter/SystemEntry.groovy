@@ -4,15 +4,17 @@ import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
+import org.apache.lucene.document.IntPoint
+import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.StringField
 
 @ToString(includeNames = true)
-@EqualsAndHashCode
+@EqualsAndHashCode(includes = ['system'])
 class SystemEntry {
     /**
      * The name of the system (such as atari2600).
      */
-    String name
+    String system
 
     /**
      * The document that was used to create this entry.
@@ -26,12 +28,16 @@ class SystemEntry {
     SystemEntry() {
     }
 
+    int getHash() {
+        return hashCode()
+    }
+
     /**
      * Restore from Index constructor.
      */
     SystemEntry(Document document) {
         this()
-        name = document.name
+        system = document.system
         this.document = document
     }
 
@@ -42,7 +48,9 @@ class SystemEntry {
      */
     Document makeDocument() {
         Document doc = new Document();
-        doc.add(new StringField("name", name, Field.Store.YES))
+        doc.add(new StringField("system", system, Field.Store.YES))
+        doc.add(new IntPoint("hash", hash))
+        doc.add(new StoredField("hash", hash))
         return doc
     }
 }

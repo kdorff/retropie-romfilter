@@ -3,16 +3,15 @@ package retropie.romfilter
 import org.apache.log4j.Logger
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
-import org.apache.lucene.document.IntPoint
 import org.apache.lucene.index.IndexReader
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser
 import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.MatchAllDocsQuery
 import org.apache.lucene.search.Query
+import retropie.romfilter.queryParser.RomfilterQueryParser
 
 class IndexerDataService {
     /**
@@ -72,7 +71,7 @@ class IndexerDataService {
      * @return
      */
     int getSystemEntryCount() {
-        return systemsIndexReader.getDocCount('name')
+        return systemsIndexReader.getDocCount('system')
     }
 
     /**
@@ -89,6 +88,15 @@ class IndexerDataService {
      */
     int getRomEntryCount() {
         return romsIndexReader.getDocCount('system')
+    }
+
+    /**
+     * Return List[RomEntry] for a specific system.
+     * @param system
+     * @return
+     */
+    List<RomEntry> romEntriesForSystem(String system) {
+        return romEntriesForQuery(/+system:"${QueryParser.escape(system)}"/)
     }
 
     /**
@@ -112,21 +120,7 @@ class IndexerDataService {
      * @return
      */
     GamelistEntry gamelistEntryForQuery(String queryStr, Query moreQuery = null) {
-        println "Performing query for GamelistEntry: ${queryStr}"
-        StandardQueryParser queryParser = new StandardQueryParser(queryAnalyzer)
-        Query query = queryParser.parse(queryStr, "")
-        if (moreQuery) {
-            query = new BooleanQuery.Builder().
-                add(query, BooleanClause.Occur.MUST).
-                add(moreQuery, BooleanClause.Occur.MUST).
-                build()
-        }
-        IndexSearcher indexSearcher = new IndexSearcher(gamesIndexReader)
-        List<GamelistEntry> matches = indexSearcher.search(query, gamesIndexReader.maxDoc()).scoreDocs.collect {
-            Document document = indexSearcher.doc(it.doc)
-            return new GamelistEntry(document)
-        }
-
+        List<GamelistEntry> matches = gamelistEntriesForQuery(queryStr, moreQuery)
         if (matches) {
             if (matches.size() > 1) {
                 log.error("gamelistEntryForQuery(${queryStr}) should have returned 1 but returend ${matches.size()}")
@@ -138,6 +132,71 @@ class IndexerDataService {
     }
 
     /**
+     * Retrieve all SytemEntry.
+     * @return
+     */
+    List<SystemEntry> getAllSystems(){
+        println "Retrieving all systems"
+        Query query = new MatchAllDocsQuery()
+
+        IndexSearcher indexSearcher = new IndexSearcher(systemsIndexReader)
+        return indexSearcher.search(query, systemsIndexReader.maxDoc()).scoreDocs.collect {
+            Document document = indexSearcher.doc(it.doc)
+            return new SystemEntry(document)
+        }
+    }
+
+    /**
+     * Get gamelist entries for query.
+     *
+     * @param queryStr
+     * @param moreQuery
+     * @return
+     */
+    List<GamelistEntry> gamelistEntriesForQuery(String queryStr, Query moreQuery = null) {
+        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
+        Query query = queryParser.parse(queryStr)
+        if (moreQuery) {
+            query = new BooleanQuery.Builder().
+                add(query, BooleanClause.Occur.MUST).
+                add(moreQuery, BooleanClause.Occur.MUST).
+                build()
+        }
+        log.info("Performing query for GamelistEntry list: ${query}")
+        IndexSearcher indexSearcher = new IndexSearcher(gamesIndexReader)
+        return indexSearcher.search(query, gamesIndexReader.maxDoc()).scoreDocs.collect {
+            Document document = indexSearcher.doc(it.doc)
+            return new GamelistEntry(document)
+        }
+    }
+
+    /**
+     * Get List[RomEntry] for query.
+     *
+     * @param queryStr
+     * @param moreQuery
+     * @return
+     */
+    List<RomEntry> romEntriesForQuery(String queryStr, Query moreQuery = null) {
+        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
+        Query query = queryParser.parse(queryStr)
+        if (moreQuery) {
+            query = new BooleanQuery.Builder().
+                add(query, BooleanClause.Occur.MUST).
+                add(moreQuery, BooleanClause.Occur.MUST).
+                build()
+        }
+        log.info("Performing query for RomEntry list: ${query}")
+        IndexSearcher indexSearcher = new IndexSearcher(romsIndexReader)
+        List<RomEntry> roms = indexSearcher.search(query, romsIndexReader.maxDoc()).scoreDocs.collect {
+            Document document = indexSearcher.doc(it.doc)
+            return new RomEntry(document)
+        }
+        println "Found ${roms}"
+        return roms
+    }
+
+    /**
      * Obtain a GamelistEntry for a system and path.
      *
      * @param system
@@ -146,7 +205,7 @@ class IndexerDataService {
      */
     GamelistEntry gamelistEntryForSystemAndPath(String system, String path) {
         GamelistEntry gamelistEntry = gamelistEntryForQuery(
-            /+system:${escapeSpaces(QueryParser.escape(system))} +path:${escapeSpaces(QueryParser.escape(path))}/)
+            /+system:"${QueryParser.escape(system)}" +path:"${QueryParser.escape(path)}"/)
         if (gamelistEntry) {
             if (gamelistEntry.path.toString() != path || gamelistEntry.system != system) {
                 log.error("Wanted system/path ${system}/${path} but was given ${gamelistEntry.system}/${gamelistEntry.path}")
@@ -163,11 +222,13 @@ class IndexerDataService {
      * @return
      */
     GamelistEntry gamelistEntryForSystemAndHash(String system, int hash) {
+        String hashVal = QueryParser.escape(hash.toString())
+        String hashRange = "[${hashVal} TO ${hashVal}]"
         GamelistEntry entry = gamelistEntryForQuery(
-            /+system:${escapeSpaces(QueryParser.escape(system))}/,
-            IntPoint.newExactQuery('hash', hash))
+            /+system:"${QueryParser.escape(system)}" +hash:${hashRange}/)
         return entry
     }
+
 
     /**
      * Obtain a RomEntry for a specific system and hash.
@@ -180,8 +241,7 @@ class IndexerDataService {
         String hashVal = QueryParser.escape(hash.toString())
         String hashRange = "[${hashVal} TO ${hashVal}]"
         RomEntry entry = romEntryForQuery(
-            /+system:${escapeSpaces(QueryParser.escape(system))}"/,
-            IntPoint.newExactQuery('hash', hash))
+            /+system:"${(QueryParser.escape(system))}" +hash:${hashRange}/)
         return entry
     }
 
@@ -194,22 +254,8 @@ class IndexerDataService {
      * @param path
      * @return
      */
-    RomEntry romEntryForQuery(String queryStr, Query moreQuery) {
-        StandardQueryParser queryParser = new StandardQueryParser(queryAnalyzer)
-        Query query = queryParser.parse(queryStr, "")
-        if (moreQuery) {
-            query = new BooleanQuery.Builder().
-                add(query, BooleanClause.Occur.MUST).
-                add(moreQuery, BooleanClause.Occur.MUST).
-                build()
-        }
-
-        IndexSearcher indexSearcher = new IndexSearcher(romsIndexReader)
-        List<RomEntry> matches = indexSearcher.search(query, gamesIndexReader.maxDoc()).scoreDocs.collect {
-            Document document = indexSearcher.doc(it.doc)
-            return new RomEntry(document)
-        }
-
+    RomEntry romEntryForQuery(String queryStr, Query moreQuery = null) {
+        List<RomEntry> matches = romEntriesForQuery(queryStr)
         if (matches) {
             if (matches.size() > 1) {
                 log.error("romEntryForQuery(${queryStr}) should have returned 1 but returend ${matches.size()}")
@@ -217,23 +263,6 @@ class IndexerDataService {
             return matches[0]
         } else {
             return null
-        }
-    }
-
-    /**
-     * Return all RomEntry for a specific system.
-     *
-     * @param system
-     * @return
-     */
-    List<RomEntry> romEntriesForSystem(String system) {
-        String queryStr = /+system:${escapeSpaces(QueryParser.escape(system))}/
-        StandardQueryParser queryParser = new StandardQueryParser(queryAnalyzer)
-        Query query = queryParser.parse(queryStr, "")
-        IndexSearcher indexSearcher = new IndexSearcher(romsIndexReader)
-        return indexSearcher.search(query, romsIndexReader.maxDoc()).scoreDocs.collect {
-            Document document = indexSearcher.doc(it.doc)
-            return new RomEntry(document)
         }
     }
 

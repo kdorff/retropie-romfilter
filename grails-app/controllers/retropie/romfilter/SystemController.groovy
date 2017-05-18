@@ -80,7 +80,7 @@ class SystemController {
         List<SystemEntry> systems = indexerDataService.systemEntries()
         Map<String, Integer> systemToNumRoms = [:]
         systems.each { SystemEntry systemEntry ->
-            systemToNumRoms[systemEntry.name] = indexerDataService.getRomEntryCountForSystem(systemEntry.name)
+            systemToNumRoms[systemEntry.system] = indexerDataService.getRomEntryCountForSystem(systemEntry.system)
         }
         return [
             systems: systems,
@@ -139,7 +139,7 @@ class SystemController {
         else {
             Path toDeletePath = Paths.get(
                 configService.getRomsPathForSystem(system),
-                toDeleteEntry.filename)
+                toDeleteEntry.path)
             if (!Files.exists(toDeletePath)) {
                 log.error("ROM not found in on disc ${toDeletePath}")
                 toDeleteEntry.delete(flush: true)

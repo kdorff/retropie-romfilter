@@ -1,3 +1,5 @@
+import org.apache.lucene.analysis.core.KeywordAnalyzer
+import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.index.IndexWriterConfig
@@ -7,7 +9,17 @@ import java.nio.file.Paths
 
 // Place your Spring DSL code here
 beans = {
-    queryAnalyzer(StandardAnalyzer)
+    standardAnalyzer(StandardAnalyzer)
+    keywordAnalyzer(KeywordAnalyzer)
+    queryAnalyzer(PerFieldAnalyzerWrapper,
+        ref('standardAnalyzer'), [
+        'system': ref('keywordAnalyzer'),
+        'scrapeId': ref('keywordAnalyzer'),
+        'path': ref('keywordAnalyzer'),
+        'image': ref('keywordAnalyzer'),
+        'thumbnail': ref('keywordAnalyzer'),
+        'gamelistEntryHash': ref('keywordAnalyzer'),
+    ])
 
     systemsIndexDir(SimpleFSDirectory, Paths.get(application.config.retropie.romfilter.systemsIndexPath))
     systemsWriterConfig(IndexWriterConfig,

@@ -5,6 +5,7 @@ retropie:
         systemsIndexPath: "./romfilter-systems.index"
         gamesIndexPath: "./romfilter-games.index"
         romsIndexPath: "./romfilter-roms.index"
+        scanAtStartup: true
         skipSystems:
         - retropie
 
@@ -70,6 +71,19 @@ environments:
                 systemsIndexPath: "./build/resources/test/integration/indexes/romfilter-systems.index"
                 gamesIndexPath: "./build/resources/test/integration/indexes/romfilter-games.index"
                 romsIndexPath: "./build/resources/test/integration/indexes/romfilter-roms.index"
+                scanAtStartup: true
+            emulationStation:
+                romsPath: "./build/resources/test/integration/roms"
+                gamelistsPath: "./build/resources/test/integration/gamelists"
+                imagesPath: "./build/resources/test/integration/downloaded_images"
+    development:
+        retropie:
+            romfilter:
+                trashPath: "./build/resources/test/integration/trash"
+                systemsIndexPath: "./build/resources/test/integration/indexes/romfilter-systems.index"
+                gamesIndexPath: "./build/resources/test/integration/indexes/romfilter-games.index"
+                romsIndexPath: "./build/resources/test/integration/indexes/romfilter-roms.index"
+                scanAtStartup: true
             emulationStation:
                 romsPath: "./build/resources/test/integration/roms"
                 gamelistsPath: "./build/resources/test/integration/gamelists"

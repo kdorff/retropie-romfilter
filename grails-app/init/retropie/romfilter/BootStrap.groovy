@@ -25,6 +25,11 @@ class BootStrap {
      */
     IndexerDataService indexerDataService
 
+    /**
+     * ConfigService (auto-injected).
+     */
+    ConfigService configService
+
 
     def init = { servletContext ->
         log.info("retropie-romfilter configuration:")
@@ -34,7 +39,7 @@ class BootStrap {
         log.info("RomEntry.count=${indexerDataService.romEntryCount}")
         log.info("GamelistEntry.count=${indexerDataService.gamelistEntryCount}")
 
-        if ((indexerDataService.romEntryCount + indexerDataService.systemEntryCount + indexerDataService.gamelistEntryCount) == 0) {
+        if (configService.scanAtStartup && (indexerDataService.romEntryCount + indexerDataService.systemEntryCount + indexerDataService.gamelistEntryCount) == 0) {
             log.info("Indexes are all empty. Starting full scan.")
             romfilterSyncService.scanAll()
         }

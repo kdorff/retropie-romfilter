@@ -64,10 +64,10 @@ dependencies {
 
     // Lucene, instead of a database.
     compile 'org.apache.lucene:lucene-core:6.5.1'
-    //compile 'org.apache.lucene:lucene-analyzers-common:6.5.1'
+    compile 'org.apache.lucene:lucene-analyzers-common:6.5.1'
     compile 'org.apache.lucene:lucene-queryparser:6.5.1'
-    //compile 'org.apache.lucene:lucene-queries:6.5.1'
-    //compile 'org.apache.lucene:lucene-highlighter:6.5.1'
+    compile 'org.apache.lucene:lucene-queries:6.5.1'
+    compile 'org.apache.lucene:lucene-highlighter:6.5.1'
 
     compile 'org.webjars:bootstrap:3.3.7-1'
     compile 'org.webjars:datatables:1.10.13'

@@ -2,7 +2,6 @@ package retropie.romfilter
 
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-import org.apache.commons.lang.builder.ToStringBuilder
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.LongPoint
@@ -16,7 +15,10 @@ import org.apache.lucene.document.TextField
  * Entry for one game from gamelist.xml.
  */
 @ToString(includeNames = true)
-@EqualsAndHashCode
+@EqualsAndHashCode(includes = [
+    "system", "scrapeId", "scrapeSource", "path", "name", "desc", "image", "thumbnail",
+    "developer", "publisher", "genre", "players", "region", "romtype", "releasedate",
+    "rating", "playcount", "lastplayed"])
 class GamelistEntry {
     /**
      * The system this rom is for (example 'atari2600').
@@ -128,7 +130,9 @@ class GamelistEntry {
     /**
      * Number to uniquely identify this GamelistEntry.
      */
-    int hash
+    int getHash() {
+        return hashCode()
+    }
 
     /**
      * Default constructor.
@@ -159,7 +163,6 @@ class GamelistEntry {
         rating = document.rating?.toDouble() ?: 0.0
         playcount = document.playcount?.toInteger() ?: 0
         lastplayed = document.lastplayed?.toLong() ?: 0
-        hash = document.hash?.toInteger() ?: 0
         this.document = document
     }
 
@@ -203,7 +206,7 @@ class GamelistEntry {
         doc.add(new IntPoint("hash", hash))
         doc.add(new StoredField("hash", hash))
 
-        String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${hash}"
+        String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${this.hash}"
         doc.add(new TextField("all", all, Field.Store.NO))
 
         return doc

@@ -3,6 +3,7 @@ package retropie.romfilter
 import grails.util.Holders
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import org.apache.log4j.Logger
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.IntPoint
@@ -11,8 +12,13 @@ import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.StringField
 
 @ToString(includeNames = true)
-@EqualsAndHashCode
+@EqualsAndHashCode(includes = ['system', 'path', 'size'])
 class RomEntry {
+    /**
+     * Logger.
+     */
+    Logger log = Logger.getLogger(getClass())
+
     /**
      * The system this rom is for (example 'atari2600').
      */
@@ -21,7 +27,7 @@ class RomEntry {
     /**
      * Filename within the system's rom directory (no additional path).
      */
-    String filename
+    String path
 
     /**
      * Size of the rom (on disk).
@@ -29,9 +35,9 @@ class RomEntry {
     long size
 
     /**
-     * If the rom has a gamelistEntry.
+     * Hash for associated GamelistEntry (or null if no entry).
      */
-    boolean hasGamelistEntry
+    Integer gamelistEntryHash
 
     /**
      * The document that was used to create this entry.
@@ -42,20 +48,27 @@ class RomEntry {
     /**
      * Number to uniquely identify this RomEntry.
      */
-    int hash
+    int getHash() {
+        return hashCode()
+    }
 
     /**
      * Store the associate GamelistEntry if we've already looked it up.
      */
-    transient GamelistEntry gamelistEntry
+    GamelistEntry gamelistEntry
 
     /**
      * Fetch the associated GamelistEntry.
      */
     GamelistEntry getGamelistEntry() {
         if (gamelistEntry == null) {
-            gamelistEntry = Holders.getApplicationContext()?.getBean('indexerDataService')?.
-                gamelistEntryForSystemAndPath(system, filename)
+            IndexerDataService indexerDataService = Holders.getApplicationContext()?.getBean('indexerDataService')
+            if (gamelistEntryHash) {
+                gamelistEntry = indexerDataService.gamelistEntryForSystemAndHash(system, gamelistEntryHash)
+            }
+            else {
+                gamelistEntry = indexerDataService.gamelistEntryForSystemAndPath(system, path)
+            }
         }
         return gamelistEntry
     }
@@ -72,10 +85,9 @@ class RomEntry {
     RomEntry(Document document) {
         this()
         system = document.system
-        filename = document.filename
+        path = document.path
         size = document.size.toLong() ?: 0
-        hasGamelistEntry = document.hasGamelistEntry == 'true' ?: false
-        hash = document.hash.toInteger() ?: 0
+        gamelistEntryHash = document.gamelistEntryHash?.toInteger() ?: null   // Will return null of no GamelistEntry for this rom
         this.document = document
     }
 
@@ -87,12 +99,21 @@ class RomEntry {
     Document makeDocument() {
         Document doc = new Document();
         doc.add(new StringField("system", system, Field.Store.YES))
-        doc.add(new StringField("filename", filename, Field.Store.YES))
+        doc.add(new StringField("path", path, Field.Store.YES))
+
         doc.add(new LongPoint("size", size))
         doc.add(new StoredField("size", size))
-        doc.add(new StringField("hasGamelistEntry", hasGamelistEntry.toString(), Field.Store.YES))
+
+        GamelistEntry gamelistEntry = getGamelistEntry()
+        gamelistEntryHash = gamelistEntry?.hash
+        if (gamelistEntryHash != null) {
+            doc.add(new IntPoint("gamelistEntryHash", gamelistEntryHash))
+            doc.add(new StoredField("gamelistEntryHash", gamelistEntryHash))
+        }
+
         doc.add(new IntPoint("hash", hash))
         doc.add(new StoredField("hash", hash))
+        log.info("RomEntry.doc = ${doc}")
         return doc
     }
 }

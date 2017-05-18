@@ -20,10 +20,10 @@
             <g:each var="system" in="${systems}">
                 <tr>
                     <td>
-                        <g:link mapping="listRomsForSystem" params="[system: system.name]">
-                            ${system.name}
+                        <g:link mapping="listRomsForSystem" params="[system: system.system]">
+                            ${system.system}
                         </g:link>
-                        (${systemToNumRoms[system.name]} roms)
+                        (${systemToNumRoms[system.system]} roms)
                     </td>
                 </tr>
             </g:each>

@@ -111,9 +111,10 @@ class RomfilterSyncService {
                 }
                 else {
                     SystemEntry systemEntry = new SystemEntry(
-                        name: system,
+                        system: system,
                     )
                     int count = scanRomsForSystem(system)
+                    println "++ Consdiering saving system, we scanned ${count} roms for ${systemEntry}"
                     if (count) {
                         // Only save if the system had roms.
                         indexerIndexingService.saveSystemEntry(systemEntry)
@@ -141,11 +142,9 @@ class RomfilterSyncService {
             String filename = FilenameUtils.getName(romPath.toString())
             RomEntry romEntry = new RomEntry(
                 system: system,
-                filename: filename,
+                path: filename,
                 size: Files.size(romPath),
             )
-            romEntry.hash = romEntry.hashCode()
-            romEntry.hasGamelistEntry = romEntry.gamelistEntry != null
             indexerIndexingService.saveRomEntry(romEntry)
             count.incrementAndGet()
         }
@@ -169,7 +168,7 @@ class RomfilterSyncService {
         // Start parsing the XML
         GPathResult gamelist = new XmlSlurper().parseText(gamelistXml)
         gamelist.children().each { game ->
-            GamelistEntry entry = new GamelistEntry(
+            GamelistEntry gamelistEntry = new GamelistEntry(
                 system: system,
                 scrapeId: game.'@id'.toString(),
                 scrapeSource: game.'@source'.toString(),
@@ -189,32 +188,31 @@ class RomfilterSyncService {
                 playcount: (game.playcount?.toString() ?: "0") as int,
                 lastplayed: convertDateTimeToLong(game.lastplayed?.toString() ?: ""),
             )
-            entry.hash = entry.hashCode()
 
             // Transform path
-            if (entry.path.startsWith('./')) {
-                entry.path -= './'
+            if (gamelistEntry.path.startsWith('./')) {
+                gamelistEntry.path -= './'
             }
 
             // Transform image
-            if (entry.image?.startsWith(imagesPrefix)) {
-                entry.image -= imagesPrefix
-                entry.image = "${configService.imagesPath}/${entry.image}".toString()
+            if (gamelistEntry.image?.startsWith(imagesPrefix)) {
+                gamelistEntry.image -= imagesPrefix
+                gamelistEntry.image = "${configService.imagesPath}/${gamelistEntry.image}".toString()
             } else {
                 // Image in unknown location, remove it
-                entry.image = ''
+                gamelistEntry.image = ''
             }
 
             // Transform thumbnail
-            if (entry.thumbnail?.startsWith(imagesPrefix)) {
-                entry.thumbnail -= imagesPrefix
-                entry.thumbnail = "${configService.imagesPath}/${entry.thumbnail}".toString()
+            if (gamelistEntry.thumbnail?.startsWith(imagesPrefix)) {
+                gamelistEntry.thumbnail -= imagesPrefix
+                gamelistEntry.thumbnail = "${configService.imagesPath}/${gamelistEntry.thumbnail}".toString()
             } else {
                 // Thumbnail in unknown location, remove it
-                entry.thumbnail = ''
+                gamelistEntry.thumbnail = ''
             }
 
-            indexerIndexingService.saveGamelistEntry(entry)
+            indexerIndexingService.saveGamelistEntry(gamelistEntry)
         }
     }
 

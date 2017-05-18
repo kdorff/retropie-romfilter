@@ -166,4 +166,14 @@ class ConfigService {
     String getRomsIndexPath() {
         return grailsApplication.config.retropie.romfilter.romsIndexPath
     }
+
+    /**
+     * Return if scan should happen at startup if all indexes are empty.
+     *
+     * @return
+     */
+    boolean getScanAtStartup() {
+        return grailsApplication.config.retropie?.romfilter?.scanAtStartup ?: false
+    }
+
 }

@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<gameList>
+	<game id="9245" source="theGamesDB.net">
+		<path>./Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip</path>
+		<name>The Activision Decathlon</name>
+		<desc>Up to four players compete in the ten different events of a real-life decathlon, either in sequence or individually. The game became somewhat notorious for the amount of wear or damage inflicted upon console controllers, where rapid back-and-forth movement of the joystick propels the athlete down the track.</desc>
+		<image>~/.emulationstation/downloaded_images/atari2600/decathlon.jpg</image>
+		<releasedate>19830101T000000</releasedate>
+		<developer>Activision</developer>
+		<publisher>Activision</publisher>
+		<genre>Sports</genre>
+		<players>1</players>
+	</game>
+	<game id="2570" source="theGamesDB.net">
+		<path>./Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip</path>
+		<name>Adventure</name>
+		<desc>Adventure was the first action-adventure game on a video console, the first to contain a widely-known Easter egg, and the first to allow a player to have a stash of items, which required the player to select which one to use at any given moment, usually through keyboard or joystick input. Adventure allowed the player to drop one item and pick up another without having to type in any commands. The graphics, on the other hand, were not that great, and Robinett even described the dragons as looking like ducks.</desc>
+		<image>~/.emulationstation/downloaded_images/atari2600/adventure.jpg</image>
+		<rating>0.775</rating>
+		<releasedate>19780101T000000</releasedate>
+		<developer>Atari</developer>
+		<publisher>Atari</publisher>
+		<genre>Adventure</genre>
+		<players>1</players>
+	</game>
+	<game id="1342" source="theGamesDB.net">
+		<path>./Asteroids (1981) (Atari, Brad Stewart - Sears) (CX2649 - 49-75163) ~.zip</path>
+		<name>Asteroids</name>
+		<desc>The objective of Asteroids is to score as many points as possible by destroying asteroids and flying saucers. The player controls a triangular-shaped ship that can rotate left and right, fire shots straight forward, and thrust forward. As the ship moves, momentum is not conserved — the ship eventually comes to a stop again when not thrusting. The player can also send their ship into hyperspace, causing it to disappear and reappear in a random location on the screen (with the risk of self-destructing or appearing on top of an asteroid).</desc>
+		<image>~/.emulationstation/downloaded_images/atari2600/Asteroids (1981) (Atari, Brad Stewart - Sears) (CX2649 - 49-75163) ~-image.jpg</image>
+		<rating>0.78</rating>
+		<releasedate>19790801T000000</releasedate>
+		<developer>Atari</developer>
+		<publisher>Atari</publisher>
+		<genre>Shooter</genre>
+		<players>2</players>
+	</game>
+	<game>
+		<path>./Astrowar (Unknown).zip</path>
+		<name>Astrowar (USA)</name>
+		<desc>Astrowar is an Action game, developed by Starsoft and published by Artic, which was cancelled before it was released.</desc>
+		<image>~/.emulationstation/downloaded_images/atari2600/Astrowar (Unknown)-image.jpg</image>
+		<releasedate>19830101T000000</releasedate>
+		<developer>Starsoft</developer>
+		<publisher>Artic</publisher>
+		<genre>Shooter</genre>
+		<players>1</players>
+	</game>
+</gameList>
