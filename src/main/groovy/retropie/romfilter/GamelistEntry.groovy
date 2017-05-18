@@ -2,13 +2,11 @@ package retropie.romfilter
 
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
-import org.apache.commons.lang.builder.ToStringBuilder
 import org.apache.lucene.document.Document
+import org.apache.lucene.document.DoubleField
 import org.apache.lucene.document.Field
-import org.apache.lucene.document.LongPoint
-import org.apache.lucene.document.StoredField
-import org.apache.lucene.document.IntPoint
-import org.apache.lucene.document.DoublePoint
+import org.apache.lucene.document.IntField
+import org.apache.lucene.document.LongField
 import org.apache.lucene.document.StringField
 import org.apache.lucene.document.TextField
 
@@ -126,9 +124,11 @@ class GamelistEntry {
     Document document
 
     /**
-     * Number to uniquely identify this GamelistEntry.
+     * Number to uniquely identify this RomEntry.
      */
-    int hash
+    int getHash() {
+        return this.hashCode()
+    }
 
     /**
      * Default constructor.
@@ -159,7 +159,7 @@ class GamelistEntry {
         rating = document.rating?.toDouble() ?: 0.0
         playcount = document.playcount?.toInteger() ?: 0
         lastplayed = document.lastplayed?.toLong() ?: 0
-        hash = document.hash?.toInteger() ?: 0
+        //hash = document.hash?.toInteger() ?: 0
         this.document = document
     }
 
@@ -181,27 +181,14 @@ class GamelistEntry {
         if (developer) doc.add(new TextField("developer", developer, Field.Store.YES))
         if (publisher) doc.add(new TextField("publisher", publisher, Field.Store.YES))
         if (genre) doc.add(new TextField("genre", genre, Field.Store.YES))
-        doc.add(new IntPoint("players", players))
-        doc.add(new StoredField("players", players))
+        doc.add(new IntField("players", players, Field.Store.YES))
         if (region) doc.add(new TextField("region", region, Field.Store.YES))
         if (romtype) doc.add(new TextField("romtype", romtype, Field.Store.YES))
-
-        if (releasedate) {
-            doc.add(new LongPoint("releasedate", releasedate))
-            doc.add(new StoredField("releasedate", releasedate))
-        }
-
-        doc.add(new DoublePoint("rating", rating))
-        doc.add(new StoredField("rating", rating))
-        doc.add(new IntPoint("playcount", playcount))
-        doc.add(new StoredField("playcount", playcount))
-
-        if (lastplayed) {
-            doc.add(new LongPoint("lastplayed", lastplayed))
-            doc.add(new StoredField("lastplayed", lastplayed))
-        }
-        doc.add(new IntPoint("hash", hash))
-        doc.add(new StoredField("hash", hash))
+        if (releasedate) doc.add(new LongField("releasedate", releasedate, Field.Store.YES))
+        doc.add(new DoubleField("rating", rating, Field.Store.YES))
+        doc.add(new IntField("playcount", playcount, Field.Store.YES))
+        if (lastplayed) doc.add(new LongField("lastplayed", lastplayed, Field.Store.YES))
+        doc.add(new IntField("hash", hash, Field.Store.YES))
 
         String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${hash}"
         doc.add(new TextField("all", all, Field.Store.NO))

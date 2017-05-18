@@ -3,7 +3,6 @@ package retropie.romfilter
 import org.apache.log4j.Logger
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
-import org.apache.lucene.document.IntPoint
 import org.apache.lucene.index.IndexReader
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.queryparser.classic.QueryParser
@@ -163,9 +162,10 @@ class IndexerDataService {
      * @return
      */
     GamelistEntry gamelistEntryForSystemAndHash(String system, int hash) {
+        String hashVal = QueryParser.escape(hash.toString())
+        String hashRange = "[${hashVal} TO ${hashVal}]"
         GamelistEntry entry = gamelistEntryForQuery(
-            /+system:${escapeSpaces(QueryParser.escape(system))}/,
-            IntPoint.newExactQuery('hash', hash))
+            /+system:${escapeSpaces(QueryParser.escape(system))} +hash:${hashRange}/)
         return entry
     }
 
@@ -180,8 +180,7 @@ class IndexerDataService {
         String hashVal = QueryParser.escape(hash.toString())
         String hashRange = "[${hashVal} TO ${hashVal}]"
         RomEntry entry = romEntryForQuery(
-            /+system:${escapeSpaces(QueryParser.escape(system))}"/,
-            IntPoint.newExactQuery('hash', hash))
+            /+system:${escapeSpaces(QueryParser.escape(system))} +hash:${hashRange}/)
         return entry
     }
 
@@ -194,7 +193,7 @@ class IndexerDataService {
      * @param path
      * @return
      */
-    RomEntry romEntryForQuery(String queryStr, Query moreQuery) {
+    RomEntry romEntryForQuery(String queryStr, Query moreQuery = null) {
         StandardQueryParser queryParser = new StandardQueryParser(queryAnalyzer)
         Query query = queryParser.parse(queryStr, "")
         if (moreQuery) {
@@ -259,15 +258,15 @@ class IndexerDataService {
      * @return
      */
     String escapeSpaces(String s) {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder()
         for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
+            char c = s.charAt(i)
             // These characters are part of the query syntax and must be escaped
             if (c == ' ') {
-                sb.append('\\');
+                sb.append('\\')
             }
-            sb.append(c);
+            sb.append(c)
         }
-        return sb.toString();
+        return sb.toString()
     }
 }

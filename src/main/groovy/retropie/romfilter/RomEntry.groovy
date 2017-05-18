@@ -5,8 +5,8 @@ import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
-import org.apache.lucene.document.IntPoint
-import org.apache.lucene.document.LongPoint
+import org.apache.lucene.document.IntField
+import org.apache.lucene.document.LongField
 import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.StringField
 
@@ -40,14 +40,16 @@ class RomEntry {
     Document document
 
     /**
-     * Number to uniquely identify this RomEntry.
-     */
-    int hash
-
-    /**
      * Store the associate GamelistEntry if we've already looked it up.
      */
     transient GamelistEntry gamelistEntry
+
+    /**
+     * Number to uniquely identify this RomEntry.
+     */
+    int getHash() {
+        return this.hashCode()
+    }
 
     /**
      * Fetch the associated GamelistEntry.
@@ -88,11 +90,13 @@ class RomEntry {
         Document doc = new Document();
         doc.add(new StringField("system", system, Field.Store.YES))
         doc.add(new StringField("filename", filename, Field.Store.YES))
-        doc.add(new LongPoint("size", size))
+
+        doc.add(new LongField("size", size, Field.Store.YES))
+
         doc.add(new StoredField("size", size))
-        doc.add(new StringField("hasGamelistEntry", hasGamelistEntry.toString(), Field.Store.YES))
-        doc.add(new IntPoint("hash", hash))
-        doc.add(new StoredField("hash", hash))
+        if (gamelistEntry) doc.add(new IntField("gamelistHash", gamelistEntry.hash, Field.Store.YES))
+        doc.add(new IntField("hash", hash, Field.Store.YES))
+        //doc.add(new StoredField("hash", hash))
         return doc
     }
 }
