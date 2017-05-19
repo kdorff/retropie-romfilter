@@ -6,16 +6,16 @@ a RetroPie. You can quickly filter your lists to search
 for specific details or even delete ROMs
 (move them to a trash folder).
 
-You CAN run this application directly on a RetroPie, but
-you might not be pleased with the performance. Instead, I prefer to
-run RetroPie romfilter on another machine on the same network.
+You should be able to run this directly on a your RetroPie if you install Oracle Java 8.
+I haven't yet done any performance testing to see how well it runs on a Pi.
+
+Currently, I prefer to run romfilter on another machine on the same network.
 
 # Disclaimer
 
 This code is a work in progress and is not ready for public consumption.
 
-The first time you run the app it will need to scan your system. This can take several minutes
-depending on how many roms you have.
+The first time you run the app it will need to scan your system. This will take a bit of time.
 
 ## A quick note about scraping
 
