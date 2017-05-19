@@ -6,13 +6,16 @@
     <asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
     <asset:javascript src="listRomsForSystem.js" asset-defer="true" />
     <asset:stylesheet src="listRomsForSystem.css"/>
+    <g:javascript>
+       var romsDataFeed = '${raw(romsDataFeed)}';
+    </g:javascript>
 </head>
 <body>
     <p>Navigation:
         <g:link mapping="listSystems">Systems</g:link> |
         <g:link mapping="listRomsForSystem" params="[system: system]">${system}</g:link>
 
-    <table id="romTable">
+    <table id="romTable" class="display" cellspacing="0" width="100%">
         <thead>
             <tr>
                 <th>Scrape Name<br/>Filename</th>
@@ -22,34 +25,15 @@
                 <th>Image</th>
             </tr>
         </thead>
-        <tbody>
-            <g:each var="rom" in="${roms}">
-                <tr>
-                    <% def gamelistEntry = rom.getGamelistEntry() %>
-                    <td>
-                        ${rom.path}
-                        <p>
-                            <input type="button" value="Delete / Move Trash" class="deleteRom"
-                                  data-delete-url='<g:createLink mapping="deleteRomForSystem" params="[system: system, hash: rom.hash]"/>' />
-                        </p>
-                    </td>
-                    <td>
-                        <g:if test="${gamelistEntry}">
-                            <g:link mapping="romForSystem" params="[system: gamelistEntry.system, hash: gamelistEntry.hash]">
-                                ${gamelistEntry?.name}
-                            </g:link>
-                        </g:if>
-                    </td>
-                    <td>${gamelistEntry?.genre}</td>
-                    <td>${gamelistEntry?.desc}</td>
-                    <td>
-                        <g:if test="${gamelistEntry && gamelistEntry.image}">
-                            <img width='200px' src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, hash: gamelistEntry.hash]"/>' />
-                        </g:if>
-                    </td>
-                </tr>
-            </g:each>
-        </tbody>
+        <tfoot>
+            <tr>
+                <th>Scrape Name<br/>Filename</th>
+                <th>Name</th>
+                <th>Genre</th>
+                <th>Desc</th>
+                <th>Image</th>
+            </tr>
+        </tfoot>
     </table>
 </body>
 </html>

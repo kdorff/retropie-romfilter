@@ -1,4 +1,4 @@
-package retropie.romfilter
+package retropie.romfilter.indexed
 
 import grails.util.Holders
 import groovy.transform.EqualsAndHashCode
@@ -10,6 +10,7 @@ import org.apache.lucene.document.IntPoint
 import org.apache.lucene.document.LongPoint
 import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.StringField
+import retropie.romfilter.IndexerDataService
 
 @ToString(includeNames = true)
 @EqualsAndHashCode(includes = ['system', 'path', 'size'])
@@ -64,10 +65,10 @@ class RomEntry {
         if (gamelistEntry == null) {
             IndexerDataService indexerDataService = Holders.getApplicationContext()?.getBean('indexerDataService')
             if (gamelistEntryHash) {
-                gamelistEntry = indexerDataService.gamelistEntryForSystemAndHash(system, gamelistEntryHash)
+                gamelistEntry = indexerDataService.getGamelistEntryForSystemAndHash(system, gamelistEntryHash)
             }
             else {
-                gamelistEntry = indexerDataService.gamelistEntryForSystemAndPath(system, path)
+                gamelistEntry = indexerDataService.getGamelistEntryForSystemAndPath(system, path)
             }
         }
         return gamelistEntry

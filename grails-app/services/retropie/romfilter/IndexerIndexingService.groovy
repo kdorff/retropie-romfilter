@@ -10,6 +10,9 @@ import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser
 import org.apache.lucene.search.BooleanClause
 import org.apache.lucene.search.BooleanQuery
 import org.apache.lucene.search.Query
+import retropie.romfilter.indexed.GamelistEntry
+import retropie.romfilter.indexed.RomEntry
+import retropie.romfilter.indexed.SystemEntry
 
 class IndexerIndexingService {
     /**
@@ -103,7 +106,7 @@ class IndexerIndexingService {
         String hashVal = QueryParser.escape(hash.toString())
         String hashRange = "[${hashVal} TO ${hashVal}]"
         deleteRomEntriesForQuery(
-            /+system:"${indexerDataService.escapeSpaces(QueryParser.escape(romEntry.system))}" +hash:${hashRange}/,
+            /+system:"${QueryParser.escape(romEntry.system)}" +hash:${hashRange}/,
             IntPoint.newExactQuery('hash', romEntry.hash))
     }
 }

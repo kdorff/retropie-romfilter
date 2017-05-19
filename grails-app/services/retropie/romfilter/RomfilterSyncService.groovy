@@ -4,6 +4,9 @@ import groovy.util.slurpersupport.GPathResult
 import groovyx.gpars.GParsPool
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
+import retropie.romfilter.indexed.GamelistEntry
+import retropie.romfilter.indexed.RomEntry
+import retropie.romfilter.indexed.SystemEntry
 
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
@@ -114,7 +117,7 @@ class RomfilterSyncService {
                         system: system,
                     )
                     int count = scanRomsForSystem(system)
-                    println "++ Consdiering saving system, we scanned ${count} roms for ${systemEntry}"
+                    log.info("++ Consdiering saving system, we scanned ${count} roms for ${systemEntry}")
                     if (count) {
                         // Only save if the system had roms.
                         indexerIndexingService.saveSystemEntry(systemEntry)

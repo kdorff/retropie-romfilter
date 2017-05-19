@@ -1,4 +1,4 @@
-package retropie.romfilter
+package retropie.romfilter.indexed
 
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString

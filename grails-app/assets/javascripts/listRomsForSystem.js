@@ -1,37 +1,54 @@
 $(document).ready(function() {
     $('#romTable').DataTable({
-        searchHighlight: true,
+        searchHighlight: false,
         aLengthMenu: [
             [-1],
             ["All"]
         ],
         iDisplayLength: -1,
-        aoColumnDefs: [
-            {
-                // Custom rendering for the first column
-                // which is filename over scrape name
-                "mRender": function ( data, type, row ) {
-                    if (row[1]) {
-                        return row[1] + '<br/>' + data;
-                    }
-                    else {
-                        return data;
-                }
-                },
-                "aTargets": [ 0 ]
-            },
-            { "bVisible": false,  "aTargets": [ 1 ] }
-        ],
-         "columns": [
-            { "width": "35%" },
-            { "width": "0%" },
-            { "width": "5%" },
-            { "width": "40%" },
-            { "width": "20%" }
-        ],
-        "paging":   false
+        "processing": true,
+        "serverSide": true,
+        "ajax": {
+            url: romsDataFeed,
+            type: 'POST'
+        }
     });
 });
+
+// $(document).ready(function() {
+//     $('#romTable').DataTable({
+//         searchHighlight: true,
+//         aLengthMenu: [
+//             [-1],
+//             ["All"]
+//         ],
+//         iDisplayLength: -1,
+//         aoColumnDefs: [
+//             {
+//                 // Custom rendering for the first column
+//                 // which is filename over scrape name
+//                 "mRender": function ( data, type, row ) {
+//                     if (row[1]) {
+//                         return row[1] + '<br/>' + data;
+//                     }
+//                     else {
+//                         return data;
+//                 }
+//                 },
+//                 "aTargets": [ 0 ]
+//             },
+//             { "bVisible": false,  "aTargets": [ 1 ] }
+//         ],
+//          "columns": [
+//             { "width": "35%" },
+//             { "width": "0%" },
+//             { "width": "5%" },
+//             { "width": "40%" },
+//             { "width": "20%" }
+//         ],
+//         "paging":   false
+//     });
+// });
 
 $(document).on('click', '.deleteRom', function () {
     var button = $(this);

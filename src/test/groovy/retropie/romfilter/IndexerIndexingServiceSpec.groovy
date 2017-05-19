@@ -2,19 +2,25 @@ package retropie.romfilter
 
 import grails.test.mixin.integration.Integration
 import org.apache.commons.io.FileUtils
+import org.apache.log4j.Logger
 import org.apache.lucene.queryparser.classic.QueryParser
+import retropie.romfilter.indexed.GamelistEntry
+import retropie.romfilter.indexed.RomEntry
+import retropie.romfilter.indexed.SystemEntry
 import spock.lang.Specification
 import spock.lang.Unroll
 
-/**
- * Created by kevi9037 on 5/17/17.
- */
 @Integration
 class IndexerIndexingServiceSpec extends Specification {
     /**
      * Load all from resources.groovy.
      */
     static loadExternalBeans = true
+
+    /**
+     * Logger.
+     */
+    Logger log = Logger.getLogger(getClass())
 
     /**
      * The service we are integration testing (auto-injected).
@@ -35,7 +41,7 @@ class IndexerIndexingServiceSpec extends Specification {
             FileUtils.deleteDirectory(new File(indexesPath))
         }
         catch (IOException e) {
-            println "Problem deleting ${indexesPath}"
+            println "Problem deleting ${indexesPath}, ${e.message}"
         }
     }
 
@@ -60,7 +66,7 @@ class IndexerIndexingServiceSpec extends Specification {
         String query = /+system:"${QueryParser.escape((String) system)}" +hash:${hashRange}/
 
         when:
-        GamelistEntry gamelistEntry = indexerDataService.gamelistEntryForQuery(query)
+        GamelistEntry gamelistEntry = indexerDataService.getGamelistEntryForQuery(query)
 
         then:
         gamelistEntry
@@ -79,7 +85,7 @@ class IndexerIndexingServiceSpec extends Specification {
     @Unroll
     def "Find gamelist with system and hash"() {
         when:
-        GamelistEntry gamelistEntry = indexerDataService.gamelistEntryForSystemAndHash((String) system, (int) hash)
+        GamelistEntry gamelistEntry = indexerDataService.getGamelistEntryForSystemAndHash((String) system, (int) hash)
 
         then:
         gamelistEntry
@@ -97,7 +103,7 @@ class IndexerIndexingServiceSpec extends Specification {
 
     def "fetch all gamelists for atari2600"() {
         when:
-        List<GamelistEntry> games = indexerDataService.gamelistEntriesForQuery(/+system:"atari2600"/)
+        List<GamelistEntry> games = indexerDataService.getGamelistEntriesForQuery(/+system:"atari2600"/)
 
         then:
         games.size() == 4
@@ -105,8 +111,8 @@ class IndexerIndexingServiceSpec extends Specification {
 
     def "fetch all all sysetms"() {
         when:
-        List<SystemEntry> systems = indexerDataService.getAllSystems()
-        println systems
+        List<SystemEntry> systems = indexerDataService.getAllSystemsEntries()
+        log.info(systems)
 
         then:
         systems.size() == 1
@@ -114,8 +120,17 @@ class IndexerIndexingServiceSpec extends Specification {
 
     def "fetch all gamelists for atari2600 described with action"() {
         when:
-        List<GamelistEntry> games = indexerDataService.gamelistEntriesForQuery(/+system:"atari2600" +desc:action/)
-        println games
+        List<GamelistEntry> games = indexerDataService.getGamelistEntriesForQuery(/+system:"atari2600" +desc:action/)
+        log.info(games)
+
+        then:
+        games.size() == 2
+    }
+
+    def "fetch all gamelists for atari2600 all all: containing 'action'"() {
+        when:
+        List<GamelistEntry> games = indexerDataService.getGamelistEntriesForQuery(/+system:"atari2600" +all:action/)
+        log.info(games)
 
         then:
         games.size() == 2
@@ -125,7 +140,7 @@ class IndexerIndexingServiceSpec extends Specification {
     def "query for roms with system and path"() {
         setup:
         when:
-        RomEntry romEntry = indexerDataService.romEntryForSystemAndHash(system, hash)
+        RomEntry romEntry = indexerDataService.getRomEntryForSystemAndHash(system, hash)
 
         then:
         romEntry
@@ -144,8 +159,8 @@ class IndexerIndexingServiceSpec extends Specification {
     def "query for roms for system"() {
         setup:
         when:
-        List<RomEntry> roms = indexerDataService.romEntriesForSystem('atari2600')
-        println roms
+        List<RomEntry> roms = indexerDataService.getRomEntriesForSystem('atari2600')
+        log.info(roms)
 
         then:
         roms.size() == 3
@@ -155,7 +170,7 @@ class IndexerIndexingServiceSpec extends Specification {
     def "query for gamelist with system and path"() {
         setup:
         when:
-        GamelistEntry gamelistEntry = indexerDataService.gamelistEntryForSystemAndPath(system, path)
+        GamelistEntry gamelistEntry = indexerDataService.getGamelistEntryForSystemAndPath(system, path)
 
         then:
         gamelistEntry
@@ -165,11 +180,11 @@ class IndexerIndexingServiceSpec extends Specification {
         gamelistEntry.path == path
 
         where:
-        system      | name                       | hash        | path
-        'atari2600' | 'The Activision Decathlon' | 1519037557  | 'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip'
-        'atari2600' | 'Adventure'                | 555897016   | 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip'
-        'atari2600' | 'Asteroids'                | -47592823   | 'Asteroids (1981) (Atari, Brad Stewart - Sears) (CX2649 - 49-75163) ~.zip'
-        'atari2600' | 'Astrowar (USA)'           | 1999839840  | 'Astrowar (Unknown).zip'
+        system      | name                       | hash       | path
+        'atari2600' | 'The Activision Decathlon' | 1519037557 | 'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip'
+        'atari2600' | 'Adventure'                | 555897016  | 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip'
+        'atari2600' | 'Asteroids'                | -47592823  | 'Asteroids (1981) (Atari, Brad Stewart - Sears) (CX2649 - 49-75163) ~.zip'
+        'atari2600' | 'Astrowar (USA)'           | 1999839840 | 'Astrowar (Unknown).zip'
     }
 
 }

@@ -2,6 +2,10 @@ package retropie.romfilter
 
 import grails.core.GrailsApplication
 import org.apache.commons.io.FilenameUtils
+import retropie.romfilter.feed.RomsDataFeed
+import retropie.romfilter.indexed.GamelistEntry
+import retropie.romfilter.indexed.RomEntry
+import retropie.romfilter.indexed.SystemEntry
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -10,34 +14,31 @@ import java.nio.file.Paths
 class SystemController {
 
     /**
-     * TODO: Indexing:
-     * TODO: Why is the gamelist.name field missing?
-     * TODO: Add an all field that isn't stored for multi-field search for all the cards
-     * TODO: Any fields to not tokenize? I think even filenames should be tokenized
-     * TODO: action: Fixed image?
-     * TODO: action: Fixed rom details?
      * TODO: action: Fixed delete?
-     * TODO: How do I use config value or service method value in resources.groovy to specify paths for indexes.
-     * TODO: Multiple indexes in a directory?
      * TODO: Highlight?
      * TODO: Card View?
-     * TODO: Is there a native date format for Lucene for release date and last played?
-     * TODO: Data access methods so things outside the data access service don't pass raw queries.
      * TODO: Move to a consolidated view of systems instead of view of one system?
-     * TODO: Store the hash of the gamelist instead of the boolean?
-     * TODO: Integration tests.
-     * TODO: Move to Luceue 5. Lucene 6 IntPoint isn't integrated into querying?
-     *
-     * TODO: Use endless scrolling datatables to load and filter the data on demand. Much more responsive.
+     * TODO: More unit tests
+     * TODO: More integration tests
+     * TODO: Use endless scrolling datatables to load and filter the data on demand
      * TODO: Search box should support field search.
      * TODO: Show name/filename similarity?
      * TODO: Filter to show dissimilar name/filenames
-     * TODO: One search for all systems, eliminating the system screen?
      * TODO: Filter those without gamelistEntry
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
-     * TODO: A "delete all visible" button?
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
      * TODO: Add remaining file extensions to the various systems to config
+     *
+     * DONE: Indexing, move from database to Lucene.
+     * DONE: Why is the gamelist.name field missing?
+     * DONE: Add an all field that isn't stored for multi-field search for all the cards
+     * DONE: Any fields to not tokenize? I think even filenames should be tokenized
+     * DONE: How do I use config value or service method value in resources.groovy to specify paths for indexes.
+     * DONE: Data access methods so things outside the data access service don't pass raw queries.
+     * DONE: Store the hash of the gamelist instead of the boolean?
+     * DONE: Integration tests.
+     * DONE: Tests for parsing gamelist.xml file.
+     * DONE: More reliable, non-changing hash method. Explicit field list.
      */
 
     /**
@@ -76,8 +77,8 @@ class SystemController {
      * @return
      */
     def listSystems() {
-        println "Listing systems"
-        List<SystemEntry> systems = indexerDataService.systemEntries()
+        log.info("Listing systems")
+        List<SystemEntry> systems = indexerDataService.getAllSystemsEntries()
         Map<String, Integer> systemToNumRoms = [:]
         systems.each { SystemEntry systemEntry ->
             systemToNumRoms[systemEntry.system] = indexerDataService.getRomEntryCountForSystem(systemEntry.system)
@@ -95,11 +96,31 @@ class SystemController {
      * @return
      */
     def listRomsForSystem(String system) {
-        List<RomEntry> romEntryList = indexerDataService.romEntriesForSystem(system)
+        List<RomEntry> romEntryList = indexerDataService.getRomEntriesForSystem(system)
+        String romsDataFeedUrl = g.createLink(mapping: 'romsDataFeed', params: [system: system])
         return [
             system: system,
             roms: romEntryList,
+            romsDataFeed: romsDataFeedUrl
         ]
+    }
+
+    /**
+     * The roms data feed for datatables server-side processing.
+     * @param system
+     * @return
+     */
+    def romsDataFeed(String system) {
+        println "romsDataFeed for ${system}"
+        println "params ${params}"
+        List<RomEntry> roms = indexerDataService.getRomEntriesForSystem(system)
+        RomsDataFeed romsDataFeed = new RomsDataFeed(
+            draw: params.int('draw') ?: 0,
+            roms: roms,
+            recordsTotal: roms.size(),
+            recordsFiltered: roms.size(),
+        )
+        respond romsDataFeed
     }
 
     /**
@@ -110,7 +131,7 @@ class SystemController {
      * @return
      */
     def showRomForSystem(String system, int hash) {
-        GamelistEntry gamelistEntry = indexerDataService.gamelistEntryForSystemAndHash(system, hash)
+        GamelistEntry gamelistEntry = indexerDataService.getGamelistEntryForSystemAndHash(system, hash)
         if (gamelistEntry) {
             return [
                 system       : system,
@@ -131,7 +152,7 @@ class SystemController {
      * @return
      */
     def deleteRomForSystem(String system, int hash) {
-        RomEntry toDeleteEntry = indexerDataService.romEntryForSystemAndHash(system, hash)
+        RomEntry toDeleteEntry = indexerDataService.getRomEntryForSystemAndHash(system, hash)
         if (!toDeleteEntry) {
             log.error("ROM for RomEntry.id ${id} not found in database")
             response.status = 404
@@ -178,7 +199,7 @@ class SystemController {
      * @return
      */
     def showRomImageForSystem(String system, int hash) {
-        GamelistEntry game = indexerDataService.gamelistEntryForSystemAndHash(system, hash)
+        GamelistEntry game = indexerDataService.getGamelistEntryForSystemAndHash(system, hash)
         if (game) {
             String fileType = FilenameUtils.getExtension(game.image).toLowerCase()
             String mimeType = IMAGE_EXT_TO_MIME[fileType]

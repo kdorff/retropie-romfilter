@@ -47,7 +47,7 @@ class RomfilterQueryParser extends QueryParser {
         log.info("Perhaps creating range query ${field} ${part1} ${part2} ${inclusive}");
 
         Class dataClass = rangleableFields[field]
-        println "dataClass=${dataClass}"
+        log.info("dataClass=${dataClass}")
         Query result
         if (dataClass == IntPoint) {
             int lower = Integer.parseInt(part1)
@@ -59,7 +59,7 @@ class RomfilterQueryParser extends QueryParser {
                 result = IntPoint.newRangeQuery(field, lower, upper)
             }
         } else if (dataClass == LongPoint) {
-            println "it is an int query"
+            log.info("it is an int query")
             long lower = Long.parseLong(part1)
             long upper = Long.parseLong(part2)
             if (upper == lower) {
@@ -70,6 +70,7 @@ class RomfilterQueryParser extends QueryParser {
             }
         }
         else if (dataClass == DoublePoint) {
+            log.info("it is an double query")
             double lower = Double.parseDouble(part1)
             double upper = Double.parseDouble(part2)
             if (upper == lower) {

@@ -1,0 +1,24 @@
+import retropie.romfilter.feed.RomsDataFeed
+import retropie.romfilter.indexed.GamelistEntry
+import retropie.romfilter.indexed.RomEntry
+
+model {
+    RomsDataFeed romsDataFeed
+}
+json {
+    draw romsDataFeed.draw
+    recordsTotal romsDataFeed.recordsTotal
+    recordsFiltered romsDataFeed.recordsFiltered
+    error romsDataFeed.error
+    data romsDataFeed.roms.collect { RomEntry romEntry ->
+        GamelistEntry gamelistEntry = romEntry?.getGamelistEntry()
+        return [
+            romEntry.path,
+            gamelistEntry?.name ?: '',
+            gamelistEntry?.genre ?: '',
+            gamelistEntry?.desc ?: '',
+            gamelistEntry?.image ?: '',
+        ]
+
+    }
+}

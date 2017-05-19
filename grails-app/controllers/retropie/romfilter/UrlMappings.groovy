@@ -17,13 +17,17 @@ class UrlMappings {
             controller = 'system'
             action = 'listRomsForSystem'
         }
+        name romsDataFeed: "/system/$system/feed" {
+            controller = 'system'
+            action = [POST: 'romsDataFeed']
+        }
         name romForSystem: "/system/$system/rom/$hash" {
             controller = 'system'
             action = 'showRomForSystem'
         }
         name deleteRomForSystem: "/system/$system/rom/$hash/delete" {
             controller = 'system'
-            action = ['DELETE': 'deleteRomForSystem']
+            action = [DELETE: 'deleteRomForSystem']
         }
         name showRomImageForSystem: "/system/$system/rom/$hash/image" {
             controller = 'system'

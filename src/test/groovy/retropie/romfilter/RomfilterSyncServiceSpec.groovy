@@ -1,6 +1,7 @@
 package retropie.romfilter
 
 import grails.test.mixin.TestFor
+import retropie.romfilter.indexed.GamelistEntry
 import spock.lang.Specification
 
 /**
