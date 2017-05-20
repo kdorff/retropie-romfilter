@@ -30,6 +30,8 @@ class GamesController {
      * TODO: Make scanning quarts jobs
      * TODO: On demand complete re-scanning (delete and rebuild)
      * TODO: Ordering in lucene based on datatables request
+     * TODO: Show images again.
+     * TODO: Test delete game.
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
