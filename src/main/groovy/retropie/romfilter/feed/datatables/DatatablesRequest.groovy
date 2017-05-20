@@ -52,7 +52,7 @@ class DatatablesRequest {
     DatatablesRequest() {
         draw = 0
         start = 0
-        length = -1
+        length = 10
         search = ""
         searchIsRegex = false
         columns = []
@@ -60,7 +60,7 @@ class DatatablesRequest {
     }
 
     DatatablesRequest(Map<String, String> params) {
-        super()
+        this()
         params.each { paramKey, paramVal ->
             switch (paramKey) {
                 case "draw":

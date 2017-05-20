@@ -28,7 +28,7 @@ class IndexerIndexingService {
         doc.clear()
         game.convertToDocument(doc)
         gamesIndexWriter.addDocument(doc)
-        log.info("Saved GamelistEntry ${game.system} | ${game.name} | ${game.hash} to index")
+        log.info("Saved Game ${game.system}/${game.path} | hash=${game.hash} to index")
     }
 
     /**

@@ -2,17 +2,17 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>List of ROMS for ${system}</title>
+    <title>List of ROMs</title>
     <asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
-    <asset:javascript src="listGames.js" asset-defer="true" />
-    <asset:stylesheet src="listGames.css"/>
+    <asset:javascript src="gamesBrowse.js" asset-defer="true" />
+    <asset:stylesheet src="gamesBrowse.css"/>
     <g:javascript>
-       var gamesDataFeed = '${raw(gamesDataFeed)}';
+       var gamesDataFeedUrl = '<g:createLink action="feed"/>';
     </g:javascript>
 </head>
 <body>
     <p>Navigation:
-        <g:link mapping="listGames">List Games</g:link>
+        <g:link action="browse">Browse ROMs</g:link>
 
     <table id="romTable" class="display" cellspacing="0" width="100%">
         <thead>
@@ -20,19 +20,11 @@
                 <th>Scrape Name<br/>Filename</th>
                 <th>Name</th>
                 <th>Genre</th>
-                <th>Desc</th>
-                <th>Image</th>
-            </tr>
-        </thead>
-        <tfoot>
-            <tr>
-                <th>Scrape Name<br/>Filename</th>
-                <th>Name</th>
                 <th>Genre</th>
                 <th>Desc</th>
                 <th>Image</th>
             </tr>
-        </tfoot>
+        </thead>
     </table>
 </body>
 </html>

@@ -12,13 +12,21 @@ beans = {
     standardAnalyzer(StandardAnalyzer)
     keywordAnalyzer(KeywordAnalyzer)
     queryAnalyzer(PerFieldAnalyzerWrapper,
-        ref('standardAnalyzer'), [
-        'system': ref('keywordAnalyzer'),
-        'scrapeId': ref('keywordAnalyzer'),
-        'path': ref('keywordAnalyzer'),
-        'image': ref('keywordAnalyzer'),
-        'thumbnail': ref('keywordAnalyzer'),
-    ])
+        ref('standardAnalyzer'),
+        [
+            'system': ref('keywordAnalyzer'),
+            'scrapeId': ref('keywordAnalyzer'),
+            'path': ref('keywordAnalyzer'),
+            'image': ref('keywordAnalyzer'),
+            'thumbnail': ref('keywordAnalyzer'),
+            'nameOrder': ref('keywordAnalyzer'),
+            'developerOrder': ref('keywordAnalyzer'),
+            'publisherOrder': ref('keywordAnalyzer'),
+            'genreOrder': ref('keywordAnalyzer'),
+            'regionOrder': ref('keywordAnalyzer'),
+            'romtypeOrder': ref('keywordAnalyzer'),
+        ]
+    )
 
     gamesIndexDir(SimpleFSDirectory, Paths.get(application.config.retropie.romfilter.gamesIndexPath))
     gamesWriterConfig(IndexWriterConfig,

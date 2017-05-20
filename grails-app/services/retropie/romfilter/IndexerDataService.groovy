@@ -156,14 +156,14 @@ class IndexerDataService {
             query = new MatchAllDocsQuery()
         }
 
-        log.info("Performing query for GameEntry: ${query}")
+        log.info("Performing Game query: ${query}")
         IndexSearcher indexSearcher = new IndexSearcher(gamesIndexReader)
 
         TopDocs results = indexSearcher.search(query, gamesIndexReader.maxDoc())
         ScoreDoc[] scoreDocs = results.scoreDocs
 
         GamesDataFeed gamesDataFeed = new GamesDataFeed([
-            recordsTotal: getRomEntryCount(),
+            recordsTotal: getGamesCount(),
             recordsFiltered: results.totalHits,
         ])
         for (int i = datatablesRequest.start; i < results.totalHits; i++) {
@@ -174,7 +174,7 @@ class IndexerDataService {
             Document document = indexSearcher.doc(scoreDocs[i].doc)
             gamesDataFeed.games << new Game(document)
         }
-        log.info("Found ${gamesDataFeed.games}.size()")
+        log.info("Found ${gamesDataFeed.games.size()}")
         return gamesDataFeed
     }
 }

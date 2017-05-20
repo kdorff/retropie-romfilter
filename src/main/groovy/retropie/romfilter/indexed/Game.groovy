@@ -15,10 +15,7 @@ import org.apache.lucene.document.TextField
  * Entry for one game from gamelist.xml.
  */
 @ToString(includeNames = true)
-@EqualsAndHashCode(includes = [
-    "system", "scrapeId", "scrapeSource", "path", "name", "desc", "image", "thumbnail",
-    "developer", "publisher", "genre", "players", "region", "romtype", "releasedate",
-    "rating", "playcount", "lastplayed", "size"])
+@EqualsAndHashCode(includes = ["system", "path", "size"])
 class Game {
     /**
      * The system this rom is for (example 'atari2600').
@@ -182,17 +179,36 @@ class Game {
         if (scrapeId) doc.add(new StringField("scrapeId", scrapeId, Field.Store.YES))
         if (scrapeSource) doc.add(new StringField("scrapeSource", scrapeSource, Field.Store.YES))
         if (path) doc.add(new StringField("path", path, Field.Store.YES))
-        if (name) doc.add(new TextField("name", name, Field.Store.YES))
+        if (name) {
+            doc.add(new TextField("name", name, Field.Store.YES))
+            doc.add(new StringField("nameOrder", name, Field.Store.YES))
+        }
+        // No sorting by description. Who cares.
         if (desc) doc.add(new TextField("desc", desc, Field.Store.YES))
         if (image) doc.add(new StringField("image", image, Field.Store.YES))
         if (thumbnail) doc.add(new StringField("thumbnail", thumbnail, Field.Store.YES))
-        if (developer) doc.add(new TextField("developer", developer, Field.Store.YES))
-        if (publisher) doc.add(new TextField("publisher", publisher, Field.Store.YES))
-        if (genre) doc.add(new TextField("genre", genre, Field.Store.YES))
+        if (developer) {
+            doc.add(new TextField("developer", developer, Field.Store.YES))
+            doc.add(new StringField("developerOrder", developer, Field.Store.YES))
+        }
+        if (publisher) {
+            doc.add(new TextField("publisher", publisher, Field.Store.YES))
+            doc.add(new StringField("publisherOrder", developer, Field.Store.YES))
+        }
+        if (genre) {
+            doc.add(new TextField("genre", genre, Field.Store.YES))
+            doc.add(new StringField("genreOrder", genre, Field.Store.YES))
+        }
         doc.add(new IntPoint("players", players))
         doc.add(new StoredField("players", players))
-        if (region) doc.add(new TextField("region", region, Field.Store.YES))
-        if (romtype) doc.add(new TextField("romtype", romtype, Field.Store.YES))
+        if (region) {
+            doc.add(new TextField("region", region, Field.Store.YES))
+            doc.add(new StringField("regionOrder", region, Field.Store.YES))
+        }
+        if (romtype) {
+            doc.add(new TextField("romtype", romtype, Field.Store.YES))
+            doc.add(new StringField("romtypeOrder", romtype, Field.Store.YES))
+        }
 
         if (releasedate) {
             doc.add(new LongPoint("releasedate", releasedate))

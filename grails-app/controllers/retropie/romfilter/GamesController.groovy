@@ -13,14 +13,10 @@ import java.nio.file.Paths
 class GamesController {
 
     /**
-     * TODO: action: Fixed delete?
-     * TODO: Highlight?
+     * TODO: Highlight with Lucene. The Datatables highligher won't cut it.
      * TODO: Card View?
-     * TODO: Move to a consolidated view of systems instead of view of one system?
      * TODO: More unit tests
      * TODO: More integration tests
-     * TODO: Use endless scrolling datatables to load and filter the data on demand
-     * TODO: Search box should support field search.
      * TODO: Show name/filename similarity?
      * TODO: Filter to show dissimilar name/filenames
      * TODO: Filter those without gamelistEntry
@@ -30,8 +26,12 @@ class GamesController {
      * TODO: Make scanning quarts jobs
      * TODO: On demand complete re-scanning (delete and rebuild)
      * TODO: Ordering in lucene based on datatables request
-     * TODO: Show images again.
-     * TODO: Test delete game.
+     * TODO: Restore show game link
+     * TODO: Verify show game
+     * TODO: Restore delete game button.
+     * TODO: Verify delete
+     * TODO: ALL fields, start most hidden with column picker.
+     * TODO: Additional field that is name over filename with visual comparison.
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
@@ -44,7 +44,19 @@ class GamesController {
      * DONE: Tests for parsing gamelist.xml file.
      * DONE: More reliable, non-changing hash method. Explicit field list.
      * DONE: Re-use Lucene Document object to whatever extent possible to improve indexing speed.
+     * DONE: Move to a consolidated view of systems instead of view of one system?
+     * DONE: Use endless scrolling datatables to load and filter the data on demand
+     * DONE: Search box should support field search.
+     * DONE: Index correctly for ordering all fields except description.
      */
+
+    /**
+     * Methods where we enforce specific http verbs.
+     */
+    static allowedMethods = [
+        feed: 'POST',
+        delete: 'DELETE'
+    ]
 
     /**
      * GrailsApplication (auto-injected).
@@ -76,15 +88,17 @@ class GamesController {
         'gif':  'image/gif',
     ].asImmutable()
 
-    /**
+    def index() {
+        redirect action:'browse'
+    }
+
+        /**
      * List all all roms. AKA listRoms.
      *
      * @param system
      * @return
      */
-    def index() {
-        String romsDataFeedUrl = g.createLink(mapping: 'gamesDataFeed', params: [:])
-        render view: 'listGames', model: [romsDataFeed: romsDataFeedUrl ]
+    def browse() {
     }
 
     /**
@@ -92,8 +106,8 @@ class GamesController {
      * @param system
      * @return
      */
-    def gamesDataFeed() {
-        log.info("gamesDataFeed")
+    def feed() {
+        log.info("feed")
         log.info("params ${params}")
         DatatablesRequest datatablesRequest = new DatatablesRequest(params)
         log.error("request ${datatablesRequest}")
@@ -108,11 +122,11 @@ class GamesController {
      * @param hash
      * @return
      */
-    def showGame(int hash) {
-        Game gamelistEntry = indexerDataService.getGameForHash(hash)
-        if (gamelistEntry) {
+    def show(int hash) {
+        Game game = indexerDataService.getGameForHash(hash)
+        if (game) {
             return [
-                gamelistEntry: gamelistEntry,
+                game: game,
             ]
         }
         else {
@@ -128,7 +142,7 @@ class GamesController {
      * @path hash
      * @return
      */
-    def deleteGame(int hash) {
+    def delete(int hash) {
         Game toDeleteEntry = indexerDataService.getGameForHash(hash)
         if (!toDeleteEntry) {
             log.error("GameEntry.hash ${hash} not found in index")
@@ -172,7 +186,7 @@ class GamesController {
      * @param hash
      * @return
      */
-    def showGameImage(int hash) {
+    def image(int hash) {
         Game game = indexerDataService.getGameForHash(hash)
         if (game) {
             String fileType = FilenameUtils.getExtension(game.image).toLowerCase()

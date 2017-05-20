@@ -10,13 +10,19 @@ json {
     recordsFiltered gamesDataFeed.recordsFiltered
     error gamesDataFeed.error
     data gamesDataFeed.games.collect { Game gameEntry ->
+        String imageTag = ''
+        if (gameEntry?.hash) {
+            String imageUrl = g.link(action: 'image', params: [hash: gameEntry?.hash])
+            imageTag = "<image src='${imageUrl}'/>"
+        }
+
         return [
             gameEntry.path,
             gameEntry?.name ?: '',
+            gameEntry?.system ?: '',
             gameEntry?.genre ?: '',
             gameEntry?.desc ?: '',
-            gameEntry?.image ?: '',
+            imageTag,
         ]
-
     }
 }
