@@ -32,6 +32,7 @@ class GamesController {
      * TODO: Verify delete
      * TODO: ALL fields, start most hidden with column picker.
      * TODO: Additional field that is name over filename with visual comparison.
+     * TODO: Change table rows to be ALL top justified
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
