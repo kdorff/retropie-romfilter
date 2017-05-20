@@ -18,8 +18,8 @@ import org.apache.lucene.document.TextField
 @EqualsAndHashCode(includes = [
     "system", "scrapeId", "scrapeSource", "path", "name", "desc", "image", "thumbnail",
     "developer", "publisher", "genre", "players", "region", "romtype", "releasedate",
-    "rating", "playcount", "lastplayed"])
-class GamelistEntry {
+    "rating", "playcount", "lastplayed", "size"])
+class Game {
     /**
      * The system this rom is for (example 'atari2600').
      */
@@ -122,6 +122,12 @@ class GamelistEntry {
     long lastplayed
 
     /**
+     * Size of the file.
+     * Not in gamelist.xml, observed form disc.
+     */
+    long size
+
+    /**
      * The document that was used to create this entry.
      * Null if the document wasn't reconstituted from the indexer.
      */
@@ -137,13 +143,13 @@ class GamelistEntry {
     /**
      * Default constructor.
      */
-    GamelistEntry() {
+    Game() {
     }
 
     /**
      * Restore from Index constructor.
      */
-    GamelistEntry(Document document) {
+    Game(Document document) {
         this()
         system = document.system
         scrapeId = document.scrapeId ?: ''
@@ -171,8 +177,7 @@ class GamelistEntry {
      *
      * @return
      */
-    Document makeDocument() {
-        Document doc = new Document();
+    Document convertToDocument(Document doc) {
         doc.add(new StringField("system", system, Field.Store.YES))
         if (scrapeId) doc.add(new StringField("scrapeId", scrapeId, Field.Store.YES))
         if (scrapeSource) doc.add(new StringField("scrapeSource", scrapeSource, Field.Store.YES))
@@ -205,6 +210,8 @@ class GamelistEntry {
         }
         doc.add(new IntPoint("hash", hash))
         doc.add(new StoredField("hash", hash))
+        doc.add(new LongPoint("size", size))
+        doc.add(new StoredField("size", size))
 
         String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${this.hash}"
         doc.add(new TextField("all", all, Field.Store.NO))

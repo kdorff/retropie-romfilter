@@ -2,16 +2,15 @@ package retropie.romfilter
 
 import grails.core.GrailsApplication
 import org.apache.commons.io.FilenameUtils
-import retropie.romfilter.feed.RomsDataFeed
-import retropie.romfilter.indexed.GamelistEntry
-import retropie.romfilter.indexed.RomEntry
-import retropie.romfilter.indexed.SystemEntry
+import retropie.romfilter.feed.GamesDataFeed
+import retropie.romfilter.feed.datatables.DatatablesRequest
+import retropie.romfilter.indexed.Game
 
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class SystemController {
+class GamesController {
 
     /**
      * TODO: action: Fixed delete?
@@ -28,6 +27,9 @@ class SystemController {
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
      * TODO: Add remaining file extensions to the various systems to config
+     * TODO: Make scanning quarts jobs
+     * TODO: On demand complete re-scanning (delete and rebuild)
+     * TODO: Ordering in lucene based on datatables request
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
@@ -39,6 +41,7 @@ class SystemController {
      * DONE: Integration tests.
      * DONE: Tests for parsing gamelist.xml file.
      * DONE: More reliable, non-changing hash method. Explicit field list.
+     * DONE: Re-use Lucene Document object to whatever extent possible to improve indexing speed.
      */
 
     /**
@@ -72,37 +75,14 @@ class SystemController {
     ].asImmutable()
 
     /**
-     * List all systems that have roms.
-     *
-     * @return
-     */
-    def listSystems() {
-        log.info("Listing systems")
-        List<SystemEntry> systems = indexerDataService.getAllSystemsEntries()
-        Map<String, Integer> systemToNumRoms = [:]
-        systems.each { SystemEntry systemEntry ->
-            systemToNumRoms[systemEntry.system] = indexerDataService.getRomEntryCountForSystem(systemEntry.system)
-        }
-        return [
-            systems: systems,
-            systemToNumRoms: systemToNumRoms,
-        ]
-    }
-
-    /**
-     * List all all roms for a single system.
+     * List all all roms. AKA listRoms.
      *
      * @param system
      * @return
      */
-    def listRomsForSystem(String system) {
-        List<RomEntry> romEntryList = indexerDataService.getRomEntriesForSystem(system)
-        String romsDataFeedUrl = g.createLink(mapping: 'romsDataFeed', params: [system: system])
-        return [
-            system: system,
-            roms: romEntryList,
-            romsDataFeed: romsDataFeedUrl
-        ]
+    def index() {
+        String romsDataFeedUrl = g.createLink(mapping: 'gamesDataFeed', params: [:])
+        render view: 'listGames', model: [romsDataFeed: romsDataFeedUrl ]
     }
 
     /**
@@ -110,17 +90,13 @@ class SystemController {
      * @param system
      * @return
      */
-    def romsDataFeed(String system) {
-        println "romsDataFeed for ${system}"
-        println "params ${params}"
-        List<RomEntry> roms = indexerDataService.getRomEntriesForSystem(system)
-        RomsDataFeed romsDataFeed = new RomsDataFeed(
-            draw: params.int('draw') ?: 0,
-            roms: roms,
-            recordsTotal: roms.size(),
-            recordsFiltered: roms.size(),
-        )
-        respond romsDataFeed
+    def gamesDataFeed() {
+        log.info("gamesDataFeed")
+        log.info("params ${params}")
+        DatatablesRequest datatablesRequest = new DatatablesRequest(params)
+        log.error("request ${datatablesRequest}")
+        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(datatablesRequest)
+        respond gamesDataFeed
     }
 
     /**
@@ -130,16 +106,15 @@ class SystemController {
      * @param hash
      * @return
      */
-    def showRomForSystem(String system, int hash) {
-        GamelistEntry gamelistEntry = indexerDataService.getGamelistEntryForSystemAndHash(system, hash)
+    def showGame(int hash) {
+        Game gamelistEntry = indexerDataService.getGameForHash(hash)
         if (gamelistEntry) {
             return [
-                system       : system,
                 gamelistEntry: gamelistEntry,
             ]
         }
         else {
-            log.error("No game found for ${system} ${hash}")
+            log.error("No game found for ${hash}")
             response.status = 404
         }
     }
@@ -151,30 +126,27 @@ class SystemController {
      * @path hash
      * @return
      */
-    def deleteRomForSystem(String system, int hash) {
-        RomEntry toDeleteEntry = indexerDataService.getRomEntryForSystemAndHash(system, hash)
+    def deleteGame(int hash) {
+        Game toDeleteEntry = indexerDataService.getGameForHash(hash)
         if (!toDeleteEntry) {
-            log.error("ROM for RomEntry.id ${id} not found in database")
+            log.error("GameEntry.hash ${hash} not found in index")
             response.status = 404
         }
         else {
-            Path toDeletePath = Paths.get(
-                configService.getRomsPathForSystem(system),
-                toDeleteEntry.path)
+            Path toDeletePath = Paths.get(configService.getRomsPath(), toDeleteEntry.system, toDeleteEntry.path)
             if (!Files.exists(toDeletePath)) {
                 log.error("ROM not found in on disc ${toDeletePath}")
-                toDeleteEntry.delete(flush: true)
+                indexerIndexingService.deleteGame(toDeleteEntry)
                 log.error("Deleted missing from from database")
                 response.status = 404
             } else {
                 // Delete the file (move it to trash)
-                String trashPathStr = configService.getTrashPathForSystem(system)
-                Path trashDestinationPath = Paths.get(trashPathStr, toDeletePath.fileName.toString())
+                String trashPathStr = configService.trashPath
+                Path trashDestinationPath = Paths.get(trashPathStr, toDeleteEntry.system, toDeletePath.fileName.toString())
 
                 try {
                     if (Files.move(toDeletePath, trashDestinationPath)) {
-
-                        indexerIndexingService.deleteRomEntry(toDeleteEntry)
+                        indexerIndexingService.deleteGame(toDeleteEntry)
                         log.trace("Moved ${toDeletePath} to ${trashDestinationPath}")
                         response.status = 200
                     } else {
@@ -198,8 +170,8 @@ class SystemController {
      * @param hash
      * @return
      */
-    def showRomImageForSystem(String system, int hash) {
-        GamelistEntry game = indexerDataService.getGamelistEntryForSystemAndHash(system, hash)
+    def showGameImage(int hash) {
+        Game game = indexerDataService.getGameForHash(hash)
         if (game) {
             String fileType = FilenameUtils.getExtension(game.image).toLowerCase()
             String mimeType = IMAGE_EXT_TO_MIME[fileType]
@@ -218,7 +190,7 @@ class SystemController {
             }
         }
         else {
-            log.error("No game (for image) found for ${system} ${hash}")
+            log.error("No game (for image) found for ${hash}")
             response.status = 404
         }
     }

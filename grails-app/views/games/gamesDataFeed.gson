@@ -1,0 +1,22 @@
+import retropie.romfilter.feed.GamesDataFeed
+import retropie.romfilter.indexed.Game
+
+model {
+    GamesDataFeed gamesDataFeed
+}
+json {
+    draw gamesDataFeed.draw
+    recordsTotal gamesDataFeed.recordsTotal
+    recordsFiltered gamesDataFeed.recordsFiltered
+    error gamesDataFeed.error
+    data gamesDataFeed.games.collect { Game gameEntry ->
+        return [
+            gameEntry.path,
+            gameEntry?.name ?: '',
+            gameEntry?.genre ?: '',
+            gameEntry?.desc ?: '',
+            gameEntry?.image ?: '',
+        ]
+
+    }
+}

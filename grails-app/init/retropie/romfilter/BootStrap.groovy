@@ -35,11 +35,9 @@ class BootStrap {
         log.info("retropie-romfilter configuration:")
         showConfig(grailsApplication.config.retropie, "retropie.")
 
-        log.info("SystemEntry.count=${indexerDataService.systemEntryCount}")
-        log.info("RomEntry.count=${indexerDataService.romEntryCount}")
-        log.info("GamelistEntry.count=${indexerDataService.gamelistEntryCount}")
+        log.info("GamelistEntry.count=${indexerDataService.gamesCount}")
 
-        if (configService.scanAtStartup && (indexerDataService.romEntryCount + indexerDataService.systemEntryCount + indexerDataService.gamelistEntryCount) == 0) {
+        if (configService.scanAtStartup && indexerDataService.gamesCount == 0) {
             log.info("Indexes are all empty. Starting full scan.")
             romfilterSyncService.scanAll()
         }

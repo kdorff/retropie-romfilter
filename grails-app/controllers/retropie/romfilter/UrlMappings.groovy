@@ -9,29 +9,25 @@ class UrlMappings {
             }
         }
 
-        name listSystems: "/systems" {
-            controller = 'system'
-            action = 'listSystems'
+        name listGames: "/games" {
+            controller = 'games'
+            action = 'index'
         }
-        name listRomsForSystem: "/system/$system" {
+        name gameDataFeed: "/games/feed" {
             controller = 'system'
-            action = 'listRomsForSystem'
+            action = [POST: 'gamesDataFeed']
         }
-        name romsDataFeed: "/system/$system/feed" {
-            controller = 'system'
-            action = [POST: 'romsDataFeed']
+        name showGame: "/games/$hash" {
+            controller = 'games'
+            action = 'showGame'
         }
-        name romForSystem: "/system/$system/rom/$hash" {
-            controller = 'system'
-            action = 'showRomForSystem'
+        name showGameImage: "/games/$hash/image" {
+            controller = 'games'
+            action = 'showGameImage'
         }
-        name deleteRomForSystem: "/system/$system/rom/$hash/delete" {
-            controller = 'system'
-            action = [DELETE: 'deleteRomForSystem']
-        }
-        name showRomImageForSystem: "/system/$system/rom/$hash/image" {
-            controller = 'system'
-            action = 'showRomImageForSystem'
+        name deleteGame: "/roms/$hash/delete" {
+            controller = 'games'
+            action = [DELETE: 'deleteGame']
         }
 
         "/"(view:"/systems")

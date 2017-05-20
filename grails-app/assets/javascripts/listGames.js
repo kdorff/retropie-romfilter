@@ -1,15 +1,15 @@
 $(document).ready(function() {
     $('#romTable').DataTable({
         searchHighlight: false,
-        aLengthMenu: [
-            [-1],
-            ["All"]
-        ],
-        iDisplayLength: -1,
+        // aLengthMenu: [
+        //     [-1],
+        //     ["All"]
+        // ],
+        // iDisplayLength: -1,
         "processing": true,
         "serverSide": true,
         "ajax": {
-            url: romsDataFeed,
+            url: gamesDataFeed,
             type: 'POST'
         }
     });

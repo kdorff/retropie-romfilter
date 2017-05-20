@@ -18,24 +18,11 @@ beans = {
         'path': ref('keywordAnalyzer'),
         'image': ref('keywordAnalyzer'),
         'thumbnail': ref('keywordAnalyzer'),
-        'gamelistEntryHash': ref('keywordAnalyzer'),
     ])
-
-    systemsIndexDir(SimpleFSDirectory, Paths.get(application.config.retropie.romfilter.systemsIndexPath))
-    systemsWriterConfig(IndexWriterConfig,
-        ref('queryAnalyzer'))
-    systemsIndexWriter(IndexWriter,
-        ref('systemsIndexDir'), ref('systemsWriterConfig'))
 
     gamesIndexDir(SimpleFSDirectory, Paths.get(application.config.retropie.romfilter.gamesIndexPath))
     gamesWriterConfig(IndexWriterConfig,
         ref('queryAnalyzer'))
     gamesIndexWriter(IndexWriter,
         ref('gamesIndexDir'), ref('gamesWriterConfig'))
-
-    romsIndexDir(SimpleFSDirectory, Paths.get(application.config.retropie.romfilter.romsIndexPath))
-    romsWriterConfig(IndexWriterConfig,
-        ref('queryAnalyzer'))
-    romsIndexWriter(IndexWriter,
-        ref('romsIndexDir'), ref('romsWriterConfig'))
 }

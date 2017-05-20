@@ -4,16 +4,15 @@
     <meta name="layout" content="main"/>
     <title>List of ROMS for ${system}</title>
     <asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
-    <asset:javascript src="listRomsForSystem.js" asset-defer="true" />
-    <asset:stylesheet src="listRomsForSystem.css"/>
+    <asset:javascript src="listGames.js" asset-defer="true" />
+    <asset:stylesheet src="listGames.css"/>
     <g:javascript>
-       var romsDataFeed = '${raw(romsDataFeed)}';
+       var gamesDataFeed = '${raw(gamesDataFeed)}';
     </g:javascript>
 </head>
 <body>
     <p>Navigation:
-        <g:link mapping="listSystems">Systems</g:link> |
-        <g:link mapping="listRomsForSystem" params="[system: system]">${system}</g:link>
+        <g:link mapping="listGames">List Games</g:link>
 
     <table id="romTable" class="display" cellspacing="0" width="100%">
         <thead>

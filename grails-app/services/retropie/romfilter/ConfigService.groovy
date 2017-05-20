@@ -50,17 +50,6 @@ class ConfigService {
     }
 
     /**
-     * The gamelists path for a specific system. This references a folder that might contain a gamelist.xml
-     * for the specified system.
-     *
-     * @param system
-     * @return
-     */
-    String getGamelistPathForSystem(String system) {
-        return "${gamelistsPath}/${system}/gamelist.xml"
-    }
-
-    /**
      * The rom path. This references a folder that contains one folder per system. Each of these
      * folders contains roms for that system.
      *
@@ -69,16 +58,6 @@ class ConfigService {
      */
     String getRomsPath() {
         return grailsApplication.config.retropie.emulationStation.romsPath
-    }
-
-    /**
-     * The roms path for a specific system.
-     *
-     * @param system
-     * @return
-     */
-    String getRomsPathForSystem(String system) {
-        return "${romsPath}/${system}"
     }
 
     /**
@@ -99,16 +78,6 @@ class ConfigService {
      */
     String getImagesPath() {
         return grailsApplication.config.retropie.emulationStation.imagesPath
-    }
-
-    /**
-     * Return the images path for a given system
-     *
-     * @param system
-     * @return
-     */
-    String getImagesPathForSystem(String system) {
-        return "${imagesPath}/${system}"
     }
 
     /**
@@ -141,30 +110,12 @@ class ConfigService {
     }
 
     /**
-     * Return the path to the systems index folder.
-     *
-     * @return
-     */
-    String getSystemsIndexPath() {
-        return grailsApplication.config.retropie.romfilter.systemsIndexPath
-    }
-
-    /**
      * Return the path to the games index folder.
      *
      * @return
      */
     String getGamesIndexPath() {
         return grailsApplication.config.retropie.romfilter.gamesIndexPath
-    }
-
-    /**
-     * Return the path to the games index folder.
-     *
-     * @return
-     */
-    String getRomsIndexPath() {
-        return grailsApplication.config.retropie.romfilter.romsIndexPath
     }
 
     /**

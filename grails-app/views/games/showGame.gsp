@@ -4,14 +4,13 @@
     <meta name="layout" content="main"/>
     <title>Show ROM Details for ${gamelistEntry?.name}</title>
     <asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
-    <asset:javascript src="showRomForSystem.js" asset-defer="true" />
-    <asset:stylesheet src="showRomForSystem.css"/>
+    <asset:javascript src="showGame.js" asset-defer="true" />
+    <asset:stylesheet src="showGame.css"/>
 </head>
 <body>
     <p>Navigation:
-        <g:link mapping="listSystems">Systems</g:link> |
-        <g:link mapping="listRomsForSystem" params="[system: system]">${system}</g:link> |
-        <g:link mapping="romForSystem" params="[system: system, hash: gamelistEntry.hash]">${gamelistEntry.name}</g:link>
+        <g:link mapping="listGames">${Browse ROMs}</g:link> |
+        <g:link mapping="showGame" params="[hash: gamelistEntry.hash]">${gamelistEntry.name}</g:link>
 
     <table id="singleRomTable">
             <tr><th>System</th><td>${gamelistEntry?.system}</td></tr>
@@ -32,7 +31,7 @@
             <tr><th>Scrape Source</th><td>${gamelistEntry?.scrapeSource}</td></tr>
             <tr><th>Image</th><td>
                 <g:if test="${gamelistEntry && gamelistEntry.image && gamelistEntry.system && gamelistEntry.scrapeId}">
-                    <img src='<g:createLink mapping="showRomImageForSystem" params="[system: gamelistEntry.system, hash: gamelistEntry.hash]"/>' />
+                    <img src='<g:createLink mapping="showGameImage" params="[system: gamelistEntry.system, hash: gamelistEntry.hash]"/>' />
                 </g:if>
             </td></tr>
     </table>

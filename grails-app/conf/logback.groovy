@@ -22,5 +22,5 @@ if (Environment.isDevelopmentMode() && targetDir) {
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
 }
 
-logger 'retropie.romfilter', TRACE, ['STDOUT'], false
+logger 'retropie.romfilter', INFO, ['STDOUT'], false
 logger'grails.app.controllers', DEBUG, ['STDOUT'], false

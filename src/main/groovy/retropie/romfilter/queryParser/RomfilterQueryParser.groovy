@@ -44,46 +44,48 @@ class RomfilterQueryParser extends QueryParser {
 
     @Override
     Query getRangeQuery(String field, String part1, String part2, boolean inclusive, boolean endInclusive) throws ParseException {
-        log.info("Perhaps creating range query ${field} ${part1} ${part2} ${inclusive}");
+        //log.info("Perhaps creating range query ${field} ${part1} ${part2} ${inclusive}");
 
         Class dataClass = rangleableFields[field]
-        log.info("dataClass=${dataClass}")
+        //log.info("dataClass=${dataClass}")
         Query result
-        if (dataClass == IntPoint) {
-            int lower = Integer.parseInt(part1)
-            int upper = Integer.parseInt(part2)
-            if (upper == lower) {
-                result = IntPoint.newExactQuery(field, lower)
+        try {
+            if (dataClass == IntPoint) {
+                //log.info("it is an int query")
+                int lower = Integer.parseInt(part1)
+                int upper = Integer.parseInt(part2)
+                if (upper == lower) {
+                    result = IntPoint.newExactQuery(field, lower)
+                } else {
+                    result = IntPoint.newRangeQuery(field, lower, upper)
+                }
+            } else if (dataClass == LongPoint) {
+                //log.info("it is an long query")
+                long lower = Long.parseLong(part1)
+                long upper = Long.parseLong(part2)
+                if (upper == lower) {
+                    result = LongPoint.newExactQuery(field, lower)
+                } else {
+                    result = LongPoint.newRangeQuery(field, lower, upper)
+                }
+            } else if (dataClass == DoublePoint) {
+                //log.info("it is an double query")
+                double lower = Double.parseDouble(part1)
+                double upper = Double.parseDouble(part2)
+                if (upper == lower) {
+                    result = DoublePoint.newExactQuery(field, lower)
+                } else {
+                    result = DoublePoint.newRangeQuery(field, lower, upper)
+                }
+            } else {
+                // Build a normal term range query as a fallback
+                result = super.getRangeQuery(field, part1, part2, inclusive, endInclusive);
             }
-            else {
-                result = IntPoint.newRangeQuery(field, lower, upper)
-            }
-        } else if (dataClass == LongPoint) {
-            log.info("it is an int query")
-            long lower = Long.parseLong(part1)
-            long upper = Long.parseLong(part2)
-            if (upper == lower) {
-                result = LongPoint.newExactQuery(field, lower)
-            }
-            else {
-                result = LongPoint.newRangeQuery(field, lower, upper)
-            }
+            return result
         }
-        else if (dataClass == DoublePoint) {
-            log.info("it is an double query")
-            double lower = Double.parseDouble(part1)
-            double upper = Double.parseDouble(part2)
-            if (upper == lower) {
-                result = DoublePoint.newExactQuery(field, lower)
-            }
-            else {
-                result = DoublePoint.newRangeQuery(field, lower, upper)
-            }
+        catch (NumberFormatException e) {
+            log.error("Bad query field:${field} part1:${part1} part2:${part2} inclusive:${inclusive}")
+            return super.getRangeQuery(field, part1, part2, inclusive, endInclusive)
         }
-        else {
-            // Build a normal term range query as a fallback
-            result = super.getRangeQuery(field, part1, part2, inclusive, endInclusive);
-        }
-        return result
     }
 }
