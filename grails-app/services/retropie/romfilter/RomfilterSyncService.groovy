@@ -49,8 +49,8 @@ class RomfilterSyncService {
         long start = System.currentTimeMillis()
         log.info("Finding gamelists.xml files")
         Path gamelistsPath = Paths.get(configService.gamelistsPath)
-        GParsPool.withPool {
-            foldersContainedWithin(gamelistsPath).eachParallel { Path gamelistFolderPath ->
+        // GParsPool.withPool {
+            foldersContainedWithin(gamelistsPath).each { Path gamelistFolderPath ->
                 String system = gamelistFolderPath.fileName.toString()
                 if (system in configService.systemsToSkip) {
                     log.info("Skipping system ${system}")
@@ -69,7 +69,7 @@ class RomfilterSyncService {
                         romFilnameToPath)
                 }
             }
-        }
+        //}
         log.info("All gamelist.xml files found. Took ${System.currentTimeMillis() - start}ms")
     }
 
