@@ -7,7 +7,7 @@ for specific details or even delete ROMs
 (move them to a trash folder).
 
 You should be able to run this directly on a your RetroPie if you install Oracle Java 8.
-I haven't yet done any performance testing to see how well it runs on a Pi.
+See the install guide and notes below.
 
 Currently, I prefer to run romfilter on another machine on the same network.
 
@@ -88,37 +88,74 @@ And navigate your browser to
 http://localhost:8080/systems
 ```
 
-### FAQs
 
-Q: When I first start the app it takes forever before it responds.
+### Searching
 
-A: Currently it scans the roms and gamelist.xml files at first startup. This takes time. I'll make this nicer in the future.
+Since the focus of this application is browsing your ROM collection, here are some
+example searches to help illustrate how to use the application:
 
-Q: Things changed in the filesystem or I have re-scraped but I don't see the changes in romfilter
+```
+tempest             | Find the term tempest in any field
+"super mario"       | Find the phrase 'super mario' (the term super followed by the term mario) in any field
+name:"pac man"      | Find the phrase 'pac man' (the term 'pac' followed by the term 'man' in the name field
+name:pac man        | Find the term 'pac' in the name field OR the term 'man' in any field (probably not what you wanted)
++name:pac +name:man | Find the term 'pac' in the name field AND the term 'man' in the name field
+```
 
-A: Yeah, I need to add on-demand re-scan. Stop the app, delete the database in the app's local directory, and start the app again. Sorry. I'll do something about this soon.
+Fields names you can use for search prefixes
 
-Q: I'm having a problem
-
-A: Wait for the app to become more stable. Try deleting the database file stored in the app directory.
-
-Q: Should I open this port up in my router so I can browse my roms while I am away from home or let me cousin look at it?
-
-A: No. This app has very little security baked in. Don't do it. Run this on your private network, only.
-
-## Installing and running from source on a RetroPie
-
-### Fetching the source
-
-Coming soon
-
-### Running the app
-
-Coming soon
+```
+system, size, name, desc, developer, publisher, genre, players,
+region, romtype, releasedate, rating, playcount, lastplayed,
+scrapeId, scrapeSource, hash
+```
 
 ### FAQs
 
-Coming soon
+**Q:** When I first start the app it takes forever before it responds.
+
+**A:** Currently it scans the roms and gamelist.xml files at first startup. This takes time. I'll make this nicer in the future.
+
+**Q:** Things changed in the filesystem or I have re-scraped but I don't see the changes in romfilter
+
+**A:** Yeah, I need to add on-demand re-scan. Stop the app, delete the index folder in the app's directory (romfilter-games.index), and start the app again.
+
+**Q:** I'm having a problem
+
+**A:** Wait for the app to become more stable. Try deleting the index folder in the app's directory (romfilter-games.index).
+
+**Q:** Should I open this port up in my router so I can browse my roms while I am away from home or let me cousin look at it?
+
+**A:** No. This app has very little security baked in. Don't do it. Run this on your private network, only.
+
+**Q:** Is the 'hash' the hash of the ROM?
+
+**A:**: No. That is a good idea and I may considering switch to that. But now it is a number that is combination of other fields in the entry.
+
+## Running on a RetroPie
+
+
+You can (but may not want to) run this application directly on the Raspberry Pi. The setup
+instructions are about the same as the Mac version, but even simpler as you shouldn't need
+an external configuration file, ```.retropie-romfilter.yml```
+
+You need to have Oracle Java 8 installed. This should be achievalbe via:
+
+```
+sudo apt-get install oracle-java8-jdk
+```
+
+I've run romfilter in a Raspberry Pi 3b. Application startup was somewhat slow. Scanning the roms and
+parsing the gamelist.xml files (about 8500 ROMs across about 15 systems) took less than
+50 seconds, about the same amount of time as it took on my Mac.
+
+When idle, the application uses very little CPU. Once warmed up, the application performs well and
+searches feel snappy.
+
+The major issue with running on the Pi is the amount of memory used by Grails, the application, and Lucene.
+According to Top, romfilter took over 50% of the Pi's memory. This might hinder the RetroPie's
+ability to actually run games. For this reason, I continue to recommend running this application
+on another system in your LAN
 
 ## Screenshots
 
