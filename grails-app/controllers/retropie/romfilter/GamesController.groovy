@@ -17,7 +17,6 @@ class GamesController {
      * TODO: Card View?
      * TODO: More unit tests
      * TODO: More integration tests
-     * TODO: Show name/filename similarity?
      * TODO: Filter to show dissimilar name/filenames
      * TODO: Filter those without gamelistEntry
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
@@ -30,9 +29,12 @@ class GamesController {
      * TODO: Verify show game
      * TODO: Restore delete game button.
      * TODO: Verify delete
-     * TODO: ALL fields, start most hidden with column picker.
-     * TODO: Additional field that is name over filename with visual comparison.
+     * TODO: Column picker.
+     * TODO: Fancify name/path comparison
      * TODO: Change table rows to be ALL top justified
+     * TODO: What happened to the application header?
+     * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
+     *
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
@@ -49,6 +51,9 @@ class GamesController {
      * DONE: Use endless scrolling datatables to load and filter the data on demand
      * DONE: Search box should support field search.
      * DONE: Index correctly for ordering all fields except description.
+     * DONE: Move to Bootstrap css for the datatables
+     * DONE: ALL fields, start most hidden
+     * DONE: Additional field that is name over filename with visual comparison.
      */
 
     /**
@@ -68,11 +73,6 @@ class GamesController {
      * IndexerDataService (auto-injected).
      */
     IndexerDataService indexerDataService
-
-    /**
-     * RomfilterDataService (auto-injected).
-     */
-    IndexerIndexingService indexerIndexingService
 
     /**
      * ConfigService (auto-injected).
@@ -153,7 +153,7 @@ class GamesController {
             Path toDeletePath = Paths.get(configService.getRomsPath(), toDeleteEntry.system, toDeleteEntry.path)
             if (!Files.exists(toDeletePath)) {
                 log.error("ROM not found in on disc ${toDeletePath}")
-                indexerIndexingService.deleteGame(toDeleteEntry)
+                indexerDataService.deleteGame(toDeleteEntry)
                 log.error("Deleted missing from from database")
                 response.status = 404
             } else {
@@ -163,7 +163,7 @@ class GamesController {
 
                 try {
                     if (Files.move(toDeletePath, trashDestinationPath)) {
-                        indexerIndexingService.deleteGame(toDeleteEntry)
+                        indexerDataService.deleteGame(toDeleteEntry)
                         log.trace("Moved ${toDeletePath} to ${trashDestinationPath}")
                         response.status = 200
                     } else {

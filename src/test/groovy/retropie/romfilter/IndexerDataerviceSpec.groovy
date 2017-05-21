@@ -9,7 +9,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 @Integration
-class IndexerIndexingServiceSpec extends Specification {
+class IndexerDataerviceSpec extends Specification {
     /**
      * Load all from resources.groovy.
      */

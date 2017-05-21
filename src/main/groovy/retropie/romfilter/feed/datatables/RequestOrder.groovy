@@ -36,9 +36,9 @@ class RequestOrder {
     int columnOrderNumber
 
     /**
-     * Column number to sort on.
+     * Column name to sort on.
      */
-    int columnNumber
+    String columnName
 
     /**
      * Sort direction.
@@ -50,7 +50,7 @@ class RequestOrder {
      */
     RequestOrder() {
         columnOrderNumber = 0
-        columnNumber = 0
+        columnName = ""
         direction = Direction.asc
     }
 
@@ -66,7 +66,7 @@ class RequestOrder {
             paramKey.find(orderColumnPattern) { whole, foundI  ->
                 int i = foundI.toInteger()
                 RequestOrder order = results.containsKey(i) ? results[i] : (results[i] = new RequestOrder())
-                order.columnNumber = paramVal.toInteger()
+                order.columnName = paramVal
             }
             paramKey.find(orderDirectionPattern) { whole, String foundI  ->
                 int i = foundI.toInteger()

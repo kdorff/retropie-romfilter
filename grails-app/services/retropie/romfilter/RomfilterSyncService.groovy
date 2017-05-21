@@ -27,11 +27,6 @@ class RomfilterSyncService {
     /**
      * IndexerService (auto-injected).
      */
-    IndexerIndexingService indexerIndexingService
-
-    /**
-     * IndexerService (auto-injected).
-     */
     IndexerDataService indexerDataService
 
     /**
@@ -182,7 +177,7 @@ class RomfilterSyncService {
             }
 
             if (romFound) {
-                indexerIndexingService.saveGame(game, doc)
+                indexerDataService.saveGame(game, doc)
             }
         }
     }
@@ -201,7 +196,7 @@ class RomfilterSyncService {
             path: path.fileName.toString(),
             size: Files.size(path)
         )
-        indexerIndexingService.saveGame(game, doc)
+        indexerDataService.saveGame(game, doc)
     }
 
     /**

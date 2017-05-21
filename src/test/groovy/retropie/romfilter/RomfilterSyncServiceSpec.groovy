@@ -13,7 +13,7 @@ class RomfilterSyncServiceSpec extends Specification {
      * ResourceService For loading actual resources.
      */
     ResourceService resourceServiceActual
-    IndexerIndexingService indexerIndexingService
+    IndexerDataService indexerDataService
 
     def setup() {
         resourceServiceActual = new ResourceService()
@@ -21,8 +21,8 @@ class RomfilterSyncServiceSpec extends Specification {
             getImagesPrefix() >> "~/.emulationstation/downloaded_images/"
             getImagesPath() >> "/home/pi/.emulationstation/downloaded_images"
         }
-        indexerIndexingService = Mock(IndexerIndexingService)
-        service.indexerIndexingService = indexerIndexingService
+        indexerDataService = Mock(IndexerDataService)
+        service.indexerDataService = indexerDataService
     }
 
     void "test xml parsing"() {
@@ -75,7 +75,7 @@ class RomfilterSyncServiceSpec extends Specification {
         service.parseGamelistFromXml('arcade', gamelistXml)
 
         then:
-        1 * indexerIndexingService.saveGame(expectedGames[0])
-        1 * indexerIndexingService.saveGame(expectedGames[1])
+        1 * indexerDataService.saveGame(expectedGames[0])
+        1 * indexerDataService.saveGame(expectedGames[1])
     }
 }

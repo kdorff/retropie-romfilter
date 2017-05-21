@@ -30,15 +30,6 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     void onStartup(Map<String, Object> event) {
     }
 
-    @Override
-    void onShutdown(Map<String, Object> event) {
-        log.info("Shutting down index writers")
-        applicationContext.getBean('systemsIndexWriter', IndexWriter)?.close()
-        applicationContext.getBean('gamesIndexWriter', IndexWriter)?.close()
-        applicationContext.getBean('romsIndexWriter', IndexWriter)?.close()
-        log.info("Writers shutdown.")
-    }
-
     /**
      * Incorporate external config, if it exists.
      *

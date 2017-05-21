@@ -11,12 +11,14 @@ import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.MatchAllDocsQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.ScoreDoc
+import org.apache.lucene.search.Sort
+import org.apache.lucene.search.SortField
 import org.apache.lucene.search.TopDocs
 import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
+import retropie.romfilter.feed.datatables.RequestOrder
 import retropie.romfilter.indexed.Game
 import retropie.romfilter.queryParser.RomfilterQueryParser
-
 
 class IndexerDataService {
     /**
@@ -36,7 +38,7 @@ class IndexerDataService {
     Analyzer queryAnalyzer
 
     /* ----------------------------------------------------------------------------
-     * GameindexEntry methods
+     * Data access methods
      */
 
     /**
@@ -151,24 +153,29 @@ class IndexerDataService {
             catch (ParseException e) {
                 query = new MatchAllDocsQuery()
             }
-        }
-        else {
+        } else {
             query = new MatchAllDocsQuery()
         }
 
         log.info("Performing Game query: ${query}")
         IndexSearcher indexSearcher = new IndexSearcher(gamesIndexReader)
 
-        TopDocs results = indexSearcher.search(query, gamesIndexReader.maxDoc())
+        Sort sort = buildSort(datatablesRequest)
+
+        TopDocs results
+        if (sort) {
+            results = indexSearcher.search(query, gamesIndexReader.maxDoc(), sort)
+        } else {
+            results = indexSearcher.search(query, gamesIndexReader.maxDoc())
+        }
         ScoreDoc[] scoreDocs = results.scoreDocs
 
         GamesDataFeed gamesDataFeed = new GamesDataFeed([
-            recordsTotal: getGamesCount(),
+            recordsTotal   : getGamesCount(),
             recordsFiltered: results.totalHits,
         ])
         for (int i = datatablesRequest.start; i < results.totalHits; i++) {
-            if (i > (datatablesRequest.start + datatablesRequest.length) - 1)
-            {
+            if (i > (datatablesRequest.start + datatablesRequest.length) - 1) {
                 break;
             }
             Document document = indexSearcher.doc(scoreDocs[i].doc)
@@ -176,5 +183,47 @@ class IndexerDataService {
         }
         log.info("Found ${gamesDataFeed.games.size()}")
         return gamesDataFeed
+    }
+
+    Sort buildSort(DatatablesRequest datatablesRequest) {
+        Sort sort = null
+//        if (datatablesRequest.orders) {
+//            SortField[] sortFields = datatablesRequest.orders.collect { RequestOrder requestOrder ->
+//                // Need to map column # to field and optionally the field's order field.
+//                // We should first switch to returning all fields and have an enum in Game
+//                // that maps field number to field's order field (which is often just the field
+//                // itself). Note that desc isn't sortable.
+//                // We should also first define the row to datatables in the initialization datatables javascript.
+//            } as SortField[]
+//            sort = new Sort(sortFields)
+//        }
+        return sort
+    }
+
+    /* ----------------------------------------------------------------------------
+     * Index creation methods.
+     */
+
+    /**
+     * Save a Ga,e to the index.
+     * @param game
+     * @param doc reused for performance
+     */
+    void saveGame(Game game, Document doc) {
+        doc.clear()
+        game.convertToDocument(doc)
+        gamesIndexWriter.addDocument(doc)
+        log.info("Saved Game ${game.system}/${game.path} | hash=${game.hash} to index")
+    }
+
+    /**
+     * Delete a GameEntry document
+     *
+     * @param gameEntry
+     * @return
+     */
+    long deleteGame(Game gameEntry) {
+        Query query = IntPoint.newExactQuery('hash', gameEntry.hash)
+        gamesIndexWriter.deleteDocuments(query)
     }
 }

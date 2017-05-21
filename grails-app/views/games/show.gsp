@@ -4,8 +4,8 @@
     <meta name="layout" content="main"/>
     <title>Show Details for ROM ${game?.path}</title>
     <asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
-    <asset:javascript src="gameShow.js" asset-defer="true" />
-    <asset:stylesheet src="gameShow.css"/>
+    <asset:javascript src="games/show.js" asset-defer="true" />
+    <asset:stylesheet src="games/show.css"/>
 </head>
 <body>
     <p>Navigation:

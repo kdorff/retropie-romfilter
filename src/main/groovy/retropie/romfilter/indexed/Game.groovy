@@ -1,5 +1,6 @@
 package retropie.romfilter.indexed
 
+import grails.util.Holders
 import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.apache.lucene.document.Document
@@ -17,29 +18,73 @@ import org.apache.lucene.document.TextField
 @ToString(includeNames = true)
 @EqualsAndHashCode(includes = ["system", "path", "size"])
 class Game {
+
     /**
+     * Column details.
+     */
+    enum GameColumn {
+        SYSTEM(0, 'system', 'system', true, 'System', true),
+        PATH(1, 'path', 'path', false, 'Path', false),
+        SIZE(2, 'size', 'size', true, 'Size', false),
+        NAME(3, 'name', 'nameOrder', true, 'Name', true),
+        NAME_PATH_COMPARISON(4, 'namePathComparison', null, false, 'Name/Path Comparison', true),
+        DESCRIPTION(5, 'desc', null, true, 'Description', true),
+        IMAGE(6, 'image', null, false, 'Image', true),
+        THUMBNAIL(7, 'thumbnail', null, false, 'Thumbnail', false),
+        DEVELOPER(8, 'developer', 'developerOrder', true, 'Developer', true),
+        PUBLISHER(9, 'publisher', 'publisherOrder', true, 'Publisher', true),
+        GENRE(10, 'genre', 'genreOrder', true, 'Genre', false),
+        PLAYERS(11, 'players', 'players', true, 'Players', false),
+        REGION(12, 'region', 'regionOrder', true, 'Region', false),
+        ROM_TYPE(13, 'romtype', 'romtypeOrder', true, 'ROM Type', false),
+        RELEASE_DATE(14, 'releasedate', 'releasedate', true, 'Release Date', false),
+        RATING(15, 'rating', 'rating', true, 'Rating', false),
+        PLAY_COUNT(16, 'playcount', 'playcount', true, 'Play Count', false),
+        LAST_PLAYED(17, 'lastplayed', 'lastplayed', true, 'Last Played', false),
+        SCRAPE_ID(18, 'scrapeId', 'scrapeId', true, 'Scrape ID', false),
+        SCRAPE_SOURCE(19, 'scrapeSource', 'scrapeSource', true, 'Scrape Source', false),
+        HASH(20, 'hash', 'hash', true, 'Hash', false),
+
+        final int number
+        final String field
+        final String orderField
+        final boolean searchable
+        final boolean orderable
+        final String friendlyName
+        final String initiallyVisible
+
+        GameColumn(int number, String field, String orderField, boolean searchable, String friendlyName, boolean initiallyVisible) {
+            this.number = number
+            this.field = field
+            this.orderField = orderField
+            this.searchable = searchable
+            this.orderable = orderField != null
+            this.friendlyName = friendlyName
+            this.initiallyVisible = initiallyVisible
+        }
+    }
+
+    /**
+     * Always has  value since the file must exist at the time of scanning.
      * The system this rom is for (example 'atari2600').
+     * Not in gamelist.xml, discovered during scanning based on the folder name that is being scanned.
      */
-    String system         // not in gamelist.xml, effectively what folder the gamelist.xml file was in
+    String system
 
     /**
-     * The id within scrapeSource for this game.
-     * This may generally be an int, but using a String for flexibility.
-     * This value comes from the attribute "game.@id" In gamelist.txt
-     */
-    String scrapeId       // attrib
-
-    /**
-     * The source that of data for this game's scrape.
-     * This value comes from the attribute "game.@source" In gamelist.txt
-     */
-    String scrapeSource   // attrib
-
-    /**
+     * Always has  value since the file must exist at the time of scanning.
      * The path (filename) to the rom within the system's rom folder (no additional path).
      * The additional pathing that exists in gamelist.xml is removed during parsing.
+     * Only games that exist (at the time of scanning) will appear in the index.
      */
     String path
+
+    /**
+     * Always has  value since the file must exist at the time of scanning.
+     * Size of the file. Since we only store games that existed during indexing, we know size will have a value.
+     * Not in gamelist.xml, observed form disc.
+     */
+    long size
 
     /**
      * Name of the rom.
@@ -119,10 +164,17 @@ class Game {
     long lastplayed
 
     /**
-     * Size of the file.
-     * Not in gamelist.xml, observed form disc.
+     * The id within scrapeSource for this game.
+     * This may generally be an int, but using a String for flexibility.
+     * This value comes from the attribute "game.@id" In gamelist.txt
      */
-    long size
+    String scrapeId
+
+    /**
+     * The source that of data for this game's scrape.
+     * This value comes from the attribute "game.@source" In gamelist.txt
+     */
+    String scrapeSource
 
     /**
      * The document that was used to create this entry.
@@ -135,6 +187,16 @@ class Game {
      */
     int getHash() {
         return hashCode()
+    }
+
+    /**
+     * Comparison of name and path.
+     * Synthetic column, not in index so not sortable.
+     *
+     * @return
+     */
+    String getNamePathComparison() {
+        return Holders.applicationContext.getBean('gameService')?.namePathComparison(name, path)
     }
 
     /**
