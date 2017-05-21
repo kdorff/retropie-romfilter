@@ -1,7 +1,7 @@
 package retropie.romfilter
 
 import grails.test.mixin.TestFor
-import retropie.romfilter.indexed.GamelistEntry
+import retropie.romfilter.indexed.Game
 import spock.lang.Specification
 
 /**
@@ -13,7 +13,7 @@ class RomfilterSyncServiceSpec extends Specification {
      * ResourceService For loading actual resources.
      */
     ResourceService resourceServiceActual
-    IndexerIndexingService indexerIndexingService
+    IndexerDataService indexerDataService
 
     def setup() {
         resourceServiceActual = new ResourceService()
@@ -21,15 +21,15 @@ class RomfilterSyncServiceSpec extends Specification {
             getImagesPrefix() >> "~/.emulationstation/downloaded_images/"
             getImagesPath() >> "/home/pi/.emulationstation/downloaded_images"
         }
-        indexerIndexingService = Mock(IndexerIndexingService)
-        service.indexerIndexingService = indexerIndexingService
+        indexerDataService = Mock(IndexerDataService)
+        service.indexerDataService = indexerDataService
     }
 
     void "test xml parsing"() {
         setup:
         String gamelistXml = resourceServiceActual.loadResource('/XmlSamples/gamelist-sample.xml')
-        List<GamelistEntry> expectedGames = [
-            new GamelistEntry(
+        List<Game> expectedGames = [
+            new Game(
                 system: 'arcade',
                 scrapeId: '3129',
                 scrapeSource: 'theGamesDB.net',
@@ -49,7 +49,7 @@ class RomfilterSyncServiceSpec extends Specification {
                 playcount: 0,
                 lastplayed: 0,
             ),
-            new GamelistEntry(
+            new Game(
                 system: 'arcade',
                 scrapeId: '2676',
                 scrapeSource: 'theGamesDB.net',
@@ -75,7 +75,7 @@ class RomfilterSyncServiceSpec extends Specification {
         service.parseGamelistFromXml('arcade', gamelistXml)
 
         then:
-        1 * indexerIndexingService.saveGamelistEntry(expectedGames[0])
-        1 * indexerIndexingService.saveGamelistEntry(expectedGames[1])
+        1 * indexerDataService.saveGame(expectedGames[0])
+        1 * indexerDataService.saveGame(expectedGames[1])
     }
 }

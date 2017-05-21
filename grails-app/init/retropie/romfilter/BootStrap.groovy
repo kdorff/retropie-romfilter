@@ -2,6 +2,11 @@ package retropie.romfilter
 
 import grails.core.GrailsApplication
 import org.apache.log4j.Logger
+import org.apache.lucene.index.IndexWriter
+
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 
 class BootStrap {
 
@@ -30,28 +35,55 @@ class BootStrap {
      */
     ConfigService configService
 
+    /**
+     * GamesIndexWriter (auto-injected).
+     */
+    IndexWriter gamesIndexWriter
 
+    /**
+     * Application startup.
+     */
     def init = { servletContext ->
         log.info("retropie-romfilter configuration:")
-        showConfig(grailsApplication.config.retropie, "retropie.")
+        logRomfilterConfigs(grailsApplication.config.retropie, "retropie.")
 
-        log.info("SystemEntry.count=${indexerDataService.systemEntryCount}")
-        log.info("RomEntry.count=${indexerDataService.romEntryCount}")
-        log.info("GamelistEntry.count=${indexerDataService.gamelistEntryCount}")
+        Path romsPath = Paths.get(configService.getRomsPath())
+        if (!Files.exists(romsPath)) {
+            throw new IOException("Roms path does not exist ${romsPath}")
+        }
 
-        if (configService.scanAtStartup && (indexerDataService.romEntryCount + indexerDataService.systemEntryCount + indexerDataService.gamelistEntryCount) == 0) {
+        Path gamelistsPath = Paths.get(configService.getGamelistsPath())
+        if (!Files.exists(gamelistsPath)) {
+            throw new IOException("Gamelists path does not exist ${gamelistsPath}")
+        }
+
+        log.info("GamelistEntry.count=${indexerDataService.gamesCount}")
+
+        if (configService.scanAtStartup && indexerDataService.gamesCount == 0) {
             log.info("Indexes are all empty. Starting full scan.")
             romfilterSyncService.scanAll()
         }
     }
 
+    /**
+     * Application shutdown.
+     */
     def destroy = {
+        println("Shutting down index writers")
+        gamesIndexWriter.close()
+        println("Writers closed.")
     }
 
-    void showConfig(config, String prefix) {
+    /**
+     * Display romfilter config.
+     *
+     * @param config
+     * @param prefix
+     */
+    void logRomfilterConfigs(config, String prefix) {
         config.each { String key, value ->
             if (value instanceof Map) {
-                showConfig(value, "${prefix}${key}.")
+                logRomfilterConfigs(value, "${prefix}${key}.")
             }
             else {
                 String exists = ""

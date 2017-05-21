@@ -75,7 +75,9 @@ dependencies {
     // Webjars - javascript/css libraries
     compile 'org.webjars:bootstrap:3.3.7-1'
     compile 'org.webjars:datatables:1.10.13'
+    compile 'org.webjars.bower:datatables.net-scroller:1.4.2'
     compile 'org.webjars:jquery:2.2.4'
+    //compile 'org.webjars.bower:datatables-responsive:2.1.1'
 }
 
 assets {

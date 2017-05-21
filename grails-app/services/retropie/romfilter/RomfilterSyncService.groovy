@@ -4,9 +4,8 @@ import groovy.util.slurpersupport.GPathResult
 import groovyx.gpars.GParsPool
 import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
-import retropie.romfilter.indexed.GamelistEntry
-import retropie.romfilter.indexed.RomEntry
-import retropie.romfilter.indexed.SystemEntry
+import org.apache.lucene.document.Document
+import retropie.romfilter.indexed.Game
 
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
@@ -28,17 +27,7 @@ class RomfilterSyncService {
     /**
      * IndexerService (auto-injected).
      */
-    IndexerIndexingService indexerIndexingService
-
-    /**
-     * IndexerService (auto-injected).
-     */
     IndexerDataService indexerDataService
-
-    /**
-     * HashService.
-     */
-    HashService hashService
 
     /**
      * At startup or on demand. Scan all system and gamelist data,
@@ -47,13 +36,10 @@ class RomfilterSyncService {
      */
     void scanAll() {
         long start = System.currentTimeMillis()
-        log.info("Beginning startup scan.")
+        log.info("Staring scan of all systems.")
         scanGamelists()
-        scanSystems()
-        log.info("Found ${indexerDataService.systemEntryCount} systems")
-        log.info("Found ${indexerDataService.gamelistEntryCount} gamelist.xml entries")
-        log.info("Found ${indexerDataService.romEntryCount} roms")
-        log.info("Startup scan complete. Took ${System.currentTimeMillis() - start}ms")
+        log.info("Found ${indexerDataService.gamesCount} Games")
+        log.info("Scanning all systems complete. Took ${System.currentTimeMillis() - start}ms")
     }
 
     /**
@@ -65,8 +51,23 @@ class RomfilterSyncService {
         Path gamelistsPath = Paths.get(configService.gamelistsPath)
         GParsPool.withPool {
             foldersContainedWithin(gamelistsPath).eachParallel { Path gamelistFolderPath ->
-                scanGamelist(gamelistFolderPath.getFileName().toString(),
-                    Paths.get(gamelistFolderPath.toString(), 'gamelist.xml'))
+                String system = gamelistFolderPath.fileName.toString()
+                if (system in configService.systemsToSkip) {
+                    log.info("Skipping system ${system}")
+                }
+                else {
+                    Path romsPath = Paths.get(configService.romsPath, system)
+                    Map<String, Path> romFilnameToPath = filesContainedWithin(
+                        romsPath, configService.getRomGlobForSystem(system)).collectEntries { Path romPath ->
+                        String key = romPath.fileName.toString()
+                        return [(key): romPath]
+                    }
+
+                    scanGamelist(
+                        gamelistFolderPath.getFileName().toString(),
+                        Paths.get(gamelistFolderPath.toString(), 'gamelist.xml'),
+                        romFilnameToPath)
+                }
             }
         }
         log.info("All gamelist.xml files found. Took ${System.currentTimeMillis() - start}ms")
@@ -75,7 +76,7 @@ class RomfilterSyncService {
     /**
      * Scan a single gamelist.xml file for a specific system.
      */
-    void scanGamelist(String system, Path gamelistPath) {
+    void scanGamelist(String system, Path gamelistPath, Map<String, Path> unmatchedRoms) {
         long start = System.currentTimeMillis()
         List<String> skipSystems = configService.getSystemsToSkip()
         if (system in skipSystems) {
@@ -83,12 +84,20 @@ class RomfilterSyncService {
         }
         else {
             log.info("Parsing gamelist for ${system}")
+            Document doc = new Document()
             if (Files.exists(gamelistPath) &&
                 Files.isReadable(gamelistPath) &&
                 Files.isRegularFile(gamelistPath)) {
-                parseGamelistFromXml(system,
-                    new String(Files.readAllBytes(gamelistPath))
+                parseGamelistFromXml(
+                    system,
+                    new String(Files.readAllBytes(gamelistPath)),
+                    doc,
+                    unmatchedRoms
                 )
+
+                unmatchedRoms.each { String filenameUnused, Path path ->
+                    createGameWithoutGamelistEntry(system, path, doc)
+                }
             }
             else {
                 log.warn("... Gamelist not found")
@@ -99,62 +108,6 @@ class RomfilterSyncService {
     }
 
     /**
-     * Finds all systems, scans roms for each.
-     */
-    void scanSystems() {
-        long start = System.currentTimeMillis()
-        log.info("Looking for systems with roms")
-        Path systemsFolderPath = Paths.get(configService.romsPath)
-        List<String> skipSystems = configService.getSystemsToSkip()
-        GParsPool.withPool {
-            foldersContainedWithin(systemsFolderPath).eachParallel { Path systemPath ->
-                String system = systemPath.fileName.toString()
-                if (system in skipSystems) {
-                    log.info("Skipping system ${system}.")
-                }
-                else {
-                    SystemEntry systemEntry = new SystemEntry(
-                        system: system,
-                    )
-                    int count = scanRomsForSystem(system)
-                    log.info("++ Consdiering saving system, we scanned ${count} roms for ${systemEntry}")
-                    if (count) {
-                        // Only save if the system had roms.
-                        indexerIndexingService.saveSystemEntry(systemEntry)
-                    }
-                }
-            }
-        }
-        log.info("Finished looking for systems. Took ${System.currentTimeMillis() - start}ms")
-    }
-
-    /**
-     * Scan roms for a system.
-     * gamelist.xml for this system MUST already be scanned since we look up the rom's gamelistEntry when
-     * creating the RomEntry.
-     *
-     * @param system
-     * @return
-     */
-    int scanRomsForSystem(String system) {
-        Path systemFolderPath = Paths.get(configService.getRomsPathForSystem(system))
-        String romGlob = configService.getRomGlobForSystem(system)
-        AtomicInteger count = new AtomicInteger(0)
-        filesContainedWithin(systemFolderPath, romGlob).each { Path romPath ->
-            // Get rid of the path, just keep filename including ext
-            String filename = FilenameUtils.getName(romPath.toString())
-            RomEntry romEntry = new RomEntry(
-                system: system,
-                path: filename,
-                size: Files.size(romPath),
-            )
-            indexerIndexingService.saveRomEntry(romEntry)
-            count.incrementAndGet()
-        }
-        return count.get()
-    }
-
-    /**
      * Convert gamelistXml (contents of gamelist.xml file) to Map[String, GamelistEntry]
      * where the key is the filename (path).
      *
@@ -162,61 +115,88 @@ class RomfilterSyncService {
      * 1. If path starts with "./", the "./" will be stripped off.
      * 2. if image startsWith expected location prefix, remove the location prefix.
      *
-     * @param gamelistXml
+     * @param system system being scanned
+     * @param gamelistXml content of a gamelist.xml file
+     * @param doc a lucene document object for indexing. The same document is reused for all Game indexing.
      * @return
      */
-    void parseGamelistFromXml(String system, String gamelistXml) {
+    void parseGamelistFromXml(String system, String gamelistXml, Document doc, Map<String, Path> unmatchedRoms) {
         String imagesPrefix = configService.imagesPrefix
 
         // Start parsing the XML
         GPathResult gamelist = new XmlSlurper().parseText(gamelistXml)
-        gamelist.children().each { game ->
-            GamelistEntry gamelistEntry = new GamelistEntry(
+        gamelist.children().each { gamelistGame ->
+            Game game = new Game(
                 system: system,
-                scrapeId: game.'@id'.toString(),
-                scrapeSource: game.'@source'.toString(),
-                path: game.path?.toString() ?: "",
-                name: game.name?.toString() ?: "",
-                desc: game.desc?.toString() ?: "",
-                image: game.image?.toString() ?: "",
-                thumbnail: game.thumbnail?.toString() ?: "",
-                developer: game.developer?.toString() ?: "",
-                publisher: game.publisher?.toString() ?: "",
-                genre: game.genre?.toString() ?: "",
-                players: (game.players?.toString() ?: "1") as int,
-                region: game.region?.toString() ?: "",
-                romtype: game.romtype?.toString() ?: "",
-                releasedate: convertDateTimeToLong(game.releasedate?.toString() ?: ""),
-                rating: (game.rating?.toString() ?: "0.0") as double,
-                playcount: (game.playcount?.toString() ?: "0") as int,
-                lastplayed: convertDateTimeToLong(game.lastplayed?.toString() ?: ""),
+                scrapeId: gamelistGame.'@id'.toString(),
+                scrapeSource: gamelistGame.'@source'.toString(),
+                path: gamelistGame.path?.toString() ?: "",
+                name: gamelistGame.name?.toString() ?: "",
+                desc: gamelistGame.desc?.toString() ?: "",
+                image: gamelistGame.image?.toString() ?: "",
+                thumbnail: gamelistGame.thumbnail?.toString() ?: "",
+                developer: gamelistGame.developer?.toString() ?: "",
+                publisher: gamelistGame.publisher?.toString() ?: "",
+                genre: gamelistGame.genre?.toString() ?: "",
+                players: (gamelistGame.players?.toString() ?: "1") as int,
+                region: gamelistGame.region?.toString() ?: "",
+                romtype: gamelistGame.romtype?.toString() ?: "",
+                releasedate: convertDateTimeToLong(gamelistGame.releasedate?.toString() ?: ""),
+                rating: (gamelistGame.rating?.toString() ?: "0.0") as double,
+                playcount: (gamelistGame.playcount?.toString() ?: "0") as int,
+                lastplayed: convertDateTimeToLong(gamelistGame.lastplayed?.toString() ?: ""),
             )
 
             // Transform path
-            if (gamelistEntry.path.startsWith('./')) {
-                gamelistEntry.path -= './'
+            if (game.path.startsWith('./')) {
+                game.path -= './'
             }
 
             // Transform image
-            if (gamelistEntry.image?.startsWith(imagesPrefix)) {
-                gamelistEntry.image -= imagesPrefix
-                gamelistEntry.image = "${configService.imagesPath}/${gamelistEntry.image}".toString()
+            if (game.image?.startsWith(imagesPrefix)) {
+                game.image -= imagesPrefix
+                game.image = "${configService.imagesPath}/${game.image}".toString()
             } else {
                 // Image in unknown location, remove it
-                gamelistEntry.image = ''
+                game.image = ''
             }
 
             // Transform thumbnail
-            if (gamelistEntry.thumbnail?.startsWith(imagesPrefix)) {
-                gamelistEntry.thumbnail -= imagesPrefix
-                gamelistEntry.thumbnail = "${configService.imagesPath}/${gamelistEntry.thumbnail}".toString()
+            if (game.thumbnail?.startsWith(imagesPrefix)) {
+                game.thumbnail -= imagesPrefix
+                game.thumbnail = "${configService.imagesPath}/${game.thumbnail}".toString()
             } else {
                 // Thumbnail in unknown location, remove it
-                gamelistEntry.thumbnail = ''
+                game.thumbnail = ''
             }
 
-            indexerIndexingService.saveGamelistEntry(gamelistEntry)
+            boolean romFound = false
+            if (unmatchedRoms.containsKey(game.path)) {
+                unmatchedRoms.remove(game.path)
+                romFound = true
+            }
+
+            if (romFound) {
+                indexerDataService.saveGame(game, doc)
+            }
         }
+    }
+
+    /**
+     * Create a Game entry for a rom that doesn't have a gamelist.xml entry.
+     *
+     * @param system system being scanned
+     * @param filename (already stripped of anything pathing)
+     * @param path
+     * @return
+     */
+    void createGameWithoutGamelistEntry(String system, Path path, Document doc) {
+        Game game = new Game(
+            system: system,
+            path: path.fileName.toString(),
+            size: Files.size(path)
+        )
+        indexerDataService.saveGame(game, doc)
     }
 
     /**
@@ -247,7 +227,7 @@ class RomfilterSyncService {
     List<Path> filesContainedWithin(Path folder, String glob) {
         long start = System.currentTimeMillis()
         String system = folder.fileName.toString()
-        log.info("Scanning for ${system} roms")
+        log.info("Scanning folder ${system} matching files")
         int romsFound = 0
         try {
             DirectoryStream<Path> stream = Files.newDirectoryStream(folder, glob)

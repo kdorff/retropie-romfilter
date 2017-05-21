@@ -3,17 +3,21 @@ package retropie.romfilter
 import org.apache.log4j.Logger
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
+import org.apache.lucene.document.IntPoint
 import org.apache.lucene.index.IndexReader
 import org.apache.lucene.index.IndexWriter
-import org.apache.lucene.queryparser.classic.QueryParser
-import org.apache.lucene.search.BooleanClause
-import org.apache.lucene.search.BooleanQuery
+import org.apache.lucene.queryparser.classic.ParseException
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.MatchAllDocsQuery
 import org.apache.lucene.search.Query
-import retropie.romfilter.indexed.GamelistEntry
-import retropie.romfilter.indexed.RomEntry
-import retropie.romfilter.indexed.SystemEntry
+import org.apache.lucene.search.ScoreDoc
+import org.apache.lucene.search.Sort
+import org.apache.lucene.search.SortField
+import org.apache.lucene.search.TopDocs
+import retropie.romfilter.feed.GamesDataFeed
+import retropie.romfilter.feed.datatables.DatatablesRequest
+import retropie.romfilter.feed.datatables.RequestOrder
+import retropie.romfilter.indexed.Game
 import retropie.romfilter.queryParser.RomfilterQueryParser
 
 class IndexerDataService {
@@ -29,62 +33,17 @@ class IndexerDataService {
     IndexWriter gamesIndexWriter
 
     /**
-     * The IndexWriter for SystemEntry documents (auto-injected).
-     * This is used to create new documents.
-     */
-    IndexWriter systemsIndexWriter
-
-    /**
-     * The IndexWriter for RomEntry documents (auto-injected).
-     * This is used to create new documents.
-     */
-    IndexWriter romsIndexWriter
-
-    /**
      * Index query analyzer (auto-injected).
      */
     Analyzer queryAnalyzer
 
     /* ----------------------------------------------------------------------------
-     * SystemEntry methods
-     */
-
-    /**
-     * Get the IndexReader for SystemEntry documents.
-     * @return
-     */
-    IndexReader getSystemsIndexReader() {
-        return systemsIndexWriter.getReader()
-    }
-
-    /**
-     * The number of SystemEntry documents.
-     * @return
-     */
-    int getSystemEntryCount() {
-        return systemsIndexReader.getDocCount('system')
-    }
-
-    /**
-     * Retrieve all SystemEntry.
-     * @return
-     */
-    List<SystemEntry> getAllSystemsEntries(){
-        log.info("Retrieving all systems")
-        Query query = new MatchAllDocsQuery()
-        IndexSearcher indexSearcher = new IndexSearcher(systemsIndexReader)
-        return indexSearcher.search(query, systemsIndexReader.maxDoc()).scoreDocs.collect {
-            Document document = indexSearcher.doc(it.doc)
-            return new SystemEntry(document)
-        }
-    }
-
-    /* ----------------------------------------------------------------------------
-     * GameindexEntry methods
+     * Data access methods
      */
 
     /**
      * Get the IndexReader for GamelistEntry documents.
+     * Don't save this, get it fresh every you need it.
      * @return
      */
     IndexReader getGamesIndexReader() {
@@ -92,51 +51,53 @@ class IndexerDataService {
     }
 
     /**
-     * The number of GamelistEntry documents.
+     * The number of Game documents.
      * @return
      */
-    int getGamelistEntryCount() {
+    int getGamesCount() {
+        // The field system is ALWAYS populated so we use that to count.
         return gamesIndexReader.getDocCount('system')
     }
 
     /**
-     * Get gamelist entries for query.
+     * Get List[Game] for query string.
      *
      * @param queryStr
-     * @param moreQuery
      * @return
      */
-    List<GamelistEntry> getGamelistEntriesForQuery(String queryStr, Query moreQuery = null) {
+    List<Game> getGamesForQuery(String queryStr) {
         RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
-        Query query = queryParser.parse(queryStr)
-        if (moreQuery) {
-            query = new BooleanQuery.Builder().
-                add(query, BooleanClause.Occur.MUST).
-                add(moreQuery, BooleanClause.Occur.MUST).
-                build()
-        }
-        log.info("Performing query for GamelistEntry list: ${query}")
+        return getGamesForQuery(queryParser.parse(queryStr))
+    }
+
+    /**
+     * Get List[Game] entries for query.
+     *
+     * @param queryStr
+     * @return
+     */
+    List<Game> getGamesForQuery(Query query) {
+        //log.info("Performing query for GamelistEntry list: ${query}")
         IndexSearcher indexSearcher = new IndexSearcher(gamesIndexReader)
         return indexSearcher.search(query, gamesIndexReader.maxDoc()).scoreDocs.collect {
             Document document = indexSearcher.doc(it.doc)
-            return new GamelistEntry(document)
+            return new Game(document)
         }
     }
 
     /**
-     * Return a GamelistEntry for a given system and path, if it exists.
+     * Return a Game for a query string, if matched.
      * Should querying for this item, for some odd reason, return more than one,
      * this will return the first one. NOTE: they query should always just return one.
      *
-     * @param system
-     * @param path
+     * @param queryStr
      * @return
      */
-    GamelistEntry getGamelistEntryForQuery(String queryStr, Query moreQuery = null) {
-        List<GamelistEntry> matches = getGamelistEntriesForQuery(queryStr, moreQuery)
+    Game getGameForQuery(String queryStr) {
+        List<Game> matches = getGamesForQuery(queryStr)
         if (matches) {
             if (matches.size() > 1) {
-                log.error("getGamelistEntryForQuery(${queryStr}) should have returned 1 but returend ${matches.size()}")
+                log.error("getGameForQuery(${queryStr}) should have returned 1 but returend ${matches.size()}")
             }
             return matches[0]
         } else {
@@ -145,137 +106,124 @@ class IndexerDataService {
     }
 
     /**
-     * Obtain a GamelistEntry for a system and hash.
+     * Return a Game for a query, if matched.
+     * Should querying for this item, for some odd reason, return more than one,
+     * this will return the first one. NOTE: they query should always just return one.
      *
-     * @param system
-     * @param hash
+     * @param queryStr
      * @return
      */
-    GamelistEntry getGamelistEntryForSystemAndHash(String system, int hash) {
-        String hashVal = QueryParser.escape(hash.toString())
-        String hashRange = "[${hashVal} TO ${hashVal}]"
-        GamelistEntry entry = getGamelistEntryForQuery(
-            /+system:"${QueryParser.escape(system)}" +hash:${hashRange}/)
-        return entry
+    Game getGameForQuery(Query query) {
+        List<Game> matches = getGamesForQuery(query)
+        if (matches) {
+            if (matches.size() > 1) {
+                log.error("getGameForQuery(${query}) should have returned 1 but returend ${matches.size()}")
+            }
+            return matches[0]
+        } else {
+            return null
+        }
     }
 
     /**
-     * Obtain a GamelistEntry for a system and path.
+     * Return a Game for a Game's hash value, if matched.
+     * Should querying for this item, for some odd reason, return more than one,
+     * this will return the first one. NOTE: they query should always just return one.
      *
-     * @param system
      * @param hash
      * @return
      */
-    GamelistEntry getGamelistEntryForSystemAndPath(String system, String path) {
-        GamelistEntry gamelistEntry = getGamelistEntryForQuery(
-            /+system:"${QueryParser.escape(system)}" +path:"${QueryParser.escape(path)}"/)
-        if (gamelistEntry) {
-            if (gamelistEntry.path.toString() != path || gamelistEntry.system != system) {
-                log.error("Wanted system/path ${system}/${path} but was given ${gamelistEntry.system}/${gamelistEntry.path}")
+    Game getGameForHash(int hash) {
+        return getGameForQuery(IntPoint.newExactQuery('hash', hash))
+    }
+
+    /**
+     * Get List[RomEntry] for datatables requeyst.
+     *
+     * @param datatablesRequest
+     * @return
+     */
+    GamesDataFeed getGameDataFeedForRequest(DatatablesRequest datatablesRequest) {
+        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
+        Query query
+        if (datatablesRequest.search) {
+            try {
+                query = queryParser.parse(datatablesRequest.search)
             }
+            catch (ParseException e) {
+                query = new MatchAllDocsQuery()
+            }
+        } else {
+            query = new MatchAllDocsQuery()
         }
-        return gamelistEntry
+
+        log.info("Performing Game query: ${query}")
+        IndexSearcher indexSearcher = new IndexSearcher(gamesIndexReader)
+
+        Sort sort = buildSort(datatablesRequest)
+
+        TopDocs results
+        if (sort) {
+            results = indexSearcher.search(query, gamesIndexReader.maxDoc(), sort)
+        } else {
+            results = indexSearcher.search(query, gamesIndexReader.maxDoc())
+        }
+        ScoreDoc[] scoreDocs = results.scoreDocs
+
+        GamesDataFeed gamesDataFeed = new GamesDataFeed([
+            recordsTotal   : getGamesCount(),
+            recordsFiltered: results.totalHits,
+        ])
+        for (int i = datatablesRequest.start; i < results.totalHits; i++) {
+            if (i > (datatablesRequest.start + datatablesRequest.length) - 1) {
+                break;
+            }
+            Document document = indexSearcher.doc(scoreDocs[i].doc)
+            gamesDataFeed.games << new Game(document)
+        }
+        log.info("Found ${gamesDataFeed.games.size()}")
+        return gamesDataFeed
+    }
+
+    Sort buildSort(DatatablesRequest datatablesRequest) {
+        Sort sort = null
+//        if (datatablesRequest.orders) {
+//            SortField[] sortFields = datatablesRequest.orders.collect { RequestOrder requestOrder ->
+//                // Need to map column # to field and optionally the field's order field.
+//                // We should first switch to returning all fields and have an enum in Game
+//                // that maps field number to field's order field (which is often just the field
+//                // itself). Note that desc isn't sortable.
+//                // We should also first define the row to datatables in the initialization datatables javascript.
+//            } as SortField[]
+//            sort = new Sort(sortFields)
+//        }
+        return sort
     }
 
     /* ----------------------------------------------------------------------------
-     * RomEntry methods
+     * Index creation methods.
      */
 
     /**
-     * Get the IndexReader for RomEntry documents.
-     * @return
+     * Save a Ga,e to the index.
+     * @param game
+     * @param doc reused for performance
      */
-    IndexReader getRomsIndexReader() {
-        return romsIndexWriter.getReader()
+    void saveGame(Game game, Document doc) {
+        doc.clear()
+        game.convertToDocument(doc)
+        gamesIndexWriter.addDocument(doc)
+        log.info("Saved Game ${game.system}/${game.path} | hash=${game.hash} to index")
     }
 
     /**
-     * The number of RomEntry documents.
-     * @return
-     */
-    int getRomEntryCount() {
-        return romsIndexReader.getDocCount('system')
-    }
-
-    /**
-     * How many roms for a specific system.
-     * TODO: there is probably a more optimal way to do this.
+     * Delete a GameEntry document
      *
-     * @param system
+     * @param gameEntry
      * @return
      */
-    int getRomEntryCountForSystem(String system) {
-        return getRomEntriesForSystem(system).size()
-    }
-
-    /**
-     * Get List[RomEntry] for query.
-     *
-     * @param queryStr
-     * @param moreQuery
-     * @return
-     */
-    List<RomEntry> getRomEntriesForQuery(String queryStr, Query moreQuery = null) {
-        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
-        Query query = queryParser.parse(queryStr)
-        if (moreQuery) {
-            query = new BooleanQuery.Builder().
-                add(query, BooleanClause.Occur.MUST).
-                add(moreQuery, BooleanClause.Occur.MUST).
-                build()
-        }
-        log.info("Performing query for RomEntry list: ${query}")
-        IndexSearcher indexSearcher = new IndexSearcher(romsIndexReader)
-        List<RomEntry> roms = indexSearcher.search(query, romsIndexReader.maxDoc()).scoreDocs.collect {
-            Document document = indexSearcher.doc(it.doc)
-            return new RomEntry(document)
-        }
-        log.info("Found ${roms}")
-        return roms
-    }
-
-    /**
-     * Return a GamelistEntry for a given system and path, if it exists.
-     * Should querying for this item, for some odd reason, return more than one,
-     * this will return the first one. NOTE: they query should always just return one.
-     *
-     * @param system
-     * @param path
-     * @return
-     */
-    RomEntry getRomEntryForQuery(String queryStr, Query moreQuery = null) {
-        List<RomEntry> matches = getRomEntriesForQuery(queryStr)
-        if (matches) {
-            if (matches.size() > 1) {
-                log.error("getRomEntryForQuery(${queryStr}) should have returned 1 but returend ${matches.size()}")
-            }
-            return matches[0]
-        } else {
-            return null
-        }
-    }
-
-    /**
-     * Return List[RomEntry] for a specific system.
-     * @param system
-     * @return
-     */
-    List<RomEntry> getRomEntriesForSystem(String system) {
-        return getRomEntriesForQuery(/+system:"${QueryParser.escape(system)}"/)
-    }
-
-    /**
-     * Obtain a RomEntry for a specific system and hash.
-     *
-     * @param system
-     * @param hash
-     * @return
-     */
-    RomEntry getRomEntryForSystemAndHash(String system, int hash) {
-        String hashVal = QueryParser.escape(hash.toString())
-        String hashRange = "[${hashVal} TO ${hashVal}]"
-        RomEntry entry = getRomEntryForQuery(
-            /+system:"${(QueryParser.escape(system))}" +hash:${hashRange}/)
-        return entry
+    long deleteGame(Game gameEntry) {
+        Query query = IntPoint.newExactQuery('hash', gameEntry.hash)
+        gamesIndexWriter.deleteDocuments(query)
     }
 }

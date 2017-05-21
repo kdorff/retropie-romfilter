@@ -10,6 +10,7 @@
 //= require /webjars/datatables/1.10.13/js/jquery.dataTables.min
 //= require searchHighlight/jquery.highlight
 //= require searchHighlight/dataTables.searchHighlight.min
+//= require /webjars/datatables.net-scroller/1.4.2/js/dataTables.scroller.min
 //= require_tree .
 //= require_self
 

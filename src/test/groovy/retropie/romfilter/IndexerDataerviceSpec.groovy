@@ -4,14 +4,12 @@ import grails.test.mixin.integration.Integration
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.lucene.queryparser.classic.QueryParser
-import retropie.romfilter.indexed.GamelistEntry
-import retropie.romfilter.indexed.RomEntry
-import retropie.romfilter.indexed.SystemEntry
+import retropie.romfilter.indexed.Game
 import spock.lang.Specification
 import spock.lang.Unroll
 
 @Integration
-class IndexerIndexingServiceSpec extends Specification {
+class IndexerDataerviceSpec extends Specification {
     /**
      * Load all from resources.groovy.
      */
@@ -48,7 +46,7 @@ class IndexerIndexingServiceSpec extends Specification {
     @Unroll
     def "Correct number of roms indexed"() {
         expect:
-        gamelistentyCount == indexerDataService.gamelistEntryCount
+        gamelistentyCount == indexerDataService.gamesCount
         systemCount == indexerDataService.systemEntryCount
         romCount == indexerDataService.romEntryCount
 
@@ -66,7 +64,7 @@ class IndexerIndexingServiceSpec extends Specification {
         String query = /+system:"${QueryParser.escape((String) system)}" +hash:${hashRange}/
 
         when:
-        GamelistEntry gamelistEntry = indexerDataService.getGamelistEntryForQuery(query)
+        Game gamelistEntry = indexerDataService.getGameForQuery(query)
 
         then:
         gamelistEntry
@@ -85,7 +83,7 @@ class IndexerIndexingServiceSpec extends Specification {
     @Unroll
     def "Find gamelist with system and hash"() {
         when:
-        GamelistEntry gamelistEntry = indexerDataService.getGamelistEntryForSystemAndHash((String) system, (int) hash)
+        Game gamelistEntry = indexerDataService.getGamelistEntryForSystemAndHash((String) system, (int) hash)
 
         then:
         gamelistEntry
@@ -103,7 +101,7 @@ class IndexerIndexingServiceSpec extends Specification {
 
     def "fetch all gamelists for atari2600"() {
         when:
-        List<GamelistEntry> games = indexerDataService.getGamelistEntriesForQuery(/+system:"atari2600"/)
+        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600"/)
 
         then:
         games.size() == 4
@@ -120,7 +118,7 @@ class IndexerIndexingServiceSpec extends Specification {
 
     def "fetch all gamelists for atari2600 described with action"() {
         when:
-        List<GamelistEntry> games = indexerDataService.getGamelistEntriesForQuery(/+system:"atari2600" +desc:action/)
+        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600" +desc:action/)
         log.info(games)
 
         then:
@@ -129,7 +127,7 @@ class IndexerIndexingServiceSpec extends Specification {
 
     def "fetch all gamelists for atari2600 all all: containing 'action'"() {
         when:
-        List<GamelistEntry> games = indexerDataService.getGamelistEntriesForQuery(/+system:"atari2600" +all:action/)
+        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600" +all:action/)
         log.info(games)
 
         then:
@@ -170,7 +168,7 @@ class IndexerIndexingServiceSpec extends Specification {
     def "query for gamelist with system and path"() {
         setup:
         when:
-        GamelistEntry gamelistEntry = indexerDataService.getGamelistEntryForSystemAndPath(system, path)
+        Game gamelistEntry = indexerDataService.getGamelistEntryForSystemAndPath(system, path)
 
         then:
         gamelistEntry

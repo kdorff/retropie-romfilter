@@ -1,0 +1,39 @@
+import retropie.romfilter.feed.GamesDataFeed
+import retropie.romfilter.indexed.Game
+
+model {
+    GamesDataFeed gamesDataFeed
+}
+json {
+    draw gamesDataFeed.draw
+    recordsTotal gamesDataFeed.recordsTotal
+    recordsFiltered gamesDataFeed.recordsFiltered
+    error gamesDataFeed.error
+    data gamesDataFeed.games.collect { Game game ->
+        return [
+            // These need to be returned in the same order as Game.GameColumn.number
+            // Ideally these would just be output based on Game.GameColumn iteration
+            game.system ?: "",
+            game.path ?: "",
+            game.size ?: "",
+            game.name ?: "",
+            game.namePathComparison ?: "",
+            game.desc ?: "",
+            game.image ? "<image width='125px'src='${g.link(action: 'image', params: [hash: game?.hash])}'/>" : "",
+            game.thumbnail ?: "",
+            game.developer ?: "",
+            game.publisher ?: "",
+            game.genre ?: "",
+            game.players ?: "",
+            game.region ?: "",
+            game.romtype ?: "",
+            game.releasedate ?: "",
+            game.rating ?: "",
+            game.playcount ?: "",
+            game.lastplayed ?: "",
+            game.scrapeId ?: "",
+            game.scrapeSource ?: "",
+            game.hash ?: ""
+        ]
+    }
+}

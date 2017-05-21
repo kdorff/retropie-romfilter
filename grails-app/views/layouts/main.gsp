@@ -8,6 +8,7 @@
     </title>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
+    <asset:javascript src="application.js"/>
     <asset:stylesheet src="application.css"/>
 
     <g:layoutHead/>
@@ -23,7 +24,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="/systems">
+                <a class="navbar-brand" href="/games/browse">
                     RetroPie romfilter
                 </a>
             </div>
@@ -42,8 +43,5 @@
     <div id="spinner" class="spinner" style="display:none;">
         <g:message code="spinner.alt" default="Loading&hellip;"/>
     </div>
-
-    <asset:javascript src="application.js"/>
-
 </body>
 </html>
