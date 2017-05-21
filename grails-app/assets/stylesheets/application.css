@@ -7,8 +7,10 @@
 * You're free to add application-wide styles to this file and they'll appear at the top of the
 * compiled file, but it's generally better to create a new file per style scope.
 *
+* TODO: I had to take out /webjars/bootstrap/3.3.7-1/css/bootstrap-theme
+* TODO: it conflicted with viewing the title bar. Why?
+*
 *= require /webjars/bootstrap/3.3.7-1/css/bootstrap
-*= require /webjars/bootstrap/3.3.7-1/css/bootstrap-theme
 *= require /webjars/datatables/1.10.13/css/jquery.dataTables.min
 *= require searchHighlight/dataTables.searchHighlight
 *= require grails

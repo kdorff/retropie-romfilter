@@ -159,12 +159,5 @@ on another system in your LAN
 
 ## Screenshots
 
-List of systems
-
-![List of systems](https://github.com/kdorff/retropie-romfilter/blob/master/grails-app/assets/images/screenshots/listOfSystems.png)
-
-Filtered, highlighted list of ROMS
-![Filtered, highlighted list of ROMS](https://github.com/kdorff/retropie-romfilter/blob/master/grails-app/assets/images/screenshots/listOfRomsWithHighlightFiltering.png)
-
-Details for one ROM
-![Details for one ROM](https://github.com/kdorff/retropie-romfilter/blob/master/grails-app/assets/images/screenshots/gamelistEntryDetails.png)
+Browsing filtered list of ROMS
+![Filtered, highlighted list of ROMS](https://github.com/kdorff/retropie-romfilter/blob/master/grails-app/assets/images/screenshots/browse.png)
