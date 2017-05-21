@@ -33,6 +33,7 @@ class GamesController {
      * TODO: What happened to the application header?
      * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
      * TODO: How does recalbox webapp launch games? (the django code I worked on)
+     * TODO: Make game search input test box wider
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?

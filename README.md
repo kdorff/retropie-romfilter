@@ -1,15 +1,16 @@
 # RetroPie romfilter
 
-This application is designed to let you browse the
-list of ROMs you have installed for each of your systems on
-a RetroPie. You can quickly filter your lists to search
-for specific details or even delete ROMs
-(move them to a trash folder).
+This application is designed to let you browse and filter the list of ROMs you have installed
+across all of your systems on your RetroPie.
 
-You should be able to run this directly on a your RetroPie if you install Oracle Java 8.
-See the install guide and notes below.
+Features include
+* You can quickly and easily filter your lists in nearly any way imaginable.
+* Delete individual ROMs
+* There is no need to page through results. The filtered results come back instantly. All data is loaded on-demand.
 
-Currently, I prefer to run romfilter on another machine on the same network.
+You can run this directly on a your RetroPie if you install Oracle Java 8, **but I don't recommend it** as it
+uses a fair amount of memory.  I prefer to run romfilter on another machine on the same network
+and configure communicate with your RetroPie using the SMB shares the RetroPie automatically creates.
 
 # Disclaimer
 
