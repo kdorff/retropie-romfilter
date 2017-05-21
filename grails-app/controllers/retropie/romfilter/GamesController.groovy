@@ -18,23 +18,21 @@ class GamesController {
      * TODO: More unit tests
      * TODO: More integration tests
      * TODO: Filter to show dissimilar name/filenames
-     * TODO: Filter those without gamelistEntry
+     * TODO: Filter those without gamelist entry
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
      * TODO: Add remaining file extensions to the various systems to config
-     * TODO: Make scanning quarts jobs
+     * TODO: Make scanning quartz jobs
      * TODO: On demand complete re-scanning (delete and rebuild)
      * TODO: Ordering in lucene based on datatables request
      * TODO: Restore show game link
-     * TODO: Verify show game
      * TODO: Restore delete game button.
-     * TODO: Verify delete
      * TODO: Column picker.
      * TODO: Fancify name/path comparison
      * TODO: Change table rows to be ALL top justified
      * TODO: What happened to the application header?
      * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
-     *
+     * TODO: How does recalbox webapp launch games? (the django code I worked on)
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
