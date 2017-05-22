@@ -187,15 +187,26 @@ class IndexerDataService {
 
     Sort buildSort(DatatablesRequest datatablesRequest) {
         Sort sort = null
+        // TODO We cannot sort on ANY fields until we insert docvalues. As is they have "NONE" (true for System, at least).
 //        if (datatablesRequest.orders) {
-//            SortField[] sortFields = datatablesRequest.orders.collect { RequestOrder requestOrder ->
-//                // Need to map column # to field and optionally the field's order field.
-//                // We should first switch to returning all fields and have an enum in Game
-//                // that maps field number to field's order field (which is often just the field
-//                // itself). Note that desc isn't sortable.
-//                // We should also first define the row to datatables in the initialization datatables javascript.
-//            } as SortField[]
-//            sort = new Sort(sortFields)
+//            List<SortField> sortFields = datatablesRequest.orders.collect { RequestOrder requestOrder ->
+//                Game.GameColumn gameColumn = Game.GameColumn.numberToGameColumn(requestOrder.columnNumber)
+//                if (gameColumn) {
+//                    /**
+//                     * TODO this won't always be String.
+//                     */
+//                    return new SortField(
+//                        gameColumn.orderField,
+//                        SortField.Type.STRING,
+//                        requestOrder.direction == RequestOrder.Direction.desc)
+//                }
+//                else {
+//                    return null
+//                }
+//            }.findAll { it != null }
+//            if (sortFields) {
+//                sort = new Sort(sortFields as SortField[])
+//            }
 //        }
         return sort
     }

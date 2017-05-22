@@ -21,11 +21,15 @@ class Game {
 
     /**
      * Column details.
+     * *Point types here are not orderable. I need to index a bit more data for them to be Orderable.
+     * See
+     * https://lists.gt.net/lucene/java-user/315384
+     * http://stackoverflow.com/questions/38358087/how-to-sort-intpont-or-longpoint-field-in-lucene-6
      */
     enum GameColumn {
         SYSTEM(0, 'system', 'system', true, 'System', true),
         PATH(1, 'path', 'path', false, 'Path', false),
-        SIZE(2, 'size', 'size', true, 'Size', false),
+        SIZE(2, 'size', null, true, 'Size', false),
         NAME(3, 'name', 'nameOrder', true, 'Name', true),
         NAME_PATH_COMPARISON(4, 'namePathComparison', null, false, 'Name/Path Comparison', true),
         DESCRIPTION(5, 'desc', null, true, 'Description', true),
@@ -34,16 +38,16 @@ class Game {
         DEVELOPER(8, 'developer', 'developerOrder', true, 'Developer', true),
         PUBLISHER(9, 'publisher', 'publisherOrder', true, 'Publisher', true),
         GENRE(10, 'genre', 'genreOrder', true, 'Genre', false),
-        PLAYERS(11, 'players', 'players', true, 'Players', false),
+        PLAYERS(11, 'players', null, true, 'Players', false),
         REGION(12, 'region', 'regionOrder', true, 'Region', false),
         ROM_TYPE(13, 'romtype', 'romtypeOrder', true, 'ROM Type', false),
-        RELEASE_DATE(14, 'releasedate', 'releasedate', true, 'Release Date', false),
-        RATING(15, 'rating', 'rating', true, 'Rating', false),
-        PLAY_COUNT(16, 'playcount', 'playcount', true, 'Play Count', false),
-        LAST_PLAYED(17, 'lastplayed', 'lastplayed', true, 'Last Played', false),
+        RELEASE_DATE(14, 'releasedate', null, true, 'Release Date', false),
+        RATING(15, 'rating', null, true, 'Rating', false),
+        PLAY_COUNT(16, 'playcount', null, true, 'Play Count', false),
+        LAST_PLAYED(17, 'lastplayed', null, true, 'Last Played', false),
         SCRAPE_ID(18, 'scrapeId', 'scrapeId', true, 'Scrape ID', false),
         SCRAPE_SOURCE(19, 'scrapeSource', 'scrapeSource', true, 'Scrape Source', false),
-        HASH(20, 'hash', 'hash', true, 'Hash', false),
+        HASH(20, 'hash', null, true, 'Hash', false),
 
         final int number
         final String field
@@ -53,6 +57,16 @@ class Game {
         final String friendlyName
         final String initiallyVisible
 
+        /**
+         * Construct a GameColumn
+         *
+         * @param number
+         * @param field
+         * @param orderField
+         * @param searchable
+         * @param friendlyName
+         * @param initiallyVisible
+         */
         GameColumn(int number, String field, String orderField, boolean searchable, String friendlyName, boolean initiallyVisible) {
             this.number = number
             this.field = field
@@ -61,6 +75,20 @@ class Game {
             this.orderable = orderField != null
             this.friendlyName = friendlyName
             this.initiallyVisible = initiallyVisible
+        }
+
+        /**
+         * Find the GameColumn for a given column number
+         * TODO Cache all values into a map the first time? But norrmally
+         * TODO just looking up one or two different ones so hmm.
+         *
+         * @param i column number to find
+         * @return
+         */
+        static GameColumn numberToGameColumn(int i) {
+            return values().find { GameColumn gameColumn ->
+                return gameColumn.number == i
+            }
         }
     }
 

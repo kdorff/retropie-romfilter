@@ -8,7 +8,7 @@ import java.util.regex.Pattern
 /**
  * Datatables request column. Column numbering is 0-based.
  */
-@ToString(includeNames = true)
+@ToString(includeNames = true, excludes = ['log', 'columnOrderNumber'])
 class RequestColumn {
     /**
      * Logger.

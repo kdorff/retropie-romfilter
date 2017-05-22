@@ -4,11 +4,10 @@ This application is designed to let you browse and filter the list of ROMs you h
 across all of your systems on your RetroPie.
 
 Features include
-* You can quickly and easily filter your lists in nearly any way imaginable.
+* Filtering and sorting your the details of your ROMs in nearly any way you can imagine
 * Delete individual ROMs
-* There is no need to page through results. The filtered results come back instantly. All data is loaded on-demand.
 
-You can run this directly on a your RetroPie if you install Oracle Java 8, **but I don't recommend it** as it
+You *can* run this directly on a your RetroPie if you install Oracle Java 8, **but I don't recommend it** as it
 uses a fair amount of memory.  I prefer to run romfilter on another machine on the same network
 and configure communicate with your RetroPie using the SMB shares the RetroPie automatically creates.
 
@@ -75,18 +74,60 @@ retropie:
 Note the trashPath here. When you "Delete" a rom using RetroPie romfilter it will move the 
 ROM file to a system folder within the trashPath.
 
-### Running the app
+### Running the app (development mode)
 
-Via the command line, from the application's source directory run
+The fastest way to get the app running is to run it in development mode.
 
-```
-./gradlew bootRun
-```
-
-And navigate your browser to
+On the command line, from the application's source directory, run the following commands to start
+the application.
 
 ```
-http://localhost:8080/systems
+./gradlew clean bootRun"
+```
+
+> **A few  notes on running the app**
+> Here we aren't restricting the memory. This won't be terribly friendly to a Raspeberry Pi.
+> If you intend to run with this method on a Pi, you should look into setting JAVA_OPTS or similar
+> to restirct the memory. The application's index (like a database) will be stored in the application's
+> source directory.
+
+### Running the app (build the war, run it)
+
+On the command line, from the application's source directory, run the following commands to start
+the application.
+
+```
+./gradlew clean assemble
+mkdir exec
+cd exec
+cp ../build/libs/*.war retropie-romfilter.war
+java -Xmx256m -jar retropie-romfilter.war
+```
+
+> **Running the WAR notes**
+> We are copying application (.war file) that is built during
+> the "assemble" phase to the location where we want to run the application. This can be anywhere.
+> The key is the directory where you run the applications is where the index (like a database)
+> will be stored. If you ran the applicatinon out of the build/libs directory, your index would
+> be destoryed when you did a "clean" of the application (and java -jar doesn't work
+> as desired when the jar you are running is outside of the current directory). If you run the jar
+> from the application source directory, it also seems it get confused, so I recommend you
+> copy the war file to another location to run the app.
+>
+> **This application and memory**
+> This application stores data using Lucene, which is an data indexing engine. Lucene will
+> use a lot of memory if it is available. Which is great, this will speed up your searches.
+> But if you are limited in meory, you should adjust the -Xmx value that Java uses to limit
+> memory consumption. I wouldn't recommend going lower than the 256 specified above or you
+> many find the application won't run or will become very slow. When
+> I omitted the flag (or ran in development mode with no -Xmx setting) the application
+> would consume happily >1.5GB of RAM on my Mac. When I ran the application on a Pi 3 with
+> no -Xmx value it quickly consumed >50% of the Pi's RAM (according to "top").
+
+### Browsing to the app once it is running
+
+```
+http://localhost:8080/games/browse
 ```
 
 

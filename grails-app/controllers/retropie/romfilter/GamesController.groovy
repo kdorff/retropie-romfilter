@@ -33,7 +33,8 @@ class GamesController {
      * TODO: What happened to the application header?
      * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
      * TODO: How does recalbox webapp launch games? (the django code I worked on)
-     * TODO: Make game search input test box wider
+     * TODO: Need to index "docvalues" for all fields I want to be orderable, text or numeric.
+     * TODO: The sorting code right now assumes all text, adapt for numeric.
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
@@ -53,6 +54,7 @@ class GamesController {
      * DONE: Move to Bootstrap css for the datatables
      * DONE: ALL fields, start most hidden
      * DONE: Additional field that is name over filename with visual comparison.
+     * DONE: Make game search input test box wider
      */
 
     /**

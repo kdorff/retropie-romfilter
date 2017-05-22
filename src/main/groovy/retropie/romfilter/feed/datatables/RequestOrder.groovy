@@ -7,7 +7,7 @@ import java.util.regex.Pattern
 /**
  * Datatables request column. Column numbering is 0-based.
  */
-@ToString(includeNames = true)
+@ToString(includeNames = true, excludes = ['log', 'columnOrderNumber'])
 class RequestOrder {
 
     /**
@@ -38,7 +38,7 @@ class RequestOrder {
     /**
      * Column name to sort on.
      */
-    String columnName
+    int columnNumber
 
     /**
      * Sort direction.
@@ -50,7 +50,7 @@ class RequestOrder {
      */
     RequestOrder() {
         columnOrderNumber = 0
-        columnName = ""
+        columnNumber = 0
         direction = Direction.asc
     }
 
@@ -66,7 +66,7 @@ class RequestOrder {
             paramKey.find(orderColumnPattern) { whole, foundI  ->
                 int i = foundI.toInteger()
                 RequestOrder order = results.containsKey(i) ? results[i] : (results[i] = new RequestOrder())
-                order.columnName = paramVal
+                order.columnNumber = paramVal.toInteger()
             }
             paramKey.find(orderDirectionPattern) { whole, String foundI  ->
                 int i = foundI.toInteger()
