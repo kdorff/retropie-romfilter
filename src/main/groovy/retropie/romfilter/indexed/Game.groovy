@@ -5,8 +5,8 @@ import groovy.transform.ToString
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.LongPoint
-import org.apache.lucene.document.NumericDocValuesField
 import org.apache.lucene.document.SortedDocValuesField
+import org.apache.lucene.document.SortedNumericDocValuesField
 import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.IntPoint
 import org.apache.lucene.document.StringField
@@ -428,7 +428,7 @@ class Game {
 
         doc.add(new IntPoint("players", players))
         doc.add(new StoredField("players", players))
-        doc.add(new NumericDocValuesField("playersOrder", players))
+        doc.add(new SortedNumericDocValuesField("playersOrder", players))
 
         if (region) {
             doc.add(new TextField("region", region, Field.Store.YES))
@@ -443,21 +443,21 @@ class Game {
         if (releasedate) {
             doc.add(new LongPoint("releasedate", releasedate))
             doc.add(new StoredField("releasedate", releasedate))
-            doc.add(new NumericDocValuesField("releasedateOrder", releasedate))
+            doc.add(new SortedNumericDocValuesField("releasedateOrder", releasedate))
         }
 
         doc.add(new IntPoint("rating", rating))
         doc.add(new StoredField("rating", rating))
-        doc.add(new NumericDocValuesField("ratingOrder", rating))
+        doc.add(new SortedNumericDocValuesField("ratingOrder", rating))
 
         doc.add(new IntPoint("playcount", playcount))
         doc.add(new StoredField("playcount", playcount))
-        doc.add(new NumericDocValuesField("playcountOrder", playcount))
+        doc.add(new SortedNumericDocValuesField("playcountOrder", playcount))
 
         if (lastplayed) {
             doc.add(new LongPoint("lastplayed", lastplayed))
             doc.add(new StoredField("lastplayed", lastplayed))
-            doc.add(new NumericDocValuesField("lastplayedOrder", lastplayed))
+            doc.add(new SortedNumericDocValuesField("lastplayedOrder", lastplayed))
         }
 
         doc.add(new StringField("hash", hash, Field.Store.YES))
@@ -465,7 +465,7 @@ class Game {
 
         doc.add(new LongPoint("size", size))
         doc.add(new StoredField("size", size))
-        doc.add(new NumericDocValuesField("sizeOrder", size))
+        doc.add(new SortedNumericDocValuesField("sizeOrder", size))
 
         String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${hash}"
         doc.add(new TextField("all", all, Field.Store.NO))

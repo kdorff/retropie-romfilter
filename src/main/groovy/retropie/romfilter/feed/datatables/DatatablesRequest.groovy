@@ -53,7 +53,7 @@ class DatatablesRequest {
         draw = 0
         start = 0
         length = 10
-        search = ""
+        search = ''
         searchIsRegex = false
         columns = []
         orders = []

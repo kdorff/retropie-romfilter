@@ -144,7 +144,6 @@ class RomfilterSyncService {
                 playcount: (gamelistGame.playcount?.toString() ?: "0") as int,
                 lastplayed: convertDateTimeToLong(gamelistGame.lastplayed?.toString() ?: ""),
             )
-            game.hash = generateHash(game)
 
             // Transform path
             if (game.path.startsWith('./')) {
@@ -177,6 +176,7 @@ class RomfilterSyncService {
 
             if (romFound) {
                 game.size = Files.size(Paths.get(configService.romsPath, game.system, game.path))
+                game.hash = generateHash(game)
                 indexerDataService.saveGame(game, doc)
             }
         }
@@ -196,13 +196,12 @@ class RomfilterSyncService {
             path: path.fileName.toString(),
             size: Files.size(path),
         )
-        game.hash = generateHash(game)
 
         // Transform path
         if (game.path.startsWith('./')) {
             game.path -= './'
         }
-
+        game.hash = generateHash(game)
         indexerDataService.saveGame(game, doc)
     }
 
