@@ -7,8 +7,12 @@ Features include
 * Filtering and sorting your the details of your ROMs in nearly any way you can imagine
 * Delete individual ROMs
 
-You *can* run this directly on a your RetroPie if you install Oracle Java 8, **but I don't recommend it** as it
-uses a fair amount of memory.  I prefer to run romfilter on another machine on the same network
+You *can* run this directly on a your RetroPie if you install Oracle Java 8,
+**but I don't recommend it** unless you are prepared to reduce the amount romfilter uses
+and accept the risk that the reduced system memory might keep games from running.
+I don't know how much memory these emulators require. I'd love some advise on this.
+
+I prefer to run romfilter on another machine on the same network
 and configure communicate with your RetroPie using the SMB shares the RetroPie automatically creates.
 
 # Disclaimer
