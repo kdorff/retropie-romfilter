@@ -371,10 +371,11 @@ class Game {
         region = document.region ?: ''
         romtype = document.romtype ?: ''
         releasedate = document.releasedate?.toLong() ?: 0
-        rating = Math.round((document.rating?.toDouble() ?: 0.0) * 100) as int
+        rating = document.rating?.toInteger() ?: 0
         playcount = document.playcount?.toInteger() ?: 0
         lastplayed = document.lastplayed?.toLong() ?: 0
         hash = document.hash
+        size = document.size?.toLong() ?: 0
         this.document = document
     }
 

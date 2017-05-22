@@ -43,27 +43,27 @@ class IndexerDataerviceSpec extends Specification {
     }
 
     @Unroll
-    def "Correct number of roms indexed"() {
+    def "Correct number of games indexed"() {
         expect:
-        gamelistentyCount == indexerDataService.gamesCount
+        gamesCount == indexerDataService.gamesCount
 
         where:
-        gamelistentyCount | _
+        gamesCount | _
         3                 | 0
     }
 
 
     @Unroll
-    def "query for gamelist with hash #hash"() {
+    def "query for game with hash #hash"() {
         when:
-        Game gamelistEntry = indexerDataService.getGameForHash(hash)
+        Game game = indexerDataService.getGameForHash(hash)
 
         then:
-        gamelistEntry
-        gamelistEntry.system == system
-        gamelistEntry.name == name
-        gamelistEntry.hash == hash
-        gamelistEntry.path == path
+        game
+        game.system == system
+        game.name == name
+        game.hash == hash
+        game.path == path
 
         where:
         system      | name                       | hash                               | path
@@ -73,7 +73,7 @@ class IndexerDataerviceSpec extends Specification {
     }
 
     @Unroll
-    def "Find gamelist with system and hash"() {
+    def "Find game with hash"() {
         when:
         Game game = indexerDataService.getGameForHash(hash)
 
@@ -90,7 +90,63 @@ class IndexerDataerviceSpec extends Specification {
         'atari2600' | ''                         | '97485e45a737b2375cd94084b25a0bfc' | '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip'
     }
 
-    def "fetch all gamelists for atari2600"() {
+    def "Verify xml to document creation for game with no gamelist"() {
+        when:
+        Game game = indexerDataService.getGameForHash('97485e45a737b2375cd94084b25a0bfc')
+
+        then:
+        game
+        game.system == 'atari2600'
+        game.scrapeId == ''
+        game.scrapeSource == ''
+        game.path == '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip'
+        game.name == ''
+        game.desc == ''
+        game.image == ''
+        game.thumbnail == ''
+        game.rating == 0
+        game.releasedate == 0
+        game.developer == ''
+        game.publisher == ''
+        game.genre == ''
+        game.players == 1
+        game.region == ''
+        game.size == 187
+        game.romtype == ''
+        game.playcount == 0
+        game.lastplayed == 0
+        game.hash == '97485e45a737b2375cd94084b25a0bfc'
+    }
+
+    def "Verify no gamelist document creation"() {
+        when:
+        Game game = indexerDataService.getGameForHash('2058f605ec4190cbec8969e9ce45047d')
+
+        then:
+        game
+        game.system == 'atari2600'
+        game.scrapeId == '2570'
+        game.scrapeSource == 'theGamesDB.net'
+        game.path == 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip'
+        game.name == 'Adventure'
+        game.desc == 'Adventure was the first action-adventure game on a video console, the first to contain a widely-known Easter egg, and the first to allow a player to have a stash of items, which required the player to select which one to use at any given moment, usually through keyboard or joystick input. Adventure allowed the player to drop one item and pick up another without having to type in any commands. The graphics, on the other hand, were not that great, and Robinett even described the dragons as looking like ducks.'
+        game.image.endsWith('atari2600/adventure.jpg')  // do better
+        game.thumbnail.endsWith('atari2600/adventure-thumb.jpg')  // do better
+        game.rating == 78
+        game.releasedate == 19780101
+        game.developer == 'Atari'
+        game.publisher == 'Atari'
+        game.genre == 'Adventure'
+        game.players == 5
+        game.region == "USA"
+        game.size == 187
+        game.romtype == 'tiny'
+        game.playcount == 37
+        game.lastplayed == 20170415
+        game.hash == '2058f605ec4190cbec8969e9ce45047d'
+    }
+
+    def "fetch all games for atari2600"() {
         when:
         List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600"/)
 
@@ -98,7 +154,7 @@ class IndexerDataerviceSpec extends Specification {
         games.size() == 3
     }
 
-    def "fetch all gamelists for atari2600 described with action"() {
+    def "fetch all games for atari2600 described with action"() {
         when:
         List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600" +desc:action/)
         log.info(games)
@@ -107,7 +163,7 @@ class IndexerDataerviceSpec extends Specification {
         games.size() == 1
     }
 
-    def "fetch all gamelists for atari2600 all all: containing 'action'"() {
+    def "fetch all games for atari2600 all all: containing 'action'"() {
         when:
         List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600" +all:action/)
         log.info(games)

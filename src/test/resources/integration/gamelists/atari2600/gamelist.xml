@@ -16,12 +16,17 @@
 		<name>Adventure</name>
 		<desc>Adventure was the first action-adventure game on a video console, the first to contain a widely-known Easter egg, and the first to allow a player to have a stash of items, which required the player to select which one to use at any given moment, usually through keyboard or joystick input. Adventure allowed the player to drop one item and pick up another without having to type in any commands. The graphics, on the other hand, were not that great, and Robinett even described the dragons as looking like ducks.</desc>
 		<image>~/.emulationstation/downloaded_images/atari2600/adventure.jpg</image>
+		<thumbnail>~/.emulationstation/downloaded_images/atari2600/adventure-thumb.jpg</thumbnail>
 		<rating>0.775</rating>
 		<releasedate>19780101T000000</releasedate>
 		<developer>Atari</developer>
 		<publisher>Atari</publisher>
 		<genre>Adventure</genre>
-		<players>1</players>
+		<players>5</players>
+		<region>USA</region>
+		<romtype>tiny</romtype>
+		<playcount>37</playcount>
+		<lastplayed>20170415T000000</lastplayed>
 	</game>
 	<game id="1342" source="theGamesDB.net">
 		<path>./Asteroids (1981) (Atari, Brad Stewart - Sears) (CX2649 - 49-75163) ~.zip</path>
