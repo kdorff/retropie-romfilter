@@ -1,6 +1,7 @@
 package retropie.romfilter
 
 import grails.test.mixin.TestFor
+import org.apache.lucene.document.Document
 import retropie.romfilter.indexed.Game
 import spock.lang.Specification
 
@@ -70,12 +71,13 @@ class RomfilterSyncServiceSpec extends Specification {
                 lastplayed: 20100101,
             )
         ]
+        Document doc = new Document()
 
         when:
-        service.parseGamelistFromXml('arcade', gamelistXml)
+        service.parseGamelistFromXml('arcade', gamelistXml, doc, [:])
 
         then:
-        1 * indexerDataService.saveGame(expectedGames[0])
-        1 * indexerDataService.saveGame(expectedGames[1])
+        1 * indexerDataService.saveGame(expectedGames[0], doc)
+        1 * indexerDataService.saveGame(expectedGames[1], doc)
     }
 }

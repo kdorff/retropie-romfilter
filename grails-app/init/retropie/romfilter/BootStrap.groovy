@@ -3,6 +3,7 @@ package retropie.romfilter
 import grails.core.GrailsApplication
 import org.apache.log4j.Logger
 import org.apache.lucene.index.IndexWriter
+import retropie.romfilter.indexed.Game
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -63,6 +64,9 @@ class BootStrap {
             log.info("Indexes are all empty. Starting full scan.")
             romfilterSyncService.scanAll()
         }
+
+        log.info("Warming up Game.GameColumn enum to validate that all " +
+            "configuration appears correct ${Game.GameColumn.HASH.hashCode()}")
     }
 
     /**

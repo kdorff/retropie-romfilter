@@ -1,22 +1,23 @@
 package retropie.romfilter.indexed
 
 import grails.util.Holders
-import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
 import org.apache.lucene.document.LongPoint
+import org.apache.lucene.document.NumericDocValuesField
+import org.apache.lucene.document.SortedDocValuesField
 import org.apache.lucene.document.StoredField
 import org.apache.lucene.document.IntPoint
-import org.apache.lucene.document.DoublePoint
 import org.apache.lucene.document.StringField
 import org.apache.lucene.document.TextField
+import org.apache.lucene.search.SortField
+import org.apache.lucene.util.BytesRef
 
 /**
  * Entry for one game from gamelist.xml.
  */
-@ToString(includeNames = true)
-@EqualsAndHashCode(includes = ["system", "path", "size"])
+@ToString(includeNames = true, excludes = [])
 class Game {
 
     /**
@@ -27,35 +28,130 @@ class Game {
      * http://stackoverflow.com/questions/38358087/how-to-sort-intpont-or-longpoint-field-in-lucene-6
      */
     enum GameColumn {
-        SYSTEM(0, 'system', 'system', true, 'System', true),
-        PATH(1, 'path', 'path', false, 'Path', false),
-        SIZE(2, 'size', null, true, 'Size', false),
-        NAME(3, 'name', 'nameOrder', true, 'Name', true),
-        NAME_PATH_COMPARISON(4, 'namePathComparison', null, false, 'Name/Path Comparison', true),
-        DESCRIPTION(5, 'desc', null, true, 'Description', true),
-        IMAGE(6, 'image', null, false, 'Image', true),
-        THUMBNAIL(7, 'thumbnail', null, false, 'Thumbnail', false),
-        DEVELOPER(8, 'developer', 'developerOrder', true, 'Developer', true),
-        PUBLISHER(9, 'publisher', 'publisherOrder', true, 'Publisher', true),
-        GENRE(10, 'genre', 'genreOrder', true, 'Genre', false),
-        PLAYERS(11, 'players', null, true, 'Players', false),
-        REGION(12, 'region', 'regionOrder', true, 'Region', false),
-        ROM_TYPE(13, 'romtype', 'romtypeOrder', true, 'ROM Type', false),
-        RELEASE_DATE(14, 'releasedate', null, true, 'Release Date', false),
-        RATING(15, 'rating', null, true, 'Rating', false),
-        PLAY_COUNT(16, 'playcount', null, true, 'Play Count', false),
-        LAST_PLAYED(17, 'lastplayed', null, true, 'Last Played', false),
-        SCRAPE_ID(18, 'scrapeId', 'scrapeId', true, 'Scrape ID', false),
-        SCRAPE_SOURCE(19, 'scrapeSource', 'scrapeSource', true, 'Scrape Source', false),
-        HASH(20, 'hash', null, true, 'Hash', false),
+        SYSTEM([
+            number: 0,
+            field: 'system',
+            initiallyVisible: true,
+        ]),
+        PATH([
+            number: 1,
+            field: 'path',
+            orderable: false,
+            searchable: false,
+        ]),
+        SIZE([
+            number: 2,
+            field: 'size',
+            sortFieldType: SortField.Type.LONG,
+        ]),
+        NAME([
+            number: 3,
+            field: 'name',
+            initiallyVisible: true,
+        ]),
+        NAME_PATH_COMPARISON([
+            number:4,
+            field:'namePathComparison',
+            orderable: false,
+            searchable: false,
+            friendlyName: 'Name/Path Comparison',
+            initiallyVisible: true
+        ]),
+        DESCRIPTION([
+            number:5,
+            field:'desc',
+            orderable: false,
+            friendlyName: 'Description',
+            initiallyVisible:  true,
+        ]),
+        IMAGE([
+            number:  6,
+            field:  'image',
+            orderable: false,
+            searchable:  false,
+            initiallyVisible:  true,
+        ]),
+        THUMBNAIL([
+            number: 7,
+            field: 'thumbnail',
+            orderable: false,
+            searchable:  false,
+        ]),
+        DEVELOPER([
+            number: 8,
+            field: 'developer',
+            initiallyVisible:  true,
+        ]),
+        PUBLISHER([
+            number: 9,
+            field: 'publisher',
+            initiallyVisible: true,
+        ]),
+        GENRE([
+            number: 10,
+            field: 'genre',
+        ]),
+        PLAYERS([
+            number: 11,
+            field: 'players',
+            sortFieldType: SortField.Type.INT,
+        ]),
+        REGION([
+            number: 12,
+            field: 'region',
+        ]),
+        ROM_TYPE([
+            number: 13,
+            field: 'romtype',
+            friendlyName: 'ROM Type',
+        ]),
+        RELEASE_DATE([
+            number: 14,
+            field: 'releasedate',
+            friendlyName: 'Release Date',
+            sortFieldType: SortField.Type.LONG,
+        ]),
+        RATING([
+            number: 15,
+            field: 'rating',
+            sortFieldType: SortField.Type.INT,
+            initiallyVisible: true,
+        ]),
+        PLAY_COUNT([
+            number: 16,
+            field: 'playcount',
+            friendlyName:  'Play Count',
+            sortFieldType: SortField.Type.INT,
+        ]),
+        LAST_PLAYED([
+            number: 17,
+            field: 'lastplayed',
+            friendlyName: 'Last Played',
+            sortFieldType: SortField.Type.LONG,
+        ]),
+        SCRAPE_ID([
+            number: 18,
+            field: 'scrapeId',
+            friendlyName: 'Scrape ID',
+        ]),
+        SCRAPE_SOURCE([
+            number: 19,
+            field: 'scrapeSource',
+            friendlyName: 'Scrape Source',
+        ]),
+        HASH([
+            number: 20,
+            field: 'hash',
+        ])
 
-        final int number
-        final String field
-        final String orderField
-        final boolean searchable
-        final boolean orderable
-        final String friendlyName
-        final String initiallyVisible
+        int number
+        String field
+        String orderField
+        boolean searchable
+        boolean orderable
+        String friendlyName
+        String initiallyVisible
+        SortField.Type sortFieldType
 
         /**
          * Construct a GameColumn
@@ -67,14 +163,38 @@ class Game {
          * @param friendlyName
          * @param initiallyVisible
          */
-        GameColumn(int number, String field, String orderField, boolean searchable, String friendlyName, boolean initiallyVisible) {
-            this.number = number
-            this.field = field
-            this.orderField = orderField
-            this.searchable = searchable
-            this.orderable = orderField != null
-            this.friendlyName = friendlyName
-            this.initiallyVisible = initiallyVisible
+        GameColumn(Map config) {
+            // Cannot store this list in static. Hmm, where to put it?
+            List<String> validConfigKeys = [
+                'number', 'field', 'orderField', 'searchable', 'orderable',
+                'friendlyName', 'initiallyVisible', 'sortFieldType'
+            ]
+
+            // Make sure all the config keys are valid for this configuration
+            // This will throw an exception if the enum's config Map is mis-configured (hopefully).
+            Set<String> invalidKeys = config.keySet().findAll { String configKey ->
+                return (!(configKey in validConfigKeys))
+            }
+            if (invalidKeys) {
+                throw new IllegalArgumentException("Invalid keys ${invalidKeys} during configuration of GameColumn")
+            }
+            if (config.number == null|| !config.field) {
+                throw new IllegalArgumentException(
+                    "Invalid value for required field, one of GameColumn.number or GameColumn.field ")
+            }
+
+            this.number = config.number
+            this.field = config.field
+            this.orderable = config.orderable == null ? true : config.orderable
+            this.orderField = config.orderField ?: "${this.field}Sorted"
+            this.searchable = config.searchable == null ? true : config.orderable
+            this.friendlyName = config.friendlyName ?: this.field.capitalize()
+            this.initiallyVisible = config.initiallyVisible == null ? false : config.initiallyVisible
+            this.sortFieldType = config.sortFieldType ?: SortField.Type.STRING
+
+            println "Enum ${this} number=${number} field=${field} orderable=${orderable} " +
+                "orderField=${orderField} searchable=${searchable} friendlyName=${friendlyName} " +
+                "initiallyVisible=${initiallyVisible} sortFieldType=${sortFieldType}"
         }
 
         /**
@@ -177,7 +297,7 @@ class Game {
      * The rating of the rom..
      * If no value is present in gamelist.xml for this entry, this will default to 0.
      */
-    double rating
+    int rating
 
     /**
      * The number of times the rom has been played.
@@ -205,17 +325,15 @@ class Game {
     String scrapeSource
 
     /**
+     * Hash.
+     */
+    String hash
+
+    /**
      * The document that was used to create this entry.
      * Null if the document wasn't reconstituted from the indexer.
      */
     Document document
-
-    /**
-     * Number to uniquely identify this GamelistEntry.
-     */
-    int getHash() {
-        return hashCode()
-    }
 
     /**
      * Comparison of name and path.
@@ -253,9 +371,10 @@ class Game {
         region = document.region ?: ''
         romtype = document.romtype ?: ''
         releasedate = document.releasedate?.toLong() ?: 0
-        rating = document.rating?.toDouble() ?: 0.0
+        rating = Math.round((document.rating?.toDouble() ?: 0.0) * 100) as int
         playcount = document.playcount?.toInteger() ?: 0
         lastplayed = document.lastplayed?.toLong() ?: 0
+        hash = document.hash
         this.document = document
     }
 
@@ -266,70 +385,90 @@ class Game {
      */
     Document convertToDocument(Document doc) {
         doc.add(new StringField("system", system, Field.Store.YES))
-        if (scrapeId) doc.add(new StringField("scrapeId", scrapeId, Field.Store.YES))
-        if (scrapeSource) doc.add(new StringField("scrapeSource", scrapeSource, Field.Store.YES))
+        doc.add(new SortedDocValuesField("systemOrder", new BytesRef(system)))
+
+        if (scrapeId) {
+            doc.add(new StringField("scrapeId", scrapeId, Field.Store.YES))
+            doc.add(new SortedDocValuesField("scrapeIdOrder", new BytesRef(scrapeId)))
+        }
+
+        if (scrapeSource) {
+            doc.add(new StringField("scrapeSource", scrapeSource, Field.Store.YES))
+            doc.add(new SortedDocValuesField("scrapeSourceOrder", new BytesRef(scrapeSource)))
+        }
+
         if (path) doc.add(new StringField("path", path, Field.Store.YES))
+
         if (name) {
             doc.add(new TextField("name", name, Field.Store.YES))
-            doc.add(new StringField("nameOrder", name, Field.Store.YES))
+            doc.add(new SortedDocValuesField("nameOrder", new BytesRef(name)))
         }
+
         // No sorting by description. Who cares.
         if (desc) doc.add(new TextField("desc", desc, Field.Store.YES))
+
         if (image) doc.add(new StringField("image", image, Field.Store.YES))
+
         if (thumbnail) doc.add(new StringField("thumbnail", thumbnail, Field.Store.YES))
+
         if (developer) {
             doc.add(new TextField("developer", developer, Field.Store.YES))
-            doc.add(new StringField("developerOrder", developer, Field.Store.YES))
+            doc.add(new SortedDocValuesField("developerOrder", new BytesRef(developer)))
         }
+
         if (publisher) {
             doc.add(new TextField("publisher", publisher, Field.Store.YES))
-            doc.add(new StringField("publisherOrder", developer, Field.Store.YES))
+            doc.add(new SortedDocValuesField("publisherOrder", new BytesRef(publisher)))
         }
         if (genre) {
             doc.add(new TextField("genre", genre, Field.Store.YES))
-            doc.add(new StringField("genreOrder", genre, Field.Store.YES))
+            doc.add(new SortedDocValuesField("genreOrder", new BytesRef(genre)))
         }
+
         doc.add(new IntPoint("players", players))
         doc.add(new StoredField("players", players))
+        doc.add(new NumericDocValuesField("playersOrder", players))
+
         if (region) {
             doc.add(new TextField("region", region, Field.Store.YES))
-            doc.add(new StringField("regionOrder", region, Field.Store.YES))
+            doc.add(new SortedDocValuesField("regionOrder", new BytesRef(region)))
         }
+
         if (romtype) {
             doc.add(new TextField("romtype", romtype, Field.Store.YES))
-            doc.add(new StringField("romtypeOrder", romtype, Field.Store.YES))
+            doc.add(new SortedDocValuesField("romtypeOrder", new BytesRef(romtype)))
         }
 
         if (releasedate) {
             doc.add(new LongPoint("releasedate", releasedate))
             doc.add(new StoredField("releasedate", releasedate))
+            doc.add(new NumericDocValuesField("releasedateOrder", releasedate))
         }
 
-        doc.add(new DoublePoint("rating", rating))
+        doc.add(new IntPoint("rating", rating))
         doc.add(new StoredField("rating", rating))
+        doc.add(new NumericDocValuesField("ratingOrder", rating))
+
         doc.add(new IntPoint("playcount", playcount))
         doc.add(new StoredField("playcount", playcount))
+        doc.add(new NumericDocValuesField("playcountOrder", playcount))
 
         if (lastplayed) {
             doc.add(new LongPoint("lastplayed", lastplayed))
             doc.add(new StoredField("lastplayed", lastplayed))
+            doc.add(new NumericDocValuesField("lastplayedOrder", lastplayed))
         }
-        doc.add(new IntPoint("hash", hash))
-        doc.add(new StoredField("hash", hash))
+
+        doc.add(new StringField("hash", hash, Field.Store.YES))
+        doc.add(new SortedDocValuesField("hash", new BytesRef(hash)))
+
         doc.add(new LongPoint("size", size))
         doc.add(new StoredField("size", size))
+        doc.add(new NumericDocValuesField("sizeOrder", size))
 
-        String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${this.hash}"
+        String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${hash}"
         doc.add(new TextField("all", all, Field.Store.NO))
 
         return doc
-    }
-
-    boolean hasThumbnail() {
-        return thumbnail != null && thumbnail != ""
-    }
-
-    boolean hasImage() {
-        return image != null && image != ""
     }
 }

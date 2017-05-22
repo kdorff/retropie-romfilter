@@ -1,8 +1,6 @@
 package retropie.romfilter
 
 import groovy.util.slurpersupport.GPathResult
-import groovyx.gpars.GParsPool
-import org.apache.commons.io.FilenameUtils
 import org.apache.log4j.Logger
 import org.apache.lucene.document.Document
 import retropie.romfilter.indexed.Game
@@ -11,7 +9,7 @@ import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.atomic.AtomicInteger
+import java.security.MessageDigest
 
 class RomfilterSyncService {
     /**
@@ -146,6 +144,7 @@ class RomfilterSyncService {
                 playcount: (gamelistGame.playcount?.toString() ?: "0") as int,
                 lastplayed: convertDateTimeToLong(gamelistGame.lastplayed?.toString() ?: ""),
             )
+            game.hash = generateHash(game)
 
             // Transform path
             if (game.path.startsWith('./')) {
@@ -194,8 +193,9 @@ class RomfilterSyncService {
         Game game = new Game(
             system: system,
             path: path.fileName.toString(),
-            size: Files.size(path)
+            size: Files.size(path),
         )
+        game.hash = generateHash(game)
         indexerDataService.saveGame(game, doc)
     }
 
@@ -261,5 +261,27 @@ class RomfilterSyncService {
             }
         }
         return result
+    }
+
+    /**
+     * Genereate hash for game.
+     *
+     * @param game
+     * @return
+     */
+    String generateHash(Game game) {
+        try {
+            String md5 = "${game.system}|${game.path}|${game.size}"
+            MessageDigest md = MessageDigest.getInstance("MD5")
+            byte[] array = md.digest(md5.getBytes());
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < array.length; ++i) {
+                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1,3))
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.error("Problem creating MD5 for ${game}, returning UUID", e)
+            return UUID.toString()
+        }
     }
 }

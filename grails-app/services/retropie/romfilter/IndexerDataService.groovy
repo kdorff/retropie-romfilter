@@ -3,16 +3,17 @@ package retropie.romfilter
 import org.apache.log4j.Logger
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
-import org.apache.lucene.document.IntPoint
 import org.apache.lucene.index.IndexReader
 import org.apache.lucene.index.IndexWriter
 import org.apache.lucene.queryparser.classic.ParseException
+import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search.IndexSearcher
 import org.apache.lucene.search.MatchAllDocsQuery
 import org.apache.lucene.search.Query
 import org.apache.lucene.search.ScoreDoc
 import org.apache.lucene.search.Sort
 import org.apache.lucene.search.SortField
+import org.apache.lucene.search.SortedNumericSortField
 import org.apache.lucene.search.TopDocs
 import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
@@ -133,8 +134,8 @@ class IndexerDataService {
      * @param hash
      * @return
      */
-    Game getGameForHash(int hash) {
-        return getGameForQuery(IntPoint.newExactQuery('hash', hash))
+    Game getGameForHash(String hash) {
+        return getGameForQuery(/+hash:"${QueryParser.escape(hash)}"/)
     }
 
     /**
@@ -164,7 +165,7 @@ class IndexerDataService {
 
         TopDocs results
         if (sort) {
-            results = indexSearcher.search(query, gamesIndexReader.maxDoc(), sort)
+            results = indexSearcher.search(query, gamesIndexReader.maxDoc(), sort, true, false)
         } else {
             results = indexSearcher.search(query, gamesIndexReader.maxDoc())
         }
@@ -185,29 +186,46 @@ class IndexerDataService {
         return gamesDataFeed
     }
 
+    /**
+     * Build a sort for the datatables request.
+     *
+     * @param datatablesRequest
+     * @return
+     */
     Sort buildSort(DatatablesRequest datatablesRequest) {
         Sort sort = null
-        // TODO We cannot sort on ANY fields until we insert docvalues. As is they have "NONE" (true for System, at least).
-//        if (datatablesRequest.orders) {
-//            List<SortField> sortFields = datatablesRequest.orders.collect { RequestOrder requestOrder ->
-//                Game.GameColumn gameColumn = Game.GameColumn.numberToGameColumn(requestOrder.columnNumber)
-//                if (gameColumn) {
-//                    /**
-//                     * TODO this won't always be String.
-//                     */
-//                    return new SortField(
-//                        gameColumn.orderField,
-//                        SortField.Type.STRING,
-//                        requestOrder.direction == RequestOrder.Direction.desc)
-//                }
-//                else {
-//                    return null
-//                }
-//            }.findAll { it != null }
-//            if (sortFields) {
-//                sort = new Sort(sortFields as SortField[])
-//            }
-//        }
+        if (datatablesRequest.orders) {
+            List<SortField> sortFields = datatablesRequest.orders.collect { RequestOrder requestOrder ->
+                Game.GameColumn gameColumn = Game.GameColumn.numberToGameColumn(requestOrder.columnNumber)
+                if (gameColumn) {
+                    if (gameColumn.sortFieldType == SortField.Type.STRING) {
+                        return new SortField(
+                            gameColumn.orderField,
+                            SortField.Type.STRING,
+                            requestOrder.direction == RequestOrder.Direction.desc)
+                    }
+                    else if (gameColumn.sortFieldType in [SortField.Type.INT, SortField.Type.LONG, SortField.Type.DOUBLE, SortField.Type.FLOAT, SortField.Type.SCORE, SortField.Type.DOC]) {
+                        return new SortedNumericSortField(
+                            gameColumn.orderField,
+                            gameColumn.sortFieldType,
+                            requestOrder.direction == RequestOrder.Direction.desc)
+                    }
+                    else {
+                        log.error("Unsupported gameColumn.sortFieldType ${gameColumn.sortFieldType}")
+                        return null
+                    }
+                }
+                else {
+                    return null
+                }
+            }.findAll { it != null }
+            if (sortFields) {
+                sort = new Sort(sortFields as SortField[])
+            }
+        }
+        if (sort) {
+            log.info("Returning sort: ${sort}")
+        }
         return sort
     }
 
@@ -228,13 +246,20 @@ class IndexerDataService {
     }
 
     /**
-     * Delete a GameEntry document
+     * Delete a Game document
      *
-     * @param gameEntry
+     * @param game
      * @return
      */
-    long deleteGame(Game gameEntry) {
-        Query query = IntPoint.newExactQuery('hash', gameEntry.hash)
-        gamesIndexWriter.deleteDocuments(query)
+    void deleteGame(Game game) {
+        String queryStr = /+hash:"${QueryParser.escape(game.hash)}"/
+        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
+        try {
+            Query query = queryParser.parse(queryStr)
+            gamesIndexWriter.deleteDocuments(query)
+        }
+        catch (Exception e) {
+            log.error("Error deleting Game document for hash ${game.hash}", e)
+        }
     }
 }

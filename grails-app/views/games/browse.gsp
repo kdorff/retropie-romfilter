@@ -1,5 +1,4 @@
 <%@ page import="retropie.romfilter.indexed.Game" %>
-<%@ page import="retropie.romfilter.indexed.Game.GameColumn" %>
 <!doctype html>
 <html>
 <head>
@@ -19,7 +18,7 @@
     <table id="romTable" class="display table" cellspacing="0" width="100%">
         <thead>
             <tr>
-                <g:each status='i' var='column' in="${GameColumn}">
+                <g:each status='i' var='column' in="${Game.GameColumn.values()}">
                     <th>${column.friendlyName}</th>
                 </g:each>
             </tr>
@@ -36,24 +35,8 @@
                 scrollY: 400,
                 paging:   true,
                 sDom: "frti",
-                // aoColumnDefs: [
-                // {
-                //     // Custom rendering for the first column
-                //     // which is filename over scrape name
-                //     "mRender": function ( data, type, row ) {
-                //         if (row[1]) {
-                //             return row[1] + '<br/>' + data;
-                //         }
-                //         else {
-                //             return data;
-                //     }
-                //     },
-                //     "aTargets": [ 0 ]
-                // },
-                // { "bVisible": false,  "aTargets": [ 1 ] }
-                // ],
                 columns: [
-                    <g:each status='i' var='column' in="${GameColumn}"><g:if test="${i > 0}">,</g:if> { name: '${column.field}',
+                    <g:each status='i' var='column' in="${Game.GameColumn.values()}"><g:if test="${i > 0}">,</g:if> { name: '${column.field}',
                          data: ${column.number},
                          searchable: ${column.searchable},
                          orderable: ${column.orderable},
@@ -65,7 +48,7 @@
                     type: 'POST'
                 }
             });
-});
+        });
     </g:javascript>
 </body>
 </html>

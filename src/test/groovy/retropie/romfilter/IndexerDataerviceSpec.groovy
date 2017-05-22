@@ -3,7 +3,6 @@ package retropie.romfilter
 import grails.test.mixin.integration.Integration
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
-import org.apache.lucene.queryparser.classic.QueryParser
 import retropie.romfilter.indexed.Game
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -47,128 +46,17 @@ class IndexerDataerviceSpec extends Specification {
     def "Correct number of roms indexed"() {
         expect:
         gamelistentyCount == indexerDataService.gamesCount
-        systemCount == indexerDataService.systemEntryCount
-        romCount == indexerDataService.romEntryCount
 
         where:
-        gamelistentyCount | systemCount | romCount
-        4                 | 1           | 3
+        gamelistentyCount | _
+        3                 | 0
     }
 
 
     @Unroll
-    def "query for gamelist with system and hash"() {
-        setup:
-        String hashVal = QueryParser.escape(hash.toString())
-        String hashRange = "[${hashVal} TO ${hashVal}]"
-        String query = /+system:"${QueryParser.escape((String) system)}" +hash:${hashRange}/
-
+    def "query for gamelist with hash #hash"() {
         when:
-        Game gamelistEntry = indexerDataService.getGameForQuery(query)
-
-        then:
-        gamelistEntry
-        gamelistEntry.system == system
-        gamelistEntry.name == name
-        gamelistEntry.hash == hash
-
-        where:
-        system      | name                       | hash
-        'atari2600' | 'The Activision Decathlon' | 1519037557
-        'atari2600' | 'Adventure'                | 555897016
-        'atari2600' | 'Asteroids'                | -47592823
-        'atari2600' | 'Astrowar (USA)'           | 1999839840
-    }
-
-    @Unroll
-    def "Find gamelist with system and hash"() {
-        when:
-        Game gamelistEntry = indexerDataService.getGamelistEntryForSystemAndHash((String) system, (int) hash)
-
-        then:
-        gamelistEntry
-        gamelistEntry.system == system
-        gamelistEntry.name == name
-        gamelistEntry.hash == hash
-
-        where:
-        system      | name                       | hash
-        'atari2600' | 'The Activision Decathlon' | 1519037557
-        'atari2600' | 'Adventure'                | 555897016
-        'atari2600' | 'Asteroids'                | -47592823
-        'atari2600' | 'Astrowar (USA)'           | 1999839840
-    }
-
-    def "fetch all gamelists for atari2600"() {
-        when:
-        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600"/)
-
-        then:
-        games.size() == 4
-    }
-
-    def "fetch all all sysetms"() {
-        when:
-        List<SystemEntry> systems = indexerDataService.getAllSystemsEntries()
-        log.info(systems)
-
-        then:
-        systems.size() == 1
-    }
-
-    def "fetch all gamelists for atari2600 described with action"() {
-        when:
-        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600" +desc:action/)
-        log.info(games)
-
-        then:
-        games.size() == 2
-    }
-
-    def "fetch all gamelists for atari2600 all all: containing 'action'"() {
-        when:
-        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600" +all:action/)
-        log.info(games)
-
-        then:
-        games.size() == 2
-    }
-
-    @Unroll
-    def "query for roms with system and path"() {
-        setup:
-        when:
-        RomEntry romEntry = indexerDataService.getRomEntryForSystemAndHash(system, hash)
-
-        then:
-        romEntry
-        romEntry.system == system
-        romEntry.hash == hash
-        romEntry.path == path
-
-        where:
-        system      | hash       | gamelistHash | path
-        'atari2600' | -480653922 | null         | '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip'
-        'atari2600' | -433859633 | 1659784634   | 'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip'
-        'atari2600' | -508239167 | -1661632215  | 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip'
-    }
-
-    @Unroll
-    def "query for roms for system"() {
-        setup:
-        when:
-        List<RomEntry> roms = indexerDataService.getRomEntriesForSystem('atari2600')
-        log.info(roms)
-
-        then:
-        roms.size() == 3
-    }
-
-    @Unroll
-    def "query for gamelist with system and path"() {
-        setup:
-        when:
-        Game gamelistEntry = indexerDataService.getGamelistEntryForSystemAndPath(system, path)
+        Game gamelistEntry = indexerDataService.getGameForHash(hash)
 
         then:
         gamelistEntry
@@ -178,11 +66,53 @@ class IndexerDataerviceSpec extends Specification {
         gamelistEntry.path == path
 
         where:
-        system      | name                       | hash       | path
-        'atari2600' | 'The Activision Decathlon' | 1519037557 | 'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip'
-        'atari2600' | 'Adventure'                | 555897016  | 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip'
-        'atari2600' | 'Asteroids'                | -47592823  | 'Asteroids (1981) (Atari, Brad Stewart - Sears) (CX2649 - 49-75163) ~.zip'
-        'atari2600' | 'Astrowar (USA)'           | 1999839840 | 'Astrowar (Unknown).zip'
+        system      | name                       | hash                               | path
+        'atari2600' | 'The Activision Decathlon' | 'b15d819c62fdf63c153d716899ba840c' | 'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip'
+        'atari2600' | 'Adventure'                | '2058f605ec4190cbec8969e9ce45047d' | 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip'
+        'atari2600' | ''                         | '97485e45a737b2375cd94084b25a0bfc' | '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip'
     }
 
+    @Unroll
+    def "Find gamelist with system and hash"() {
+        when:
+        Game game = indexerDataService.getGameForHash(hash)
+
+        then:
+        game
+        game.system == system
+        game.name == name
+        game.hash == hash
+
+        where:
+        system      | name                       | hash                               | path
+        'atari2600' | 'The Activision Decathlon' | 'b15d819c62fdf63c153d716899ba840c' | 'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip'
+        'atari2600' | 'Adventure'                | '2058f605ec4190cbec8969e9ce45047d' | 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip'
+        'atari2600' | ''                         | '97485e45a737b2375cd94084b25a0bfc' | '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip'
+    }
+
+    def "fetch all gamelists for atari2600"() {
+        when:
+        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600"/)
+
+        then:
+        games.size() == 3
+    }
+
+    def "fetch all gamelists for atari2600 described with action"() {
+        when:
+        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600" +desc:action/)
+        log.info(games)
+
+        then:
+        games.size() == 1
+    }
+
+    def "fetch all gamelists for atari2600 all all: containing 'action'"() {
+        when:
+        List<Game> games = indexerDataService.getGamesForQuery(/+system:"atari2600" +all:action/)
+        log.info(games)
+
+        then:
+        games.size() == 1
+    }
 }
