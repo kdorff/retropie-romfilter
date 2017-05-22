@@ -12,9 +12,10 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 @Integration
-class IndexerDataerviceSpec extends Specification {
+class IndexerDataServiceSpec extends Specification {
     /**
      * Load all from resources.groovy.
+     * IMPORTANT for Intergration tests.
      */
     static loadExternalBeans = true
 
@@ -34,13 +35,13 @@ class IndexerDataerviceSpec extends Specification {
     RomfilterSyncService romfilterSyncService
 
     @Shared
-    String hashDecathlon = 'b15d819c62fdf63c153d716899ba840c'
+    String hashDecathlon
 
     @Shared
-    String hashAdventure = '2058f605ec4190cbec8969e9ce45047d'
+    String hashAdventure
 
     @Shared
-    String hash3DTicTacToe = '51e9e77bc487a7997e19e39c3544c3d1'
+    String hash3DTicTacToe
 
     /**
      * Before the class tests run.
@@ -66,19 +67,16 @@ class IndexerDataerviceSpec extends Specification {
             path: 'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',
             size: 187,
         ]))
-        log.info("hashDecathlon=${hashDecathlon}")
         hashAdventure = romfilterSyncService.generateHash(new Game([
             system: 'atari2600',
             path: 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',
             size: 561,
         ]))
-        log.info("hashAdventure=${hashAdventure}")
         hash3DTicTacToe = romfilterSyncService.generateHash(new Game([
             system: 'atari2600',
             path: '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',
             size: 374,
         ]))
-        log.info("hash3DTicTacToe=${hash3DTicTacToe}")
     }
 
     @Unroll
@@ -88,7 +86,7 @@ class IndexerDataerviceSpec extends Specification {
 
         where:
         gamesCount | _
-        3                 | 0
+        3          | 0
     }
 
 
@@ -211,11 +209,194 @@ class IndexerDataerviceSpec extends Specification {
         then:
         gamesDataFeed
         gamesDataFeed.games.size() == 3
+        gamesDataFeed.games*.name == [
+            'The Activision Decathlon',
+            'Adventure',
+            '',
+        ]
         gamesDataFeed.games*.path == [
-            'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',
             'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',
+            'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',
             '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',
         ]
+    }
+
+    def "fetch all games, sort by name asc for atari2600"() {
+        setup:
+        DatatablesRequest req = new DatatablesRequest([
+            draw: '0',
+            start: '0',
+            length: '10',
+            'search[value]': /+system:atari2600/,
+            'search[regex]': 'false',
+            'order[0][column]': Game.GameColumn.NAME.number.toString(),
+            'order[0][dir]': RequestOrder.Direction.asc.toString(),
+        ])
+
+        when:
+        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(req)
+
+        then:
+        gamesDataFeed
+        gamesDataFeed.games.size() == 3
+        gamesDataFeed.games*.name == [
+            '',
+            'Adventure',
+            'The Activision Decathlon',
+        ]
+        gamesDataFeed.games*.path == [
+            '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',
+            'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',
+            'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',
+        ]
+    }
+
+    def "fetch all games, sort by hash [StringField] desc for atari2600"() {
+        setup:
+        DatatablesRequest req = new DatatablesRequest([
+            draw: '0',
+            start: '0',
+            length: '10',
+            'search[value]': /+system:atari2600/,
+            'search[regex]': 'false',
+            'order[0][column]': Game.GameColumn.HASH.number.toString(),
+            'order[0][dir]': RequestOrder.Direction.desc.toString(),
+        ])
+        List<String> expHashOrder = [hash3DTicTacToe, hashAdventure, hashDecathlon].sort({ a, b -> -(a <=> b) })
+
+        when:
+        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(req)
+
+        then:
+        gamesDataFeed
+        gamesDataFeed.games.size() == 3
+        gamesDataFeed.games*.hash == expHashOrder
+    }
+
+    def "fetch all games, sort by hash [StringField/SortedDocValuesField] asc for atari2600"() {
+        setup:
+        DatatablesRequest req = new DatatablesRequest([
+            draw: '0',
+            start: '0',
+            length: '10',
+            'search[value]': /+system:atari2600/,
+            'search[regex]': 'false',
+            'order[0][column]': Game.GameColumn.HASH.number.toString(),
+            'order[0][dir]': RequestOrder.Direction.asc.toString(),
+        ])
+        List<String> expHashOrder = [hash3DTicTacToe, hashAdventure, hashDecathlon].sort({ a, b -> a <=> b })
+
+        when:
+        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(req)
+
+        then:
+        gamesDataFeed
+        gamesDataFeed.games.size() == 3
+        gamesDataFeed.games*.hash == expHashOrder
+    }
+
+    def "fetch all games, sort by size [LongPoint/SortedNumericDocValuesField] desc for atari2600"() {
+        setup:
+        DatatablesRequest req = new DatatablesRequest([
+            draw: '0',
+            start: '0',
+            length: '10',
+            'search[value]': /+system:atari2600/,
+            'search[regex]': 'false',
+            'order[0][column]': Game.GameColumn.SIZE.number.toString(),
+            'order[0][dir]': RequestOrder.Direction.desc.toString(),
+        ])
+
+        when:
+        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(req)
+
+        then:
+        gamesDataFeed
+        gamesDataFeed.games.size() == 3
+        gamesDataFeed.games*.path == [
+            'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',   // 561
+            '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',   // 374
+            'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',  // 187
+        ]
+        gamesDataFeed.games*.size == [561, 374, 187]
+    }
+
+    def "fetch all games, sort by size [LongPoint/SortedNumericDocValuesField] asc for atari2600"() {
+        setup:
+        DatatablesRequest req = new DatatablesRequest([
+            draw: '0',
+            start: '0',
+            length: '10',
+            'search[value]': /+system:atari2600/,
+            'search[regex]': 'false',
+            'order[0][column]': Game.GameColumn.SIZE.number.toString(),
+            'order[0][dir]': RequestOrder.Direction.asc.toString(),
+        ])
+
+        when:
+        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(req)
+
+        then:
+        gamesDataFeed
+        gamesDataFeed.games.size() == 3
+        gamesDataFeed.games*.path == [
+            'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',  // 187
+            '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',   // 374
+            'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',   // 561
+        ]
+        gamesDataFeed.games*.size == [187, 374, 561]
+    }
+
+    def "fetch all games, sort by players [IntPoint/SortedNumericDocValuesField] desc for atari2600"() {
+        setup:
+        DatatablesRequest req = new DatatablesRequest([
+            draw: '0',
+            start: '0',
+            length: '10',
+            'search[value]': /+system:atari2600/,
+            'search[regex]': 'false',
+            'order[0][column]': Game.GameColumn.PLAYERS.number.toString(),
+            'order[0][dir]': RequestOrder.Direction.desc.toString(),
+        ])
+
+        when:
+        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(req)
+
+        then:
+        gamesDataFeed
+        gamesDataFeed.games.size() == 3
+        gamesDataFeed.games*.path == [
+            'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',   // 561
+            'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',  // 187
+            '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',   // 374
+        ]
+        gamesDataFeed.games*.players == [5, 2, 1]
+    }
+
+    def "fetch all games, sort by players [IntPoint/SortedNumericDocValuesField] asc for atari2600"() {
+        setup:
+        DatatablesRequest req = new DatatablesRequest([
+            draw: '0',
+            start: '0',
+            length: '10',
+            'search[value]': /+system:atari2600/,
+            'search[regex]': 'false',
+            'order[0][column]': Game.GameColumn.PLAYERS.number.toString(),
+            'order[0][dir]': RequestOrder.Direction.asc.toString(),
+        ])
+
+        when:
+        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(req)
+
+        then:
+        gamesDataFeed
+        gamesDataFeed.games.size() == 3
+        gamesDataFeed.games*.path == [
+            '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',   // 374
+            'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',  // 187
+            'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',   // 561
+        ]
+        gamesDataFeed.games*.players == [1, 2, 5]
     }
 
     def "fetch all games for atari2600 described with action"() {

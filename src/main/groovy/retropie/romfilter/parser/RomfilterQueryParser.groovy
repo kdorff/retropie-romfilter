@@ -1,4 +1,4 @@
-package retropie.romfilter.queryParser
+package retropie.romfilter.parser
 
 import org.apache.log4j.Logger
 import org.apache.lucene.analysis.Analyzer

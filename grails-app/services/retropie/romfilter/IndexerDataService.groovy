@@ -14,12 +14,13 @@ import org.apache.lucene.search.ScoreDoc
 import org.apache.lucene.search.Sort
 import org.apache.lucene.search.SortField
 import org.apache.lucene.search.SortedNumericSortField
+import org.apache.lucene.search.SortedSetSortField
 import org.apache.lucene.search.TopDocs
 import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.feed.datatables.RequestOrder
 import retropie.romfilter.indexed.Game
-import retropie.romfilter.queryParser.RomfilterQueryParser
+import retropie.romfilter.parser.RomfilterQueryParser
 
 class IndexerDataService {
     /**
@@ -199,16 +200,30 @@ class IndexerDataService {
                 Game.GameColumn gameColumn = Game.GameColumn.numberToGameColumn(requestOrder.columnNumber)
                 if (gameColumn) {
                     if (gameColumn.sortFieldType == SortField.Type.STRING) {
-                        return new SortField(
+                        SortField sortField = new SortedSetSortField(
                             gameColumn.orderField,
-                            SortField.Type.STRING,
                             requestOrder.direction == RequestOrder.Direction.desc)
+
+                        // Put blanks on the bottom. Always. This may not be popular.
+                        sortField.setMissingValue(
+                            requestOrder.direction == RequestOrder.Direction.asc ?
+                                SortField.STRING_LAST : SortField.STRING_FIRST
+                        )
+
+                        return sortField
                     }
                     else if (gameColumn.sortFieldType in [SortField.Type.INT, SortField.Type.LONG, SortField.Type.DOUBLE, SortField.Type.FLOAT, SortField.Type.SCORE, SortField.Type.DOC]) {
-                        return new SortedNumericSortField(
+                        SortField sortField = new SortedNumericSortField(
                             gameColumn.orderField,
                             gameColumn.sortFieldType,
                             requestOrder.direction == RequestOrder.Direction.desc)
+
+                        // Put blanks on the bottom. Always. This may not be popular.
+                        sortField.setMissingValue(
+                            requestOrder.direction == RequestOrder.Direction.asc ?
+                                SortField.STRING_LAST : SortField.STRING_FIRST
+                        )
+                        return sortField
                     }
                     else {
                         log.error("Unsupported gameColumn.sortFieldType ${gameColumn.sortFieldType}")

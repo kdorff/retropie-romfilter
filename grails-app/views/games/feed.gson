@@ -33,7 +33,8 @@ json {
             game.lastplayed ?: "",
             game.scrapeId ?: "",
             game.scrapeSource ?: "",
-            game.hash ?: ""
+            game.hash ?: "",
+            game.metadata ?: "",
         ]
     }
 }

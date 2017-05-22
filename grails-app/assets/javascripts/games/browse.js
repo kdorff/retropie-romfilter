@@ -1,23 +1,35 @@
-$(document).on('click', '.deleteRom', function () {
+$(document).on('click', 'button.deleteRom', function (e) {
+    e.preventDefault();
+
     var button = $(this);
     var deleteUrl = button.data('delete-url');
     if (deleteUrl) {
         button.css("background", "yellow");
-        button.attr('value', 'Attempting to Move ROM to Trash');
+        button.html('Attempting to Move ROM to Trash');
         $.ajax({
             url: deleteUrl,
             type: 'DELETE',
             success: function (result) {
-                button.attr('value', 'ROM Moved To Trash');
+                button.html('ROM Moved To Trash');
                 button.prop('disabled', true);
                 button.css("background", "green");
-                console.log("ROM deleted");
+                button.css("foreground", "white");
             },
             error: function (result) {
                 button.css("background", "");
-                button.attr('value', 'Delete / Move Trash');
+                button.html('Delete / Move Trash');
                 alert('Error deleting the ROM.');
             }
         });
     }
+});
+
+$(document).on('click', 'a.toggle-vis', function (e) {
+    e.preventDefault();
+
+    // Get the column API object
+    var column = romTable.column( $(this).attr('data-column') );
+
+    // Toggle the visibility
+    column.visible( ! column.visible() );
 });

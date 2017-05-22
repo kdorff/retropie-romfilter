@@ -13,28 +13,25 @@ import java.nio.file.Paths
 class GamesController {
 
     /**
+     * High:
      * TODO: Highlight with Lucene. The Datatables highligher won't cut it.
+     * TODO: Make scanning quartz jobs
+     * TODO: On demand complete re-scanning (delete and rebuild)
+     * TODO: Restore show game link
+     * TODO: Add remaining file extensions to the various systems to config
+     * TODO: Fancify name/path comparison
+     * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
+     *
+     * Lower:
+     * TODO: Change table rows to be ALL top justified
+     * TODO: More search help
+     * TODO: How does recalbox webapp launch games? (the django code I worked on)
+     * TODO: Filter to show dissimilar name/filenames
      * TODO: Card View?
      * TODO: More unit tests
      * TODO: More integration tests
-     * TODO: Filter to show dissimilar name/filenames
-     * TODO: Filter those without gamelist entry
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
-     * TODO: Add remaining file extensions to the various systems to config
-     * TODO: Make scanning quartz jobs
-     * TODO: On demand complete re-scanning (delete and rebuild)
-     * TODO: Ordering in lucene based on datatables request
-     * TODO: Restore show game link
-     * TODO: Restore delete game button.
-     * TODO: Column picker.
-     * TODO: Fancify name/path comparison
-     * TODO: Change table rows to be ALL top justified
-     * TODO: What happened to the application header?
-     * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
-     * TODO: How does recalbox webapp launch games? (the django code I worked on)
-     * TODO: Need to index "docvalues" for all fields I want to be orderable, text or numeric.
-     * TODO: The sorting code right now assumes all text, adapt for numeric.
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
@@ -55,6 +52,12 @@ class GamesController {
      * DONE: ALL fields, start most hidden
      * DONE: Additional field that is name over filename with visual comparison.
      * DONE: Make game search input test box wider
+     * DONE: new field named "metadata" that contains "true" or "false" to find roms with/without gamelist entries
+     * DONE: Ordering in lucene based on datatables request
+     * DONE: What happened to the application header?
+     * DONE: Column picker (and list of fields) (also shows if searchable and orderable).
+     * DONE: When sorting, always put missing data at bottom.
+     * DONE: Delete button in name/path comparison field. Working. Some filenames cause it problems ('[', ']' ?). Good enough.
      */
 
     /**
@@ -124,7 +127,7 @@ class GamesController {
      * @param hash
      * @return
      */
-    def show(int hash) {
+    def show(String hash) {
         Game game = indexerDataService.getGameForHash(hash)
         if (game) {
             return [
@@ -144,7 +147,7 @@ class GamesController {
      * @path hash
      * @return
      */
-    def delete(int hash) {
+    def delete(String hash) {
         Game toDeleteEntry = indexerDataService.getGameForHash(hash)
         if (!toDeleteEntry) {
             log.error("GameEntry.hash ${hash} not found in index")
@@ -188,7 +191,7 @@ class GamesController {
      * @param hash
      * @return
      */
-    def image(int hash) {
+    def image(String hash) {
         Game game = indexerDataService.getGameForHash(hash)
         if (game) {
             String fileType = FilenameUtils.getExtension(game.image).toLowerCase()

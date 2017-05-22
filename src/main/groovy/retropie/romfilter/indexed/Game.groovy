@@ -142,6 +142,10 @@ class Game {
         HASH([
             number: 20,
             field: 'hash',
+        ]),
+        METADATA([
+            number: 21,
+            field: 'metadata',
         ])
 
         int number
@@ -186,7 +190,7 @@ class Game {
             this.number = config.number
             this.field = config.field
             this.orderable = config.orderable == null ? true : config.orderable
-            this.orderField = config.orderField ?: "${this.field}Sorted"
+            this.orderField = config.orderField ?: this.field
             this.searchable = config.searchable == null ? true : config.orderable
             this.friendlyName = config.friendlyName ?: this.field.capitalize()
             this.initiallyVisible = config.initiallyVisible == null ? false : config.initiallyVisible
@@ -330,6 +334,11 @@ class Game {
     String hash
 
     /**
+     * If the Game has a gamelist entry.
+     */
+    boolean metadata
+
+    /**
      * The document that was used to create this entry.
      * Null if the document wasn't reconstituted from the indexer.
      */
@@ -342,7 +351,7 @@ class Game {
      * @return
      */
     String getNamePathComparison() {
-        return Holders.applicationContext.getBean('gameService')?.namePathComparison(name, path)
+        return Holders.applicationContext.getBean('gameService')?.namePathComparison(this)
     }
 
     /**
@@ -376,6 +385,7 @@ class Game {
         lastplayed = document.lastplayed?.toLong() ?: 0
         hash = document.hash
         size = document.size?.toLong() ?: 0
+        metadata = document.metadata?.toBoolean() ?: false
         this.document = document
     }
 
@@ -386,23 +396,23 @@ class Game {
      */
     Document convertToDocument(Document doc) {
         doc.add(new StringField("system", system, Field.Store.YES))
-        doc.add(new SortedDocValuesField("systemOrder", new BytesRef(system)))
+        doc.add(new SortedDocValuesField("system", new BytesRef(system)))
 
         if (scrapeId) {
             doc.add(new StringField("scrapeId", scrapeId, Field.Store.YES))
-            doc.add(new SortedDocValuesField("scrapeIdOrder", new BytesRef(scrapeId)))
+            doc.add(new SortedDocValuesField("scrapeId", new BytesRef(scrapeId)))
         }
 
         if (scrapeSource) {
             doc.add(new StringField("scrapeSource", scrapeSource, Field.Store.YES))
-            doc.add(new SortedDocValuesField("scrapeSourceOrder", new BytesRef(scrapeSource)))
+            doc.add(new SortedDocValuesField("scrapeSource", new BytesRef(scrapeSource)))
         }
 
         if (path) doc.add(new StringField("path", path, Field.Store.YES))
 
         if (name) {
             doc.add(new TextField("name", name, Field.Store.YES))
-            doc.add(new SortedDocValuesField("nameOrder", new BytesRef(name)))
+            doc.add(new SortedDocValuesField("name", new BytesRef(name)))
         }
 
         // No sorting by description. Who cares.
@@ -414,50 +424,51 @@ class Game {
 
         if (developer) {
             doc.add(new TextField("developer", developer, Field.Store.YES))
-            doc.add(new SortedDocValuesField("developerOrder", new BytesRef(developer)))
+            doc.add(new SortedDocValuesField("developer", new BytesRef(developer)))
         }
 
         if (publisher) {
             doc.add(new TextField("publisher", publisher, Field.Store.YES))
-            doc.add(new SortedDocValuesField("publisherOrder", new BytesRef(publisher)))
+            doc.add(new SortedDocValuesField("publisher", new BytesRef(publisher)))
         }
+
         if (genre) {
             doc.add(new TextField("genre", genre, Field.Store.YES))
-            doc.add(new SortedDocValuesField("genreOrder", new BytesRef(genre)))
+            doc.add(new SortedDocValuesField("genre", new BytesRef(genre)))
         }
 
         doc.add(new IntPoint("players", players))
         doc.add(new StoredField("players", players))
-        doc.add(new SortedNumericDocValuesField("playersOrder", players))
+        doc.add(new SortedNumericDocValuesField("players", players))
 
         if (region) {
             doc.add(new TextField("region", region, Field.Store.YES))
-            doc.add(new SortedDocValuesField("regionOrder", new BytesRef(region)))
+            doc.add(new SortedDocValuesField("region", new BytesRef(region)))
         }
 
         if (romtype) {
             doc.add(new TextField("romtype", romtype, Field.Store.YES))
-            doc.add(new SortedDocValuesField("romtypeOrder", new BytesRef(romtype)))
+            doc.add(new SortedDocValuesField("romtype", new BytesRef(romtype)))
         }
 
         if (releasedate) {
             doc.add(new LongPoint("releasedate", releasedate))
             doc.add(new StoredField("releasedate", releasedate))
-            doc.add(new SortedNumericDocValuesField("releasedateOrder", releasedate))
+            doc.add(new SortedNumericDocValuesField("releasedate", releasedate))
         }
 
         doc.add(new IntPoint("rating", rating))
         doc.add(new StoredField("rating", rating))
-        doc.add(new SortedNumericDocValuesField("ratingOrder", rating))
+        doc.add(new SortedNumericDocValuesField("rating", rating))
 
         doc.add(new IntPoint("playcount", playcount))
         doc.add(new StoredField("playcount", playcount))
-        doc.add(new SortedNumericDocValuesField("playcountOrder", playcount))
+        doc.add(new SortedNumericDocValuesField("playcount", playcount))
 
         if (lastplayed) {
             doc.add(new LongPoint("lastplayed", lastplayed))
             doc.add(new StoredField("lastplayed", lastplayed))
-            doc.add(new SortedNumericDocValuesField("lastplayedOrder", lastplayed))
+            doc.add(new SortedNumericDocValuesField("lastplayed", lastplayed))
         }
 
         doc.add(new StringField("hash", hash, Field.Store.YES))
@@ -465,7 +476,10 @@ class Game {
 
         doc.add(new LongPoint("size", size))
         doc.add(new StoredField("size", size))
-        doc.add(new SortedNumericDocValuesField("sizeOrder", size))
+        doc.add(new SortedNumericDocValuesField("size", size))
+
+        doc.add(new StringField("metadata", "${metadata}", Field.Store.YES))
+        doc.add(new SortedDocValuesField("metadata", new BytesRef("${metadata}")))
 
         String all = "${system} ${scrapeId} ${scrapeSource} ${path} ${name} ${desc} ${image} ${thumbnail} ${developer} ${publisher} ${genre} ${players} ${region} ${romtype} ${releasedate} ${rating} ${playcount} ${lastplayed} ${hash}"
         doc.add(new TextField("all", all, Field.Store.NO))

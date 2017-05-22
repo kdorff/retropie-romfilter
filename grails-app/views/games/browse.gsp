@@ -3,7 +3,7 @@
 <html>
 <head>
     <meta name="layout" content="main"/>
-    <title>List of ROMs</title>
+    <title>Browse ROMs</title>
     <asset:link rel="icon" href="favicon.ico" type="image/x-ico" />
     <asset:javascript src="games/browse.js" asset-defer="true" />
     <asset:stylesheet src="games/browse.css"/>
@@ -15,6 +15,13 @@
     <p>Navigation:
         <g:link action="browse">Browse ROMs</g:link>
 
+    <p>
+        <strong>All Fields (click to toggle visibility):</strong>
+            <g:each status='i' var='column' in="${Game.GameColumn.values()}">
+                <g:if test="${i}"> | </g:if>
+                <a class="toggle-vis" data-column="${column.number}">${column.field}</a><g:if test="${column.searchable}"><sup>s</sup></g:if><g:if test="${column.orderable}"><sup>o</sup></g:if>
+            </g:each>
+    </p>
     <table id="romTable" class="display table" cellspacing="0" width="100%">
         <thead>
             <tr>
@@ -25,8 +32,9 @@
         </thead>
     </table>
     <g:javascript>
+        var romTable;
         $(document).ready(function() {
-            $('#romTable').DataTable({
+            romTable = $('#romTable').DataTable({
                 // searchHighlight: true,
                 processing: true,
                 serverSide: true,
@@ -42,6 +50,10 @@
                          orderable: ${column.orderable},
                          visible: ${column.initiallyVisible} }
                     </g:each>
+                ],
+                order: [
+                    [ ${Game.GameColumn.NAME.number}, "asc" ],
+                    [ ${Game.GameColumn.SYSTEM.number}, "asc" ]
                 ],
                 ajax: {
                     url: gamesDataFeedUrl,

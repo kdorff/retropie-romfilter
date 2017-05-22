@@ -143,6 +143,7 @@ class RomfilterSyncService {
                 rating: Math.round(((gamelistGame.rating?.toString() ?: "0.0") as double) * 100) as int,
                 playcount: (gamelistGame.playcount?.toString() ?: "0") as int,
                 lastplayed: convertDateTimeToLong(gamelistGame.lastplayed?.toString() ?: ""),
+                metadata: true,
             )
 
             // Transform path

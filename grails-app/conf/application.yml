@@ -6,6 +6,7 @@ retropie:
         scanAtStartup: true
         skipSystems:
         - retropie
+        - genesis     # Genesis is a alt-name for megadrive
 
     emulationStation:
         romsPath: "/home/pi/RetroPie/roms"
