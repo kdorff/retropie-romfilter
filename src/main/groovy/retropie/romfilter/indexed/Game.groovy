@@ -16,6 +16,10 @@ import org.apache.lucene.util.BytesRef
 
 /**
  * Entry for one game from gamelist.xml.
+ *
+ * NOTE!!! Numeric values should not be stored in the index as empty.
+ * All numerics should be stored with a value.
+ *
  */
 @ToString(includeNames = true, excludes = [])
 class Game {
@@ -451,11 +455,9 @@ class Game {
             doc.add(new SortedDocValuesField("romtype", new BytesRef(romtype)))
         }
 
-        if (releasedate) {
-            doc.add(new LongPoint("releasedate", releasedate))
-            doc.add(new StoredField("releasedate", releasedate))
-            doc.add(new SortedNumericDocValuesField("releasedate", releasedate))
-        }
+        doc.add(new LongPoint("releasedate", releasedate))
+        doc.add(new StoredField("releasedate", releasedate))
+        doc.add(new SortedNumericDocValuesField("releasedate", releasedate))
 
         doc.add(new IntPoint("rating", rating))
         doc.add(new StoredField("rating", rating))
@@ -465,11 +467,9 @@ class Game {
         doc.add(new StoredField("playcount", playcount))
         doc.add(new SortedNumericDocValuesField("playcount", playcount))
 
-        if (lastplayed) {
-            doc.add(new LongPoint("lastplayed", lastplayed))
-            doc.add(new StoredField("lastplayed", lastplayed))
-            doc.add(new SortedNumericDocValuesField("lastplayed", lastplayed))
-        }
+        doc.add(new LongPoint("lastplayed", lastplayed))
+        doc.add(new StoredField("lastplayed", lastplayed))
+        doc.add(new SortedNumericDocValuesField("lastplayed", lastplayed))
 
         doc.add(new StringField("hash", hash, Field.Store.YES))
         doc.add(new SortedDocValuesField("hash", new BytesRef(hash)))

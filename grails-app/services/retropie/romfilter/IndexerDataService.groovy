@@ -218,11 +218,6 @@ class IndexerDataService {
                             gameColumn.sortFieldType,
                             requestOrder.direction == RequestOrder.Direction.desc)
 
-                        // Put blanks on the bottom. Always. This may not be popular.
-                        sortField.setMissingValue(
-                            requestOrder.direction == RequestOrder.Direction.asc ?
-                                SortField.STRING_LAST : SortField.STRING_FIRST
-                        )
                         return sortField
                     }
                     else {

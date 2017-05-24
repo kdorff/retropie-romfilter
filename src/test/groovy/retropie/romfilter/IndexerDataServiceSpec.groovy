@@ -209,6 +209,7 @@ class IndexerDataServiceSpec extends Specification {
         then:
         gamesDataFeed
         gamesDataFeed.games.size() == 3
+        // Blanks always go to the bottom
         gamesDataFeed.games*.name == [
             'The Activision Decathlon',
             'Adventure',
@@ -239,15 +240,16 @@ class IndexerDataServiceSpec extends Specification {
         then:
         gamesDataFeed
         gamesDataFeed.games.size() == 3
+        // Blanks always go to the bottom
         gamesDataFeed.games*.name == [
-            '',
             'Adventure',
             'The Activision Decathlon',
+            '',
         ]
         gamesDataFeed.games*.path == [
-            '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',
             'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',
             'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',
+            '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',
         ]
     }
 
