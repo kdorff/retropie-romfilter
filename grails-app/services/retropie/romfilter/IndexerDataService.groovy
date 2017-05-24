@@ -17,8 +17,10 @@ import org.apache.lucene.search.SortedNumericSortField
 import org.apache.lucene.search.SortedSetSortField
 import org.apache.lucene.search.TopDocs
 import org.apache.lucene.search.highlight.Highlighter
+import org.apache.lucene.search.highlight.InvalidTokenOffsetsException
 import org.apache.lucene.search.highlight.QueryScorer
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter
+import org.apache.lucene.search.highlight.SimpleSpanFragmenter
 import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.feed.datatables.RequestOrder
@@ -148,7 +150,7 @@ class IndexerDataService {
      * @param datatablesRequest
      * @return
      */
-    GamesDataFeed getGameDataFeedForRequest(DatatablesRequest datatablesRequest, boolean highlight = false) {
+    GamesDataFeed getGameDataFeedForRequest(DatatablesRequest datatablesRequest, boolean highlight = true) {
         RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
         Query query
         if (datatablesRequest.search) {
@@ -181,9 +183,11 @@ class IndexerDataService {
         ])
         SimpleHTMLFormatter htmlFormatter = null
         Highlighter highlighter = null
+        QueryScorer queryScorer = null
         if (highlight) {
-            htmlFormatter = new SimpleHTMLFormatter()
-            highlighter = new Highlighter(htmlFormatter, new QueryScorer(query))
+            htmlFormatter = new SimpleHTMLFormatter("<span class='MatchedText'>", "</span>");
+            queryScorer = new QueryScorer(query)
+            highlighter = new Highlighter(htmlFormatter, queryScorer)
         }
 
         for (int i = datatablesRequest.start; i < results.totalHits; i++) {
@@ -193,7 +197,7 @@ class IndexerDataService {
             Document document = indexSearcher.doc(scoreDocs[i].doc)
             Game game = new Game(document)
             if (highlight) {
-                highlightGame(indexSearcher, highlighter, game)
+                highlightGame(highlighter, queryScorer, game)
             }
             gamesDataFeed.games << game
         }
@@ -253,38 +257,70 @@ class IndexerDataService {
         return sort
     }
 
-    void highlightGame(IndexSearcher indexSearcher, Highlighter highlighter, Game game) {
-        game.desc = highlightField(indexSearcher, highlighter, 'desc', game.desc)
+    /**
+     * Highlight search terms in all string fields.
+     * Currently the the way I have things set up this doesn't support
+     * numbers (or URLs to images).
+     *
+     * @param highlighter
+     * @param queryScorer
+     * @param game
+     */
+    void highlightGame(Highlighter highlighter, QueryScorer queryScorer,  Game game) {
+        game.system = highlightField(highlighter, queryScorer, 'system', game.system)
+        game.path = highlightField(highlighter, queryScorer, 'path', game.path)
+        game.name = highlightField(highlighter, queryScorer, 'name', game.name)
+        game.desc = highlightField(highlighter, queryScorer, 'desc', clipText(game.desc, 500))
+        game.developer = highlightField(highlighter, queryScorer, 'developer', game.developer)
+        game.publisher = highlightField(highlighter, queryScorer, 'publisher', game.publisher)
+        game.genre = highlightField(highlighter, queryScorer, 'genre', game.genre)
+        game.region = highlightField(highlighter, queryScorer, 'region', game.region)
+        game.romtype = highlightField(highlighter, queryScorer, 'romtype', game.romtype)
+        game.scrapeId = highlightField(highlighter, queryScorer, 'scrapeId', game.scrapeId)
+        game.scrapeSource = highlightField(highlighter, queryScorer, 'scrapeSource', game.scrapeSource)
     }
 
-    void highlightField(IndexSearcher indexSearcher, Highlighter highlighter, String field, String value) {
-//        String text = doc.get("notv");
-//        TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), id, "notv", analyzer);
-//        TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, false, 10);//highlighter.getBestFragments(tokenStream, text, 3, "...");
-//        for (int j = 0; j < frag.length; j++) {
-//            if ((frag[j] != null) && (frag[j].getScore() > 0)) {
-//                System.out.println((frag[j].toString()));
-//            }
-//        }
-//        //Term vector
-//        text = doc.get("tv");
-//        tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), hits.scoreDocs[i].doc, "tv", analyzer);
-//        frag = highlighter.getBestTextFragments(tokenStream, text, false, 10);
-//        for (int j = 0; j < frag.length; j++) {
-//            if ((frag[j] != null) && (frag[j].getScore() > 0)) {
-//                System.out.println((frag[j].toString()));
-//            }
-//        }
-//
+    /**
+     * Clip long text. If clipped, append "..." to the clipped text.
+     *
+     * @param value
+     * @return
+     */
+    String clipText(String value, int maxLength) {
+        int size = value ?.size() ?: 0
+        if (size < maxLength) {
+            return  value
+        }
+        else {
+            return value.substring(0, maxLength) + '...'
+        }
     }
 
+    /**
+     * Return the text of a single field highlighted OR the original field if nothing
+     * was highlighted.
+     *
+     * @param highlighter
+     * @param queryScorer
+     * @param field
+     * @param value
+     * @return
+     * @throws IOException
+     * @throws InvalidTokenOffsetsException
+     */
+    String highlightField(Highlighter highlighter, QueryScorer queryScorer, String field, String value) throws IOException, InvalidTokenOffsetsException {
+        highlighter.setTextFragmenter(new SimpleSpanFragmenter(queryScorer, Integer.MAX_VALUE))
+        highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE)
+        String highlighted = highlighter.getBestFragment(queryAnalyzer, field, value)
+        return  highlighted ?: value
+    }
 
     /* ----------------------------------------------------------------------------
      * Index creation methods.
      */
 
     /**
-     * Save a Ga,e to the index.
+     * Save a Game to the index.
      * @param game
      * @param doc reused for performance
      */
