@@ -1,3 +1,11 @@
 #romTable_filter>label>input {
     width: 400px
 }
+.MatchedText {
+    background-color: yellow;
+}
+div#deleteAllSpan {
+    float:right;
+    padding: 5px;
+    background-color: red;
+}

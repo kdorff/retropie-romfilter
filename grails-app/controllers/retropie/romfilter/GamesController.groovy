@@ -14,7 +14,6 @@ class GamesController {
 
     /**
      * High:
-     * TODO: Highlight with Lucene. The Datatables highligher won't cut it.
      * TODO: Make scanning quartz jobs
      * TODO: On demand complete re-scanning (delete and rebuild)
      * TODO: Restore show game link
@@ -32,6 +31,7 @@ class GamesController {
      * TODO: More integration tests
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
+     * TODO: Bulk deletion can take a while to come back with no status. A AJAX delete would be nice.
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
@@ -58,6 +58,8 @@ class GamesController {
      * DONE: Column picker (and list of fields) (also shows if searchable and orderable).
      * DONE: When sorting, always put missing data at bottom.
      * DONE: Delete button in name/path comparison field. Working. Some filenames cause it problems ('[', ']' ?). Good enough.
+     * DONE: Bulk deletion. Delete everything that matches a query. BE CAREFUL!
+     * TODO: Highlight with Lucene. The Datatables highligher won't cut it.
      */
 
     /**
@@ -66,6 +68,16 @@ class GamesController {
     static allowedMethods = [
         feed: 'POST',
         delete: 'DELETE'
+    ]
+
+    /**
+     * Delete response code to text message
+     * for bulk deletes.
+     */
+    Map DELETE_RESPONSES = [
+        200: "Deletion successful",
+        404: "Index entry or ROM path not found",
+        500: "Exception deleting ROM."
     ]
 
     /**
@@ -112,11 +124,13 @@ class GamesController {
      * @return
      */
     def feed() {
+        long start = System.currentTimeMillis()
         log.info("feed")
         log.info("params ${params}")
         DatatablesRequest datatablesRequest = new DatatablesRequest(params)
         log.error("request ${datatablesRequest}")
         GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(datatablesRequest)
+        log.info("Retrieval of data from index took ${System.currentTimeMillis()-start}ms")
         respond gamesDataFeed
     }
 
@@ -163,6 +177,12 @@ class GamesController {
             } else {
                 // Delete the file (move it to trash)
                 String trashPathStr = configService.trashPath
+
+                // Make sure system trash folder exists
+                Path trashDestinationFolderPath = Paths.get(trashPathStr, toDeleteEntry.system)
+                Files.createDirectories(trashDestinationFolderPath)
+
+                // Location with trash to move rom
                 Path trashDestinationPath = Paths.get(trashPathStr, toDeleteEntry.system, toDeletePath.fileName.toString())
 
                 try {
@@ -214,5 +234,53 @@ class GamesController {
             log.error("No game (for image) found for ${hash}")
             response.status = 404
         }
+    }
+
+    /**
+     * Confirm the choice to delete all roms that match a query.
+     *
+     * @return
+     */
+    def deleteAllConfirm() {
+        if (!params.query) {
+            redirect(actionName: 'browse')
+        }
+        else {
+            return [
+                query: params.query
+            ]
+        }
+    }
+
+    /**
+     * User Confirmed the choice to delete all roms that match a query.
+     * Delete the roms and then provide a response that shows all the
+     * roms and the status of the deletion. This isn't ideal
+     * because all of the deletes happen THEN the result is shown. Deleting
+     * hundreds of roms and be slow. An AJAX delete all of some sort would
+     * be better. Or start it and monitor the deletes with AJAX.
+     * It should be a background task like scanning.
+     *
+     * @return
+     */
+    def deleteAllConfirmed() {
+        if (!params.query) {
+            redirect(actionName: 'browse')
+        }
+
+        List<Game> toDeletes = indexerDataService.getGamesForQuery((String) params.query)
+
+        Map deleteResult = [:]
+        toDeletes.each { Game toDelete ->
+            response.status = 0
+            delete(toDelete.hash)
+            deleteResult[toDelete.path] = DELETE_RESPONSES[response.status] ?: "Unknown"
+        }
+        response.status = 200
+
+        return [
+            query: params.query,
+            deleteResult: deleteResult,
+        ]
     }
 }
