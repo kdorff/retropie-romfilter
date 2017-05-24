@@ -59,7 +59,7 @@ class GamesController {
      * DONE: When sorting, always put missing data at bottom.
      * DONE: Delete button in name/path comparison field. Working. Some filenames cause it problems ('[', ']' ?). Good enough.
      * DONE: Bulk deletion. Delete everything that matches a query. BE CAREFUL!
-     * TODO: Highlight with Lucene. The Datatables highligher won't cut it.
+     * DONE: Highlight with Lucene. The Datatables highligher won't cut it.
      */
 
     /**
