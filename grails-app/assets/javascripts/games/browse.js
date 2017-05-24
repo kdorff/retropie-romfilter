@@ -1,3 +1,6 @@
+//
+// Delete a ROM.
+//
 $(document).on('click', 'button.deleteRom', function (e) {
     e.preventDefault();
 
@@ -12,8 +15,7 @@ $(document).on('click', 'button.deleteRom', function (e) {
             success: function (result) {
                 button.html('ROM Moved To Trash');
                 button.prop('disabled', true);
-                button.css("background", "green");
-                button.css("foreground", "white");
+                button.css("background", "chartreuse");
             },
             error: function (result) {
                 button.css("background", "");
@@ -24,6 +26,10 @@ $(document).on('click', 'button.deleteRom', function (e) {
     }
 });
 
+//
+// Toggle the visibility of a column by clicking on the field name
+// at the top of the page.
+//
 $(document).on('click', 'a.toggle-vis', function (e) {
     e.preventDefault();
 
@@ -32,4 +38,19 @@ $(document).on('click', 'a.toggle-vis', function (e) {
 
     // Toggle the visibility
     column.visible( ! column.visible() );
+});
+
+//
+// User is deleting all matching roms. Copy the query to the
+// forms hidden query field.
+//
+$(document).on('click', '#deleteAllMatching', function (e) {
+    var query = $("#romTable_filter>label>input").val();
+    if (query) {
+        $("#deleteAllQuery").val(query);
+    }
+    else {
+        alert("No query specified.");
+        event.preventDefault()
+    }
 });
