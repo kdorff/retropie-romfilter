@@ -12,8 +12,7 @@ $(document).on('click', 'button.deleteRom', function (e) {
             success: function (result) {
                 button.html('ROM Moved To Trash');
                 button.prop('disabled', true);
-                button.css("background", "green");
-                button.css("foreground", "white");
+                button.css("background", "chartreuse");
             },
             error: function (result) {
                 button.css("background", "");

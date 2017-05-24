@@ -8,7 +8,6 @@ import org.apache.lucene.document.LongPoint
 import org.apache.lucene.document.SortedDocValuesField
 import org.apache.lucene.document.SortedNumericDocValuesField
 import org.apache.lucene.document.StoredField
-import org.apache.lucene.document.IntPoint
 import org.apache.lucene.document.StringField
 import org.apache.lucene.document.TextField
 import org.apache.lucene.search.SortField
@@ -98,7 +97,7 @@ class Game {
         PLAYERS([
             number: 11,
             field: 'players',
-            sortFieldType: SortField.Type.INT,
+            sortFieldType: SortField.Type.LONG,
         ]),
         REGION([
             number: 12,
@@ -118,14 +117,14 @@ class Game {
         RATING([
             number: 15,
             field: 'rating',
-            sortFieldType: SortField.Type.INT,
+            sortFieldType: SortField.Type.LONG,
             initiallyVisible: true,
         ]),
         PLAY_COUNT([
             number: 16,
             field: 'playcount',
             friendlyName:  'Play Count',
-            sortFieldType: SortField.Type.INT,
+            sortFieldType: SortField.Type.LONG,
         ]),
         LAST_PLAYED([
             number: 17,
@@ -283,7 +282,7 @@ class Game {
      * Number of players supported by the rom.
      * If no value is present in gamelist.xml for this entry, this will default to 1.
      */
-    int players
+    long players
 
     /**
      * Region of the rom.
@@ -305,13 +304,13 @@ class Game {
      * The rating of the rom..
      * If no value is present in gamelist.xml for this entry, this will default to 0.
      */
-    int rating
+    long rating
 
     /**
      * The number of times the rom has been played.
      * If no value is present in gamelist.xml for this entry, this will default to 0.
      */
-    int playcount
+    long playcount
 
     /**
      * The date the rom was last played.
@@ -441,7 +440,7 @@ class Game {
             doc.add(new SortedDocValuesField("genre", new BytesRef(genre)))
         }
 
-        doc.add(new IntPoint("players", players))
+        doc.add(new LongPoint("players", players))
         doc.add(new StoredField("players", players))
         doc.add(new SortedNumericDocValuesField("players", players))
 
@@ -459,11 +458,11 @@ class Game {
         doc.add(new StoredField("releasedate", releasedate))
         doc.add(new SortedNumericDocValuesField("releasedate", releasedate))
 
-        doc.add(new IntPoint("rating", rating))
+        doc.add(new LongPoint("rating", rating))
         doc.add(new StoredField("rating", rating))
         doc.add(new SortedNumericDocValuesField("rating", rating))
 
-        doc.add(new IntPoint("playcount", playcount))
+        doc.add(new LongPoint("playcount", playcount))
         doc.add(new StoredField("playcount", playcount))
         doc.add(new SortedNumericDocValuesField("playcount", playcount))
 

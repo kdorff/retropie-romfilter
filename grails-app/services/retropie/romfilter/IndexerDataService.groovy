@@ -16,6 +16,9 @@ import org.apache.lucene.search.SortField
 import org.apache.lucene.search.SortedNumericSortField
 import org.apache.lucene.search.SortedSetSortField
 import org.apache.lucene.search.TopDocs
+import org.apache.lucene.search.highlight.Highlighter
+import org.apache.lucene.search.highlight.QueryScorer
+import org.apache.lucene.search.highlight.SimpleHTMLFormatter
 import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.feed.datatables.RequestOrder
@@ -145,7 +148,7 @@ class IndexerDataService {
      * @param datatablesRequest
      * @return
      */
-    GamesDataFeed getGameDataFeedForRequest(DatatablesRequest datatablesRequest) {
+    GamesDataFeed getGameDataFeedForRequest(DatatablesRequest datatablesRequest, boolean highlight = false) {
         RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
         Query query
         if (datatablesRequest.search) {
@@ -176,12 +179,23 @@ class IndexerDataService {
             recordsTotal   : getGamesCount(),
             recordsFiltered: results.totalHits,
         ])
+        SimpleHTMLFormatter htmlFormatter = null
+        Highlighter highlighter = null
+        if (highlight) {
+            htmlFormatter = new SimpleHTMLFormatter()
+            highlighter = new Highlighter(htmlFormatter, new QueryScorer(query))
+        }
+
         for (int i = datatablesRequest.start; i < results.totalHits; i++) {
             if (i > (datatablesRequest.start + datatablesRequest.length) - 1) {
                 break;
             }
             Document document = indexSearcher.doc(scoreDocs[i].doc)
-            gamesDataFeed.games << new Game(document)
+            Game game = new Game(document)
+            if (highlight) {
+                highlightGame(indexSearcher, highlighter, game)
+            }
+            gamesDataFeed.games << game
         }
         log.info("Found ${gamesDataFeed.games.size()}")
         return gamesDataFeed
@@ -238,6 +252,32 @@ class IndexerDataService {
         }
         return sort
     }
+
+    void highlightGame(IndexSearcher indexSearcher, Highlighter highlighter, Game game) {
+        game.desc = highlightField(indexSearcher, highlighter, 'desc', game.desc)
+    }
+
+    void highlightField(IndexSearcher indexSearcher, Highlighter highlighter, String field, String value) {
+//        String text = doc.get("notv");
+//        TokenStream tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), id, "notv", analyzer);
+//        TextFragment[] frag = highlighter.getBestTextFragments(tokenStream, text, false, 10);//highlighter.getBestFragments(tokenStream, text, 3, "...");
+//        for (int j = 0; j < frag.length; j++) {
+//            if ((frag[j] != null) && (frag[j].getScore() > 0)) {
+//                System.out.println((frag[j].toString()));
+//            }
+//        }
+//        //Term vector
+//        text = doc.get("tv");
+//        tokenStream = TokenSources.getAnyTokenStream(searcher.getIndexReader(), hits.scoreDocs[i].doc, "tv", analyzer);
+//        frag = highlighter.getBestTextFragments(tokenStream, text, false, 10);
+//        for (int j = 0; j < frag.length; j++) {
+//            if ((frag[j] != null) && (frag[j].getScore() > 0)) {
+//                System.out.println((frag[j].toString()));
+//            }
+//        }
+//
+    }
+
 
     /* ----------------------------------------------------------------------------
      * Index creation methods.

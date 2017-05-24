@@ -10,8 +10,19 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.MessageDigest
+import java.util.regex.Pattern
 
 class RomfilterSyncService {
+    /**
+     * Pattern to match int / long type numbers within a string.
+     */
+    final static Pattern INT_STRING_PATTERN = ~/(\d+)/
+
+    /**
+     * Pattern to match int / long type numbers within a string.
+     */
+    final static Pattern FLOAT_STRING_PATTERN = ~/(\d+\.\d+)|(\d+)/
+
     /**
      * Logger.
      */
@@ -136,12 +147,12 @@ class RomfilterSyncService {
                 developer: gamelistGame.developer?.toString() ?: "",
                 publisher: gamelistGame.publisher?.toString() ?: "",
                 genre: gamelistGame.genre?.toString() ?: "",
-                players: (gamelistGame.players?.toString() ?: "1") as int,
+                players: intString(gamelistGame.players.toString(), '1') as int,
                 region: gamelistGame.region?.toString() ?: "",
                 romtype: gamelistGame.romtype?.toString() ?: "",
                 releasedate: convertDateTimeToLong(gamelistGame.releasedate?.toString() ?: ""),
-                rating: Math.round(((gamelistGame.rating?.toString() ?: "0.0") as double) * 100) as int,
-                playcount: (gamelistGame.playcount?.toString() ?: "0") as int,
+                rating: Math.round((floatString(gamelistGame.rating?.toString(), "0.0") as double) * 100) as int,
+                playcount: intString(gamelistGame.playcount?.toString(), "0") as int,
                 lastplayed: convertDateTimeToLong(gamelistGame.lastplayed?.toString() ?: ""),
                 metadata: true,
             )
@@ -290,5 +301,30 @@ class RomfilterSyncService {
             log.error("Problem creating MD5 for ${game}, returning UUID", e)
             return UUID.toString()
         }
+    }
+
+    /**
+     * Return the (first) integer portion of a String or the default value if no integer portion was found
+     * as a String. "cat15fish622more" would return "15". "catfishmore" would return defultVal.
+     * Note this should be suitable for long, also. null and empty string would return default, as well.
+     *
+     * @param val
+     * @return
+     */
+    String intString(String val, String defaultVal = null) {
+        return val?.find(INT_STRING_PATTERN) ?: defaultVal
+    }
+
+    /**
+     * Return the (first) float portion of a String or the default value if no float portion was found
+     * as a String. "cat15fish622more" would return "15", "mouse15.321runt" would return "15.321", and
+     * "catfishmore" would return defultVal. null and empty string would return default, as well.
+     * Note this should be suitable for double, also.
+     *
+     * @param val
+     * @return
+     */
+    String floatString(String val, String defaultVal = null) {
+        return val?.find(FLOAT_STRING_PATTERN) ?: defaultVal
     }
 }

@@ -163,6 +163,12 @@ class GamesController {
             } else {
                 // Delete the file (move it to trash)
                 String trashPathStr = configService.trashPath
+
+                // Make sure system trash folder exists
+                Path trashDestinationFolderPath = Paths.get(trashPathStr, toDeleteEntry.system)
+                Files.createDirectories(trashDestinationFolderPath)
+
+                // Location with trash to move rom
                 Path trashDestinationPath = Paths.get(trashPathStr, toDeleteEntry.system, toDeletePath.fileName.toString())
 
                 try {
