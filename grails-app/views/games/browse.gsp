@@ -14,14 +14,23 @@
 <body>
     <p>Navigation:
         <g:link action="browse">Browse ROMs</g:link>
-
-    <p>
-        <strong>All Fields (click to toggle visibility):</strong>
-            <g:each status='i' var='column' in="${Game.GameColumn.values()}">
-                <g:if test="${i}"> | </g:if>
-                <a class="toggle-vis" data-column="${column.number}">${column.field}</a><g:if test="${column.searchable}"><sup>s</sup></g:if><g:if test="${column.orderable}"><sup>o</sup></g:if>
-            </g:each>
     </p>
+    <p>&nbsp;</p>
+    <strong>All Fields (click to toggle visibility):</strong>
+        <g:each status='i' var='column' in="${Game.GameColumn.values()}">
+            <g:if test="${i}"> | </g:if>
+            <a class="toggle-vis" data-column="${column.number}">${column.field}</a><g:if test="${column.searchable}"><sup>s</sup></g:if><g:if test="${column.orderable}"><sup>o</sup></g:if>
+        </g:each>
+    </p>
+
+    <div id="deleteAllSpan">
+        <g:form action='deleteAllConfirm' method="POST">
+            <p>
+                <input type='hidden' id='deleteAllQuery' name='query' value=''/>
+                <button type="submit" id="deleteAllMatching">Delete ALL ROMs matching query</button>
+            </p>
+        </g:form>
+    </div>
     <table id="romTable" class="display table" cellspacing="0" width="100%">
         <thead>
             <tr>
@@ -40,7 +49,7 @@
                 serverSide: true,
                 deferRender: true,
                 scroller: true,
-                scrollY: 400,
+                scrollY: 350,
                 paging:   true,
                 sDom: "frti",
                 columns: [
