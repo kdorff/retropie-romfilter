@@ -147,12 +147,12 @@ class RomfilterSyncService {
                 developer: gamelistGame.developer?.toString() ?: "",
                 publisher: gamelistGame.publisher?.toString() ?: "",
                 genre: gamelistGame.genre?.toString() ?: "",
-                players: intString(gamelistGame.players.toString(), '1') as int,
+                players: intString(gamelistGame.players.toString(), '1') as long,
                 region: gamelistGame.region?.toString() ?: "",
                 romtype: gamelistGame.romtype?.toString() ?: "",
                 releasedate: convertDateTimeToLong(gamelistGame.releasedate?.toString() ?: ""),
-                rating: Math.round((floatString(gamelistGame.rating?.toString(), "0.0") as double) * 100) as int,
-                playcount: intString(gamelistGame.playcount?.toString(), "0") as int,
+                rating: Math.round((floatString(gamelistGame.rating?.toString(), "0.0") as double) * 100) as long,
+                playcount: intString(gamelistGame.playcount?.toString(), "0") as long,
                 lastplayed: convertDateTimeToLong(gamelistGame.lastplayed?.toString() ?: ""),
                 metadata: true,
             )
@@ -207,6 +207,12 @@ class RomfilterSyncService {
             system: system,
             path: path.fileName.toString(),
             size: Files.size(path),
+            // Populate all numeric fields
+            players: 1,
+            releasedate: 0,
+            rating: 0,
+            playcount: 0,
+            lastplayed: 0,
         )
 
         // Transform path

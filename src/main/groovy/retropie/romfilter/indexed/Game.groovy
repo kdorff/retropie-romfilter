@@ -217,6 +217,20 @@ class Game {
                 return gameColumn.number == i
             }
         }
+
+        /**
+         * Given a field name, return the GameColumn.
+         * TODO Cache all values into a map the first time? But norrmally
+         * TODO just looking up one or two different ones so hmm.
+         *
+         * @param field
+         * @return
+         */
+        static GameColumn fieldToGameColumn(String field) {
+            return values().find { GameColumn gameColumn ->
+                return gameColumn.field == field
+            }
+        }
     }
 
     /**
@@ -379,12 +393,12 @@ class Game {
         developer = document.developer ?: ''
         publisher = document.publisher ?: ''
         genre = document.genre ?: ''
-        players = document.players?.toInteger() ?: 1
+        players = document.players?.toLong() ?: 1
         region = document.region ?: ''
         romtype = document.romtype ?: ''
         releasedate = document.releasedate?.toLong() ?: 0
-        rating = document.rating?.toInteger() ?: 0
-        playcount = document.playcount?.toInteger() ?: 0
+        rating = document.rating?.toLong() ?: 0
+        playcount = document.playcount?.toLong() ?: 0
         lastplayed = document.lastplayed?.toLong() ?: 0
         hash = document.hash
         size = document.size?.toLong() ?: 0
