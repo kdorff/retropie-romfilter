@@ -86,7 +86,7 @@ On the command line, from the application's source directory, run the following 
 the application.
 
 ```
-./gradlew clean bootRun"
+./gradlew clean bootRun
 ```
 
 > **A few  notes on running the app**
