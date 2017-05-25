@@ -24,3 +24,4 @@ if (Environment.isDevelopmentMode() && targetDir) {
 
 logger 'retropie.romfilter', INFO, ['STDOUT'], false
 logger'grails.app.controllers', DEBUG, ['STDOUT'], false
+logger'grails.app.jobs', DEBUG, ['STDOUT'], false

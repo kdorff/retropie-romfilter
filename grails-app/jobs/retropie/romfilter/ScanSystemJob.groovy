@@ -12,7 +12,13 @@ import java.nio.file.Paths
 import java.security.MessageDigest
 import java.util.regex.Pattern
 
-class RomfilterSyncService {
+class ScanSystemJob {
+    static triggers = {}
+
+    def description = 'Scan roms and gamelists for single system'
+    def concurrent = true
+    def sessionRequired = false
+
     /**
      * Pattern to match int / long type numbers within a string.
      */
@@ -39,53 +45,64 @@ class RomfilterSyncService {
     IndexerDataService indexerDataService
 
     /**
-     * At startup or on demand. Scan all system and gamelist data,
-     * TODO: Add on-demand.
-     * TODO: Transaction sync by [system, per gamelist, romlist]
+     *
+     * @param context
      */
-    void scanAll() {
-        long start = System.currentTimeMillis()
-        log.info("Staring scan of all systems.")
-        scanGamelists()
-        log.info("Found ${indexerDataService.gamesCount} Games")
-        log.info("Scanning all systems complete. Took ${System.currentTimeMillis() - start}ms")
-    }
+    Random random = new Random()
 
-    /**
-     * Startup or on demand. Scan all gamelist.xml files, up to one per system.
-     */
-    void scanGamelists() {
+    void execute(context) {
         long start = System.currentTimeMillis()
-        log.info("Finding gamelists.xml files")
-        Path gamelistsPath = Paths.get(configService.gamelistsPath)
-        // GParsPool.withPool {
-            foldersContainedWithin(gamelistsPath).each { Path gamelistFolderPath ->
-                String system = gamelistFolderPath.fileName.toString()
-                if (system in configService.systemsToSkip) {
-                    log.info("Skipping system ${system}")
+        String system = context.mergedJobDataMap.get('system')
+        try {
+            if (!system) {
+                log.error("ScanSystemJob called but no system parameter provided")
+                return
+            }
+
+            Path gamelistFolderPath = Paths.get(configService.gamelistsPath, system)
+            log.info("Starting scanning system ${system}")
+            log.info("Scanning gamelist.xml in path ${gamelistFolderPath}")
+
+            // We may have added it as a skip system after we indexed. Remove from the index.
+            indexerDataService.deleteAllForSystem(system)
+
+            if (system in configService.systemsToSkip) {
+                log.info("Skipping system ${system}")
+            } else {
+                Path romsPath = Paths.get(configService.romsPath, system)
+                gamelistFolderPath
+                // Collect the list of roms for the system in question
+                Map<String, Path> unmatchedRoms = filesContainedWithin(
+                    romsPath, configService.getRomGlobForSystem(system)).collectEntries { Path romPath ->
+                    String key = romPath.fileName.toString()
+                    return [(key): romPath]
                 }
-                else {
-                    Path romsPath = Paths.get(configService.romsPath, system)
-                    Map<String, Path> romFilnameToPath = filesContainedWithin(
-                        romsPath, configService.getRomGlobForSystem(system)).collectEntries { Path romPath ->
-                        String key = romPath.fileName.toString()
-                        return [(key): romPath]
-                    }
 
-                    scanGamelist(
-                        gamelistFolderPath.getFileName().toString(),
-                        Paths.get(gamelistFolderPath.toString(), 'gamelist.xml'),
-                        romFilnameToPath)
+                // Parse the gamelist.xml for the system in question
+                // indexing only entries for which we have roms. As a gamelist.xml entriy
+                // is found for the roms, it will be removed from unmatchedRoms.
+                Document doc = new Document()
+                scanGamelist(
+                    gamelistFolderPath.getFileName().toString(),
+                    Paths.get(gamelistFolderPath.toString(), 'gamelist.xml'),
+                    doc,
+                    unmatchedRoms)
+
+                // Index roms which don't have a gamelist entry with minimum details.
+                unmatchedRoms.each { String filenameUnused, Path path ->
+                    createGameWithoutGamelistEntry(system, path, doc)
                 }
             }
-        //}
-        log.info("All gamelist.xml files found. Took ${System.currentTimeMillis() - start}ms")
+        }
+        finally {
+            log.info("Scanning system ${system} took ${System.currentTimeMillis() - start}ms")
+        }
     }
 
     /**
      * Scan a single gamelist.xml file for a specific system.
      */
-    void scanGamelist(String system, Path gamelistPath, Map<String, Path> unmatchedRoms) {
+    void scanGamelist(String system, Path gamelistPath, Document doc, Map<String, Path> unmatchedRoms) {
         long start = System.currentTimeMillis()
         List<String> skipSystems = configService.getSystemsToSkip()
         if (system in skipSystems) {
@@ -93,7 +110,6 @@ class RomfilterSyncService {
         }
         else {
             log.info("Parsing gamelist for ${system}")
-            Document doc = new Document()
             if (Files.exists(gamelistPath) &&
                 Files.isReadable(gamelistPath) &&
                 Files.isRegularFile(gamelistPath)) {
@@ -103,10 +119,6 @@ class RomfilterSyncService {
                     doc,
                     unmatchedRoms
                 )
-
-                unmatchedRoms.each { String filenameUnused, Path path ->
-                    createGameWithoutGamelistEntry(system, path, doc)
-                }
             }
             else {
                 log.warn("... Gamelist not found")
@@ -188,7 +200,7 @@ class RomfilterSyncService {
 
             if (romFound) {
                 game.size = Files.size(Paths.get(configService.romsPath, game.system, game.path))
-                game.hash = generateHash(game)
+                game.hash = indexerDataService.generateHash(game)
                 indexerDataService.saveGame(game, doc)
             }
         }
@@ -219,27 +231,8 @@ class RomfilterSyncService {
         if (game.path.startsWith('./')) {
             game.path -= './'
         }
-        game.hash = generateHash(game)
+        game.hash = indexerDataService.generateHash(game)
         indexerDataService.saveGame(game, doc)
-    }
-
-    /**
-     * Return all of the FOLDERS in the specified folder (1 level deep).
-     *
-     * @param folder folder to search
-     * @return list of Path for folders
-     */
-    List<Path> foldersContainedWithin(Path folder) {
-        try {
-            DirectoryStream<Path> stream = Files.newDirectoryStream(folder)
-            List<Path> paths = stream.findAll { Path path ->
-                return Files.isDirectory(path) && !Files.isHidden(path)
-            }
-            return paths
-        } catch (IOException e) {
-            log.error("Exception scanning systems folder", e)
-            return []
-        }
     }
 
     /**
@@ -287,27 +280,6 @@ class RomfilterSyncService {
         return result
     }
 
-    /**
-     * Genereate hash for game.
-     *
-     * @param game
-     * @return
-     */
-    String generateHash(Game game) {
-        try {
-            String md5 = "${game.system}|${game.path}|${game.size}"
-            MessageDigest md = MessageDigest.getInstance("MD5")
-            byte[] array = md.digest(md5.getBytes());
-            StringBuffer sb = new StringBuffer();
-            for (int i = 0; i < array.length; ++i) {
-                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1,3))
-            }
-            return sb.toString();
-        } catch (Exception e) {
-            log.error("Problem creating MD5 for ${game}, returning UUID", e)
-            return UUID.toString()
-        }
-    }
 
     /**
      * Return the (first) integer portion of a String or the default value if no integer portion was found

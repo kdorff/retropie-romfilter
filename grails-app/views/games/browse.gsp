@@ -13,15 +13,19 @@
 </head>
 <body>
     <p>Navigation:
-        <g:link action="browse">Browse ROMs</g:link>
+        <g:link controller="games" action="browse">Browse ROMs</g:link> |
+        <g:link controller="jobs" action="index">Systems and Scan Jobs</g:link>
     </p>
     <p>&nbsp;</p>
-    <strong>All Fields (click to toggle visibility):</strong>
-        <g:each status='i' var='column' in="${Game.GameColumn.values()}">
-            <g:if test="${i}"> | </g:if>
-            <a class="toggle-vis" data-column="${column.number}">${column.field}</a><g:if test="${column.searchable}"><sup>s</sup></g:if><g:if test="${column.orderable}"><sup>o</sup></g:if>
-        </g:each>
-    </p>
+    <div id="fieldsSpan">
+        <strong>All Fields (click to toggle visibility):</strong>
+            <g:each status='i' var='column' in="${Game.GameColumn.values()}">
+                <g:if test="${i}"> | </g:if>
+                <g:if test="${i % 11 == 0}"><br/></g:if>
+                <a class="toggle-vis" data-column="${column.number}">${column.field}</a><g:if test="${column.searchable}"><sup>s</sup></g:if><g:if test="${column.orderable}"><sup>o</sup></g:if>
+            </g:each>
+        </p>
+    </div>
 
     <div id="deleteAllSpan">
         <g:form action='deleteAllConfirm' method="POST">

@@ -3,8 +3,12 @@ package retropie.romfilter
 import org.apache.log4j.Logger
 import org.apache.lucene.analysis.Analyzer
 import org.apache.lucene.document.Document
+import org.apache.lucene.index.Fields
 import org.apache.lucene.index.IndexReader
 import org.apache.lucene.index.IndexWriter
+import org.apache.lucene.index.MultiFields
+import org.apache.lucene.index.Terms
+import org.apache.lucene.index.TermsEnum
 import org.apache.lucene.queryparser.classic.ParseException
 import org.apache.lucene.queryparser.classic.QueryParser
 import org.apache.lucene.search.IndexSearcher
@@ -21,11 +25,14 @@ import org.apache.lucene.search.highlight.InvalidTokenOffsetsException
 import org.apache.lucene.search.highlight.QueryScorer
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter
 import org.apache.lucene.search.highlight.SimpleSpanFragmenter
+import org.apache.lucene.util.BytesRef
 import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.feed.datatables.RequestOrder
 import retropie.romfilter.indexed.Game
 import retropie.romfilter.parser.RomfilterQueryParser
+
+import java.security.MessageDigest
 
 class IndexerDataService {
     /**
@@ -64,6 +71,49 @@ class IndexerDataService {
     int getGamesCount() {
         // The field system is ALWAYS populated so we use that to count.
         return gamesIndexReader.getDocCount('system')
+    }
+
+    /**
+     * Return the count of documents that match a query.
+     *
+     * @param query
+     */
+    int getCountForQuery(Query query) {
+        IndexSearcher indexSearcher = new IndexSearcher(gamesIndexReader)
+        int count = indexSearcher.count(query)
+        return count
+    }
+
+    /**
+     * Return the count of documents for a specific system.
+     *
+     * @param query
+     */
+    int getCountForSystem(String system) {
+        String queryStr = /+system:"${QueryParser.escape(system)}"/
+        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
+        Query query = queryParser.parse(queryStr)
+        return getCountForQuery(query)
+    }
+
+
+    /**
+     * The list of terms defined for a specific field.
+     * @return
+     */
+    List<String> listValuesForField(String field) {
+        // https://stackoverflow.com/questions/8910008/how-can-i-get-the-list-of-unique-terms-from-a-specific-field-in-lucene
+        List<String> allTerms = []
+        Fields fields = MultiFields.getFields(gamesIndexReader)
+        Terms terms = fields.terms(field)
+        if (terms) {
+            TermsEnum iterator = terms.iterator()
+            BytesRef byteRef = null
+            while ((byteRef = iterator.next()) != null) {
+                allTerms << new String(byteRef.bytes, byteRef.offset, byteRef.length);
+            }
+        }
+        return allTerms
     }
 
     /**
@@ -346,6 +396,62 @@ class IndexerDataService {
         }
         catch (Exception e) {
             log.error("Error deleting Game document for hash ${game.hash}", e)
+        }
+    }
+
+    /**
+     * Delete all documents that match the specified query.
+     * @param query
+     */
+    void deleteAllForQuery(Query query) {
+        try {
+            gamesIndexWriter.deleteDocuments(query)
+        }
+        catch (Exception e) {
+            log.error("Error deleting Game documents for query ${query.toString()}", e)
+        }
+    }
+
+    /**
+     * Delete all documents for a specific system.
+     * TODO: This can probably be done with a Term instead of a query
+     * TODO: which will be even better.
+     *
+     * @param system
+     */
+    void deleteAllForSystem(String system) {
+        String queryStr = /+system:"${QueryParser.escape(system)}"/
+        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
+        try {
+            log.info("deleteing all Game documents for system ${system}")
+            Query query = queryParser.parse(queryStr)
+            deleteAllForQuery(query)
+            log.info("All Game documents deleted for system ${system}")
+        }
+        catch (Exception e) {
+            log.error("Error parsing system delete query for system ${system}", e)
+        }
+    }
+
+    /**
+     * Genereate hash for game.
+     *
+     * @param game
+     * @return
+     */
+    String generateHash(Game game) {
+        try {
+            String md5 = "${game.system}|${game.path}|${game.size}"
+            MessageDigest md = MessageDigest.getInstance("MD5")
+            byte[] array = md.digest(md5.getBytes());
+            StringBuffer sb = new StringBuffer();
+            for (int i = 0; i < array.length; ++i) {
+                sb.append(Integer.toHexString((array[i] & 0xFF) | 0x100).substring(1,3))
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            log.error("Problem creating MD5 for ${game}, returning UUID", e)
+            return UUID.toString()
         }
     }
 }

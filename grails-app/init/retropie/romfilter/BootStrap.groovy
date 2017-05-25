@@ -1,6 +1,7 @@
 package retropie.romfilter
 
 import grails.core.GrailsApplication
+import grails.plugins.quartz.JobManagerService
 import org.apache.log4j.Logger
 import org.apache.lucene.index.IndexWriter
 import retropie.romfilter.indexed.Game
@@ -20,11 +21,6 @@ class BootStrap {
      * GrailsApplication (auto-injected).
      */
     GrailsApplication grailsApplication
-
-    /**
-     * RomfilterSyncService (auto-injected).
-     */
-    RomfilterSyncService romfilterSyncService
 
     /**
      * IndexerDataService (auto-injected).
@@ -59,11 +55,6 @@ class BootStrap {
         }
 
         log.info("GamelistEntry.count=${indexerDataService.gamesCount}")
-
-        if (configService.scanAtStartup && indexerDataService.gamesCount == 0) {
-            log.info("Indexes are all empty. Starting full scan.")
-            romfilterSyncService.scanAll()
-        }
 
         log.info("Warming up Game.GameColumn enum to validate that all " +
             "configuration appears correct ${Game.GameColumn.HASH.hashCode()}")
