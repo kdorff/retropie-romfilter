@@ -14,24 +14,33 @@ class GamesController {
 
     /**
      * High:
-     * TODO: Make scanning quartz jobs
-     * TODO: On demand complete re-scanning (delete and rebuild)
      * TODO: Restore show game link
      * TODO: Add remaining file extensions to the various systems to config
      * TODO: Fancify name/path comparison
-     * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
+     * TODO: Option to rescan a single system
+     * TODO: Make jobs.index prettier
+     * TODO: add tag support for kid friendly:
+     * TODO: 		<favorite>true</favorite>
+     * TODO:        <kidgame>true</kidgame>
+     * TODO:        <hidden>true</hidden>
+     * TODO: / to games/browse doesn't show games/browse. Change to redirect.
+     * TODO: Make bulk deletion a job and have the ability to give status of the job?
+     * TODO: Show "recent" jobs and that they finished and how long they took?
+     * TODO: When scanning all, remove any systems that are in the index but not on disc
      *
      * Lower:
+     * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
+     * TODO: How can I trigger an app restart of a spring boot app? such as if I re-write the index or ?
      * TODO: Change table rows to be ALL top justified
      * TODO: More search help
      * TODO: How does recalbox webapp launch games? (the django code I worked on)
-     * TODO: Filter to show dissimilar name/filenames
+     * TODO: Filter to show 'too dissimilar' name/filenames
      * TODO: Card View?
      * TODO: More unit tests
      * TODO: More integration tests
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
-     * TODO: Bulk deletion can take a while to come back with no status. A AJAX delete would be nice.
+     * TODO: How to stop the index to compress or ?? And restart. With Spring Beans.
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
@@ -60,6 +69,10 @@ class GamesController {
      * DONE: Delete button in name/path comparison field. Working. Some filenames cause it problems ('[', ']' ?). Good enough.
      * DONE: Bulk deletion. Delete everything that matches a query. BE CAREFUL!
      * DONE: Highlight with Lucene. The Datatables highligher won't cut it.
+     * DONE: The quartz jobs now exist and work, one for submitting all systems for scanning, one for scanning a system.
+     * DONE: On demand via the /quartz endpoint
+     * DONE: Replace quartz-monitor with custom scanning systems and jobs page (allows for rescan of all)
+     * WONT: Compresses index or re-write index function. [It compresses at startup, it seems.]
      */
 
     /**
@@ -109,7 +122,7 @@ class GamesController {
         redirect action:'browse'
     }
 
-        /**
+    /**
      * List all all roms. AKA listRoms.
      *
      * @param system
@@ -270,6 +283,10 @@ class GamesController {
 
         List<Game> toDeletes = indexerDataService.getGamesForQuery((String) params.query)
 
+        /**
+         * TODO: Consider deleting from the index in bulk and deleleting the files
+         * TODO: in bulk. Might not matter and the consistency here might be more important.
+         */
         Map deleteResult = [:]
         toDeletes.each { Game toDelete ->
             response.status = 0

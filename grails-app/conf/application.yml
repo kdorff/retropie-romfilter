@@ -63,7 +63,10 @@ quartz:
 environments:
     test:
         quartz:
-            autoStartup: false
+            # We perform a system scan in the integration tests.
+            # so we need quartz running. None of the jobs in this
+            # app are scheduled at startup so this should be safe.
+            autoStartup: true
         retropie:
             romfilter:
                 trashPath: "./build/resources/test/integration/trash"

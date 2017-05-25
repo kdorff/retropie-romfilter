@@ -9,3 +9,6 @@ div#deleteAllSpan {
     padding: 5px;
     background-color: red;
 }
+div#fieldsSpan {
+    float:left;
+}

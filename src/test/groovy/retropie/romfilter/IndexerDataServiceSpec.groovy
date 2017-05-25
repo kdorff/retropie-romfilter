@@ -1,5 +1,6 @@
 package retropie.romfilter
 
+import grails.plugins.quartz.JobManagerService
 import grails.test.mixin.integration.Integration
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
@@ -9,9 +10,16 @@ import retropie.romfilter.feed.datatables.RequestOrder
 import retropie.romfilter.indexed.Game
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Stepwise
+import spock.lang.Timeout
 import spock.lang.Unroll
 
+import java.util.concurrent.TimeUnit
+
+import static java.util.concurrent.TimeUnit.*
+
 @Integration
+@Stepwise
 class IndexerDataServiceSpec extends Specification {
     /**
      * Load all from resources.groovy.
@@ -30,9 +38,9 @@ class IndexerDataServiceSpec extends Specification {
     IndexerDataService indexerDataService
 
     /**
-     * RomfilterSyncService (auto-injected).
+     * JobManagerService (auto-injected).
      */
-    RomfilterSyncService romfilterSyncService
+    JobManagerService jobManagerService
 
     @Shared
     String hashDecathlon
@@ -62,21 +70,46 @@ class IndexerDataServiceSpec extends Specification {
     }
 
     def setup() {
-        hashDecathlon = romfilterSyncService.generateHash(new Game([
+        hashDecathlon = indexerDataService.generateHash(new Game([
             system: 'atari2600',
             path: 'Activision Decathlon, The (1983) (Activision, David Crane) (AG-930-04, AZ-030) [fixed] ~.zip',
             size: 187,
         ]))
-        hashAdventure = romfilterSyncService.generateHash(new Game([
+        hashAdventure = indexerDataService.generateHash(new Game([
             system: 'atari2600',
             path: 'Adventure (1980) (Atari, Warren Robinett - Sears) (CX2613 - 49-75154) ~.zip',
             size: 561,
         ]))
-        hash3DTicTacToe = romfilterSyncService.generateHash(new Game([
+        hash3DTicTacToe = indexerDataService.generateHash(new Game([
             system: 'atari2600',
             path: '3-D Tic-Tac-Toe (1980) (Atari, Carol Shaw - Sears) (CX2618 - 49-75123) ~.zip',
             size: 374,
         ]))
+    }
+
+    /**
+     * We rely on @Stepwise to make sure this method runs first. The indexing happens on startup,
+     * if the applicaiton is in test mode. This waits for that to complete.
+     */
+    @Timeout(20)
+    def "Perform indexing"() {
+        setup:
+        // Submit and wait for jobs to start
+        ScanAllSystemsJob.triggerNow([:])
+        Thread.sleep(1000)
+
+        // Wait for all jobs to complete
+        while (jobManagerService.runningJobs) {
+            log.info("Waiting for scanning to complete")
+            Thread.sleep(1000)
+        }
+        log.info("Scanning test roms done.")
+
+        when:
+        int numGames = indexerDataService.gamesCount
+
+        then:
+        numGames == 3
     }
 
     @Unroll
@@ -417,5 +450,15 @@ class IndexerDataServiceSpec extends Specification {
 
         then:
         games.size() == 1
+    }
+
+    def "Correct number of system terms"() {
+        expect:
+        ['atari2600'] == indexerDataService.listValuesForField('system')
+    }
+
+    def "Correct number of roms per system"() {
+        expect:
+        3 == indexerDataService.getCountForSystem('atari2600')
     }
 }
