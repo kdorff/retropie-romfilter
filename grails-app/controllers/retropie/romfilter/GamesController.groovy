@@ -27,6 +27,8 @@ class GamesController {
      * TODO: Make bulk deletion a job and have the ability to give status of the job?
      * TODO: Show "recent" jobs and that they finished and how long they took?
      * TODO: When scanning all, remove any systems that are in the index but not on disc
+     * TODO: Fix log levels. Everything is info. Most should be trace.
+     * TODO: Log file location to configuration
      *
      * Lower:
      * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
@@ -138,11 +140,21 @@ class GamesController {
      */
     def feed() {
         long start = System.currentTimeMillis()
-        log.info("feed")
-        log.info("params ${params}")
         DatatablesRequest datatablesRequest = new DatatablesRequest(params)
-        log.error("request ${datatablesRequest}")
-        GamesDataFeed gamesDataFeed = indexerDataService.getGameDataFeedForRequest(datatablesRequest)
+        GamesDataFeed gamesDataFeed
+        try {
+            gamesDataFeed = indexerDataService.getGameDataFeedForRequest(datatablesRequest)
+        }
+        catch (Exception e) {
+            log.error("Error retrieving data. Maybe the index is empty.", e)
+            gamesDataFeed = new GamesDataFeed([
+                draw: params.draw,
+                recordsTotal: 0,
+                recordsFiltered: 0,
+                error: 'Error retrieving data. Perhaps the index is empty.',
+                games: [],
+            ])
+        }
         log.info("Retrieval of data from index took ${System.currentTimeMillis()-start}ms")
         respond gamesDataFeed
     }

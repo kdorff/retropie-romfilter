@@ -198,10 +198,6 @@ class Game {
             this.friendlyName = config.friendlyName ?: this.field.capitalize()
             this.initiallyVisible = config.initiallyVisible == null ? false : config.initiallyVisible
             this.sortFieldType = config.sortFieldType ?: SortField.Type.STRING
-
-            println "Enum ${this} number=${number} field=${field} orderable=${orderable} " +
-                "orderField=${orderField} searchable=${searchable} friendlyName=${friendlyName} " +
-                "initiallyVisible=${initiallyVisible} sortFieldType=${sortFieldType}"
         }
 
         /**

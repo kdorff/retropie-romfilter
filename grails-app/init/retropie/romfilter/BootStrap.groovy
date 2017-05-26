@@ -57,7 +57,8 @@ class BootStrap {
         log.info("GamelistEntry.count=${indexerDataService.gamesCount}")
 
         log.info("Warming up Game.GameColumn enum to validate that all " +
-            "configuration appears correct ${Game.GameColumn.HASH.hashCode()}")
+            "configuration appears correct.")
+        String computeButThrowAway = Game.GameColumn.HASH.hashCode()
     }
 
     /**

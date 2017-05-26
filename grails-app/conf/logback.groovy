@@ -2,13 +2,24 @@ import grails.util.BuildSettings
 import grails.util.Environment
 
 // See http://logback.qos.ch/manual/groovy.html for details on configuration
-appender('STDOUT', ConsoleAppender) {
-    encoder(PatternLayoutEncoder) {
-        pattern = "%level %logger - %msg%n"
+if (Environment.isDevelopmentMode()) {
+    appender('STDOUT', ConsoleAppender) {
+        encoder(PatternLayoutEncoder) {
+            pattern = "%level %logger - %msg%n"
+        }
     }
+    root(ERROR, ['STDOUT'])
 }
-
-root(ERROR, ['STDOUT'])
+else {
+    appender("LOGFILE", FileAppender) {
+        file = "./logs/romfilter.log"
+        append = true
+        encoder(PatternLayoutEncoder) {
+            pattern = "%level %d %logger - %msg%n"
+        }
+    }
+    root(ERROR, ['LOGFILE'])
+}
 
 def targetDir = BuildSettings.TARGET_DIR
 if (Environment.isDevelopmentMode() && targetDir) {
@@ -16,12 +27,12 @@ if (Environment.isDevelopmentMode() && targetDir) {
         file = "${targetDir}/stacktrace.log"
         append = true
         encoder(PatternLayoutEncoder) {
-            pattern = "%level %logger - %msg%n"
+            pattern = "%level %d %logger - %msg%n"
         }
     }
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
 }
 
-logger 'retropie.romfilter', INFO, ['STDOUT'], false
-logger'grails.app.controllers', DEBUG, ['STDOUT'], false
-logger'grails.app.jobs', DEBUG, ['STDOUT'], false
+logger 'retropie.romfilter', INFO
+logger'grails.app.controllers', DEBUG
+logger'grails.app.jobs', DEBUG
