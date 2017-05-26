@@ -198,7 +198,7 @@ I'm a Groovy / Grails programmer by day, so it was a natural choice.
 The features I needed I knew how to develop with Groovy and Grails where I didn't
 feel confident I could do what I wanted this app to do in PHP or Python in someone else's project,
 given my level of experience in those languages (and lack of libraries?).
-And my my is better.
+And this search is amazing.
 
 ## Running on a RetroPie
 
