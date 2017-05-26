@@ -1,5 +1,9 @@
 # RetroPie romfilter
 
+I was inspired to write this application after playing with
+[RetroPie-Manager](https://github.com/botolo78/RetroPie-Manager) .
+See my FAQ for why I started this app.
+
 This application is designed to let you browse and filter the list of ROMs you have installed
 across all of your systems on your RetroPie.
 
@@ -8,18 +12,24 @@ Features include
 * Delete individual ROMs
 
 You *can* run this directly on a your RetroPie if you install Oracle Java 8,
-**but I don't recommend it** unless you are prepared to reduce the amount romfilter uses
+**but at this time I don't recommend it** unless you are prepared to reduce the memory provided to romfilter
 and accept the risk that the reduced system memory might keep games from running.
 I don't know how much memory these emulators require. I'd love some advise on this.
 
-I prefer to run romfilter on another machine on the same network
-and configure communicate with your RetroPie using the SMB shares the RetroPie automatically creates.
+I currently run romfilter on another machine on the same network
+and configure it to communicate with my RetroPie using the SMB shares
+RetroPie automatically creates.
 
 # Disclaimer
 
-This code is a work in progress and is not ready for public consumption.
+This code is a very much work in progress. It is ready for early consumption but be prepared to
+delete your index every time you download a new version. As of today, there ARE index changes
+still to come (I want to support the additional flags that
+[Kid's Mode](https://github.com/RetroPie/RetroPie-Setup/wiki/Child-friendly-EmulationStation) supports.
 
-The first time you run the app it will need to scan your system. This will take a bit of time.
+The first time you run the application, the browse page will give you a Javascript alert.
+This is because you have no data in your romfilter index. You will need to scan your systems
+under Systems and Scan Jobs.
 
 ## A quick note about scraping
 
@@ -160,26 +170,37 @@ scrapeId, scrapeSource, hash
 
 **Q:** When I first start the app it takes forever before it responds.
 
-**A:** Currently it scans the roms and gamelist.xml files at first startup. This takes time. I'll make this nicer in the future.
+**A:** Update! The latest version of the application supports scanning on-demand under Systems and Scan Jobs.
 
 **Q:** Things changed in the filesystem or I have re-scraped but I don't see the changes in romfilter
 
-**A:** Yeah, I need to add on-demand re-scan. Stop the app, delete the index folder in the app's directory (romfilter-games.index), and start the app again.
+**A:** Re-scan your systems under Systems and Scan Jobs.
 
 **Q:** I'm having a problem
 
-**A:** Wait for the app to become more stable. Try deleting the index folder in the app's directory (romfilter-games.index).
+**A:** Wait for the app to become more stable. Try stopping the app, deleting the index folder in the app's directory (romfilter-games.index), and restarting the app. You will need to re-scan your systems (Systems and Scan Jobs).
 
 **Q:** Should I open this port up in my router so I can browse my roms while I am away from home or let me cousin look at it?
 
-**A:** No. This app has very little security baked in. Don't do it. Run this on your private network, only.
+**A:** No. This app has no security baked in. Don't do it. Run this on your private network, only.
 
 **Q:** Is the 'hash' the hash of the ROM?
 
-**A:**: No. That is a good idea and I may considering switch to that. But now it is a number that is combination of other fields in the entry.
+**A:**: No. It is a unique number based on a combination of other fields in the entry (path, system, rom file size).
+
+**Q**: Why did you make this app?
+
+**A**: I started to extend RetroPie-Manager (I made a PR) but it seems that that project has been mostly
+abandoned. I'm not well versed enough in Python / Django to become the new maintainer.
+After playing with Django for a few hours, I was convinced I could just make the app I needed with
+far less effort than augmenting (and maintaining) the Django app.
+I'm a Groovy / Grails programmer by day, so it was a natural choice.
+The features I needed I knew how to develop with Groovy and Grails where I didn't
+feel confident I could do what I wanted this app to do in PHP or Python in someone else's project,
+given my level of experience in those languages (and lack of libraries?).
+And my my is better.
 
 ## Running on a RetroPie
-
 
 You can (but may not want to) run this application directly on the Raspberry Pi. The setup
 instructions are about the same as the Mac version, but even simpler as you shouldn't need
@@ -207,3 +228,6 @@ on another system in your LAN
 
 Browsing filtered list of ROMS
 ![Filtered, highlighted list of ROMS](https://github.com/kdorff/retropie-romfilter/blob/master/grails-app/assets/images/screenshots/browse.png)
+
+Systems and Scan Jobs
+![Filtered, highlighted list of ROMS](https://github.com/kdorff/retropie-romfilter/blob/master/grails-app/assets/images/screenshots/scanning.png)
