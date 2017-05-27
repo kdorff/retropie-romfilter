@@ -1,7 +1,9 @@
 package retropie.romfilter
 
+import grails.converters.JSON
 import grails.core.GrailsApplication
 import org.apache.commons.io.FilenameUtils
+import org.apache.lucene.queryparser.classic.QueryParser
 import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.indexed.Game
@@ -111,6 +113,11 @@ class GamesController {
     ConfigService configService
 
     /**
+     * JobSubmissionService (auto-injected).
+     */
+    JobSubmissionService jobSubmissionService
+
+    /**
      * Valid rom image file extensions and their associated mime type.
      */
     final static Map<String, String> IMAGE_EXT_TO_MIME = [
@@ -187,45 +194,15 @@ class GamesController {
      * @return
      */
     def delete(String hash) {
-        Game toDeleteEntry = indexerDataService.getGameForHash(hash)
-        if (!toDeleteEntry) {
-            log.error("GameEntry.hash ${hash} not found in index")
+        if (!hash) {
+            log.error("Game.hash parameter not found in index")
             response.status = 404
+            respond (['error': 'Cannot delete. Hash not provided.'] as JSON)
+            return
         }
-        else {
-            Path toDeletePath = Paths.get(configService.getRomsPath(), toDeleteEntry.system, toDeleteEntry.path)
-            if (!Files.exists(toDeletePath)) {
-                log.error("ROM not found in on disc ${toDeletePath}")
-                indexerDataService.deleteGame(toDeleteEntry)
-                log.error("Deleted missing from from database")
-                response.status = 404
-            } else {
-                // Delete the file (move it to trash)
-                String trashPathStr = configService.trashPath
-
-                // Make sure system trash folder exists
-                Path trashDestinationFolderPath = Paths.get(trashPathStr, toDeleteEntry.system)
-                Files.createDirectories(trashDestinationFolderPath)
-
-                // Location with trash to move rom
-                Path trashDestinationPath = Paths.get(trashPathStr, toDeleteEntry.system, toDeletePath.fileName.toString())
-
-                try {
-                    if (Files.move(toDeletePath, trashDestinationPath)) {
-                        indexerDataService.deleteGame(toDeleteEntry)
-                        log.trace("Moved ${toDeletePath} to ${trashDestinationPath}")
-                        response.status = 200
-                    } else {
-                        log.error("Unable to move ${toDeletePath} to ${trashDestinationPath}. Note that this may not work across filesystems, etc.")
-                        response.status = 500
-                    }
-                }
-                catch (IOException e) {
-                    log.error("Exception moving ${toDeletePath} to ${trashDestinationPath}. Note that may will not work across filesystems, etc.", e)
-                    response.status = 500
-                }
-            }
-        }
+        String query = /+hash:"${QueryParser.escape(hash)}"/
+        jobSubmissionService.submitJob(DeleteRomsForQueryJob, [query: query])
+        redirect(controller: 'jobs', action: 'index')
     }
 
     /**
@@ -290,26 +267,11 @@ class GamesController {
      */
     def deleteAllConfirmed() {
         if (!params.query) {
-            redirect(actionName: 'browse')
+            redirect(action: 'browse')
+            return
         }
 
-        List<Game> toDeletes = indexerDataService.getGamesForQuery((String) params.query)
-
-        /**
-         * TODO: Consider deleting from the index in bulk and deleleting the files
-         * TODO: in bulk. Might not matter and the consistency here might be more important.
-         */
-        Map deleteResult = [:]
-        toDeletes.each { Game toDelete ->
-            response.status = 0
-            delete(toDelete.hash)
-            deleteResult[toDelete.path] = DELETE_RESPONSES[response.status] ?: "Unknown"
-        }
-        response.status = 200
-
-        return [
-            query: params.query,
-            deleteResult: deleteResult,
-        ]
+        jobSubmissionService.submitJob(DeleteRomsForQueryJob, [query: params.query])
+        redirect(controller: 'jobs', action: 'index')
     }
 }

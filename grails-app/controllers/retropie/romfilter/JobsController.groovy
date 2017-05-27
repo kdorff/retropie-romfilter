@@ -2,7 +2,9 @@ package retropie.romfilter
 
 import grails.converters.JSON
 import grails.core.GrailsApplication
-import grails.plugins.quartz.JobManagerService
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormatter
+import org.joda.time.format.ISODateTimeFormat
 import org.quartz.JobExecutionContext
 
 class JobsController {
@@ -29,11 +31,6 @@ class JobsController {
     GrailsApplication grailsApplication
 
     /**
-     * JobManagerService (auto-injected).
-     */
-    JobManagerService jobManagerService
-
-    /**
      * IndexerDataService (auto-injected).
      */
     IndexerDataService indexerDataService
@@ -44,6 +41,11 @@ class JobsController {
     JobSubmissionService jobSubmissionService
 
     /**
+     * DateTimeFormatter
+     */
+    DateTimeFormatter isoFormatter = ISODateTimeFormat.dateTime();
+
+    /**
      * Show the jobs and systems page.
      */
     def index() {
@@ -52,25 +54,33 @@ class JobsController {
     /**
      * systems and romcount ajax json data.
      */
-    def systemToRomCountData() {
-        List<String> systems = indexerDataService.listValuesForField('system')
-        List<String> results = systems.collect { String system ->
-            return "${system}: ${indexerDataService.getCountForSystem(system)} roms"
-        }
-        render([
-            systemToCount: results.sort(),
-            totalCount: indexerDataService.gamesCount
-        ] as JSON)
-    }
+    def jobsAndRomsData() {
 
-    /**
-     * Running jobs ajax json data.
-     */
-    def runningJobsData() {
-        List<String> runningJobs = jobManagerService.runningJobs.collect { JobExecutionContext runningJob ->
-            return "${runningJob.jobDetail.description} ${runningJob.mergedJobDataMap?.system}"
-        }
-        render(runningJobs.sort() as JSON)
+        List<String> systems = indexerDataService.listValuesForField('system')
+
+        List<String> romCounts = systems.collect { String system ->
+            return "${system}: ${indexerDataService.getCountForSystem(system)} roms"
+        }.sort()
+
+        List<String> runningJobs = jobSubmissionService.runningJobs.values().collect { JobExecutionContext runningJob ->
+            String fireTime = isoFormatter.print(new DateTime(runningJob.fireTime))
+            return "${fireTime} | ${runningJob.jobDetail.description} ${cleanDataMap(runningJob.mergedJobDataMap) ?: ""}"
+        }.sort()
+
+        List<String> recentJobs = jobSubmissionService.recentlyCompletedJobs.values().collect { JobExecutionContext finishedJob ->
+            long runTime = finishedJob.jobRunTime
+            DateTime fireStartDateTime = new DateTime(finishedJob.fireTime)
+            DateTime fireEndDateTime = fireStartDateTime.plusMillis(runTime as int)
+            String fireEndStr = isoFormatter.print(fireEndDateTime)
+            return "${fireEndStr} | ${finishedJob.jobDetail.description} ${cleanDataMap(finishedJob.mergedJobDataMap) ?: ""} took ${runTime}ms"
+        }.sort().reverse()
+
+        render([
+            systemToCount: romCounts,
+            totalCount: indexerDataService.gamesCount,
+            runningJobs: runningJobs,
+            recentJobs: recentJobs,
+        ] as JSON)
     }
 
     /**
@@ -80,5 +90,12 @@ class JobsController {
         jobSubmissionService.submitJob(ScanAllSystemsJob, [:])
         log.info("Scan All Systems job submitted.")
         render([status: "Scan All Systems job submitted."] as JSON)
+    }
+
+    private Map cleanDataMap(Map details) {
+        Map results = (Map) details.clone()
+        results.remove('org.grails.plugins.quartz.grailsJobName')
+        results.remove('uuid')
+        return results
     }
 }

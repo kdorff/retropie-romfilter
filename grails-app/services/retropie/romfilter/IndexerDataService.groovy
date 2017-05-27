@@ -84,6 +84,11 @@ class IndexerDataService {
         return count
     }
 
+    Query createQueryForString(String queryStr) {
+        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
+        return queryParser.parse(queryStr)
+    }
+
     /**
      * Return the count of documents for a specific system.
      *
