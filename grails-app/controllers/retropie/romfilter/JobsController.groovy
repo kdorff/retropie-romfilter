@@ -39,6 +39,11 @@ class JobsController {
     IndexerDataService indexerDataService
 
     /**
+     * JobSubmissionService (auto-injected).
+     */
+    JobSubmissionService jobSubmissionService
+
+    /**
      * Show the jobs and systems page.
      */
     def index() {
@@ -72,7 +77,7 @@ class JobsController {
      * Ajax json call to scan ALL systems.
      */
     def rescanAll() {
-        ScanAllSystemsJob.triggerNow([:])
+        jobSubmissionService.submitJob(ScanAllSystemsJob, [:])
         log.info("Scan All Systems job submitted.")
         render([status: "Scan All Systems job submitted."] as JSON)
     }

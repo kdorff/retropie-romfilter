@@ -2,7 +2,7 @@ import grails.util.BuildSettings
 import grails.util.Environment
 
 // See http://logback.qos.ch/manual/groovy.html for details on configuration
-if (Environment.isDevelopmentMode()) {
+if (Environment.current == Environment.DEVELOPMENT || Environment.current == Environment.TEST) {
     appender('STDOUT', ConsoleAppender) {
         encoder(PatternLayoutEncoder) {
             pattern = "%level %logger - %msg%n"
@@ -22,7 +22,7 @@ else {
 }
 
 def targetDir = BuildSettings.TARGET_DIR
-if (Environment.isDevelopmentMode() && targetDir) {
+if (Environment.current == Environment.DEVELOPMENT && targetDir) {
     appender("FULL_STACKTRACE", FileAppender) {
         file = "${targetDir}/stacktrace.log"
         append = true
@@ -33,6 +33,6 @@ if (Environment.isDevelopmentMode() && targetDir) {
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
 }
 
-logger 'retropie.romfilter', INFO
+logger 'retropie.romfilter', TRACE
 logger'grails.app.controllers', DEBUG
 logger'grails.app.jobs', DEBUG

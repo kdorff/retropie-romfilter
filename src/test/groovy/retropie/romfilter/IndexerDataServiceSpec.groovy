@@ -4,6 +4,7 @@ import grails.plugins.quartz.JobManagerService
 import grails.test.mixin.integration.Integration
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
+import org.quartz.JobExecutionContext
 import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.feed.datatables.RequestOrder
@@ -14,11 +15,9 @@ import spock.lang.Stepwise
 import spock.lang.Timeout
 import spock.lang.Unroll
 
-import java.util.concurrent.TimeUnit
-
-import static java.util.concurrent.TimeUnit.*
 
 @Integration
+// The first test performs the indexing. So this needs to be Stepwise
 @Stepwise
 class IndexerDataServiceSpec extends Specification {
     /**
@@ -41,6 +40,11 @@ class IndexerDataServiceSpec extends Specification {
      * JobManagerService (auto-injected).
      */
     JobManagerService jobManagerService
+
+    /**
+     * JobSubmissionService (auto-injected).
+     */
+    JobSubmissionService jobSubmissionService
 
     @Shared
     String hashDecathlon
@@ -88,6 +92,8 @@ class IndexerDataServiceSpec extends Specification {
     }
 
     /**
+     * This test validations the job submission service as well as the scanning jobs.
+     *
      * We rely on @Stepwise to make sure this method runs first. The indexing happens on startup,
      * if the applicaiton is in test mode. This waits for that to complete.
      */
@@ -95,21 +101,30 @@ class IndexerDataServiceSpec extends Specification {
     def "Perform indexing"() {
         setup:
         // Submit and wait for jobs to start
-        ScanAllSystemsJob.triggerNow([:])
-        Thread.sleep(1000)
+        String uuid = jobSubmissionService.submitJob(ScanAllSystemsJob, [:])
 
-        // Wait for all jobs to complete
-        while (jobManagerService.runningJobs) {
-            log.info("Waiting for scanning to complete")
-            Thread.sleep(1000)
-        }
-        log.info("Scanning test roms done.")
+        expect:
+        uuid
+
+        when:
+        JobExecutionContext job = jobSubmissionService.waitForCompletedJob(uuid)
+
+        then:
+        job
+
+        when:
+        boolean quiet = jobSubmissionService.waitForQuietScheduler()
+
+        then:
+        quiet
 
         when:
         int numGames = indexerDataService.gamesCount
 
         then:
         numGames == 3
+        jobSubmissionService.runningJobs.size() == 0
+        jobSubmissionService.recentlyCompletedJobs.size() == 2
     }
 
     @Unroll

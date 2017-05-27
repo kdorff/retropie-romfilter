@@ -9,8 +9,14 @@ import java.nio.file.Paths
 
 class ScanAllSystemsJob {
     def description = 'Submit scan jobs for all systems'
+    def group = "romfilter-jobs"
     def concurrent = false
     def sessionRequired = false
+
+    /**
+     * No triggers. This job is called only manually.
+     */
+    static triggers = {}
 
     /**
      * Logger.
@@ -23,6 +29,11 @@ class ScanAllSystemsJob {
     ConfigService configService
 
     /**
+     * JobSubmissionService (auto-injected).
+     */
+    JobSubmissionService jobSubmissionService
+
+    /**
      * Startup or on demand. Scan all gamelist.xml files, up to one per system.
      */
     void execute(context) {
@@ -30,7 +41,7 @@ class ScanAllSystemsJob {
         log.info("Submitting scan jobs for all systems")
         Path gamelistsPath = Paths.get(configService.gamelistsPath)
         foldersContainedWithin(gamelistsPath).each { Path gamelistFolderPath ->
-            ScanSystemJob.triggerNow([
+            jobSubmissionService.submitJob(ScanSystemJob, [
                 system: gamelistFolderPath.fileName,
             ])
         }

@@ -13,11 +13,15 @@ import java.security.MessageDigest
 import java.util.regex.Pattern
 
 class ScanSystemJob {
-    static triggers = {}
-
     def description = 'Scan roms and gamelists for single system'
+    def group = "romfilter-jobs"
     def concurrent = true
     def sessionRequired = false
+
+    /**
+     * No triggers. This job is called only manually.
+     */
+    static triggers = {}
 
     /**
      * Pattern to match int / long type numbers within a string.

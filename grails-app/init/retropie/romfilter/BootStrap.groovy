@@ -1,7 +1,6 @@
 package retropie.romfilter
 
 import grails.core.GrailsApplication
-import grails.plugins.quartz.JobManagerService
 import org.apache.log4j.Logger
 import org.apache.lucene.index.IndexWriter
 import retropie.romfilter.indexed.Game
