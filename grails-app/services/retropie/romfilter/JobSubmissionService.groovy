@@ -8,9 +8,10 @@ import org.quartz.JobExecutionContext
 import org.quartz.Scheduler
 import org.quartz.impl.matchers.GroupMatcher
 import org.springframework.beans.factory.InitializingBean
-import retropie.romfilter.jobsupport.RomfilterJobsListener
+import retropie.romfilter.jobs.RomfilterJobsListener
 
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
 
 /**
  * Class to submit jobs to quarts and return the uuid of the job back.
@@ -39,7 +40,9 @@ class JobSubmissionService implements InitializingBean {
      * List of recently finished or vetoed jobs.
      */
     ConcurrentMap<String, JobExecutionContext> recentlyCompletedJobs =
-        CacheBuilder.newBuilder().maximumSize(50).<String, JobExecutionContext>build().asMap();
+        CacheBuilder.newBuilder().
+            expireAfterWrite(5, TimeUnit.MINUTES).
+            <String, JobExecutionContext>build().asMap();
 
     /**
      * Submit a job. Return a uuid identifier for the job.
