@@ -213,12 +213,11 @@ sudo apt-get update
 sudo apt-get install oracle-java8-jdk
 ```
 
-I've run romfilter in a Raspberry Pi 3b. Application startup was somewhat slow. Scanning the roms and
-parsing the gamelist.xml files (about 8500 ROMs across about 15 systems) took less than
-50 seconds, about the same amount of time as it took on my Mac.
-
-When idle, the application uses very little CPU. Once warmed up, the application performs well and
-searches feel snappy.
+I've run romfilter in a Raspberry Pi 3b. The very first time you assemble (or start) the application
+it has to download a large number of libraries. The first assemble took about 7 minutes on my Pi.
+Once the app is running, it may take a few additional moments on the Pi to "warm up" the application
+when accessing a page for the first time. Once warmed up, browsing and scanning the roms actually 
+works pretty well and feels snappy. When idle, the application uses very little CPU.
 
 The major issue with running on the Pi is the amount of memory used by Grails, the application, and Lucene.
 According to Top, romfilter took over 50% of the Pi's memory. This might hinder the RetroPie's
