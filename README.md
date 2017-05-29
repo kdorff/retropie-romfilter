@@ -209,6 +209,7 @@ an external configuration file, ```.retropie-romfilter.yml```
 You need to have Oracle Java 8 installed. This should be achievalbe via:
 
 ```
+sudo apt-get update
 sudo apt-get install oracle-java8-jdk
 ```
 
