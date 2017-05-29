@@ -56,8 +56,8 @@ class DeleteRomsForQueryJob {
         long start = System.currentTimeMillis()
 
         Map results = [
-            deleted: [],
-            failed: [],
+            deleted: 0,
+            failed: 0,
         ]
         String queryStr = context.mergedJobDataMap.get('query')
         context.mergedJobDataMap.results = results
@@ -71,20 +71,39 @@ class DeleteRomsForQueryJob {
             List<Game> games = indexerDataService.getGamesForQuery(query)
             indexerDataService.deleteAllForQuery(query)
 
-            games.each { Game game ->
-                Path path = Paths.get(game.path)
+            games.each { Game toDeleteGame ->
+                Path toDeletePath = Paths.get(configService.romsPath, toDeleteGame.system, toDeleteGame.path)
+
+                // Delete the file (move it to trash)
+                String trashPathStr = configService.trashPath
+
+                // Make sure system trash folder exists
+                Path trashDestinationFolderPath = Paths.get(trashPathStr, toDeleteGame.system)
+                Files.createDirectories(trashDestinationFolderPath)
+
+                // Location with trash to move rom
+                Path trashDestinationPath = Paths.get(trashPathStr, toDeleteGame.system, toDeleteGame.path)
+
                 try {
-                    Files.delete(path)
-                    results.deleted << games.name
+                    if (Files.move(toDeletePath, trashDestinationPath)) {
+                        log.trace("Moved ${toDeletePath} to ${trashDestinationPath}")
+                        results.deleted++
+                    }
+                    else {
+                        // TODO: Can this happen?
+                        log.error("Unable to move ${toDeletePath} to ${trashDestinationPath}. Note that this may not work across filesystems, etc.")
+                        results.failed++
+                    }
                 }
-                catch (Exception e) {
-                    log.error("Error deleting path ${path}", e)
-                    results.failed << games.name
+                catch (IOException e) {
+                    log.error("Exception moving ${toDeletePath} to ${trashDestinationPath}. Note that may will not work across filesystems, etc.", e)
+                    results.failed++
                 }
+
             }
         }
         finally {
-            log.info("DeleteRomsForQueryJob (deleted count=${results.deleted.size()}, failed count=${results.failed.size()}) for query ${queryStr} took ${System.currentTimeMillis() - start}ms")
+            log.info("DeleteRomsForQueryJob (deleted count=${results.deleted}, failed count=${results.failed}) for query ${queryStr} took ${System.currentTimeMillis() - start}ms")
         }
     }
 }

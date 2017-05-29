@@ -31,6 +31,7 @@ class GamesController {
      * TODO: When scanning all, remove any systems that are in the index but not on disc
      * TODO: Fix log levels. Everything is info. Most should be trace.
      * TODO: Log file location to configuration
+     * TODO: Combine the submision service and the listener to one class?
      *
      * Lower:
      * TODO: Make / go to /games/browse or to /games which already goes to /games/browse

@@ -18,55 +18,48 @@ class RomfilterJobsListener implements JobListener {
      */
     Logger log = Logger.getLogger(getClass())
 
+    /**
+     * Constant name.
+     */
     static final String LISTENER_NAME = "romfilter-jobs-listener";
 
+    /**
+     * Get name of listener.
+     * @return
+     */
     @Override
     public String getName() {
         return LISTENER_NAME;
     }
 
+    /**
+     * Observe a job to be executed.
+     * @return
+     */
     @Override
     void jobToBeExecuted(JobExecutionContext context) {
-        String jobName = context.getJobDetail().getKey().toString()
-        log.trace("jobToBeExecuted")
-        log.trace("Job ${jobName} is to be executed wutg data ${context.mergedJobDataMap}.")
-        String uuid = (String) context.mergedJobDataMap.uuid
-        if (uuid) {
-            jobSubmissionService.runningJobs[uuid] = context
-        }
-        else {
-            log.warn("No uuid in job.")
-        }
+        log.trace("jobToBeExecuted ${context.jobDetail.key}")
+        jobSubmissionService.observeJobStarted(context)
     }
 
+    /**
+     * Observe a job that has been vetoed.
+     * @return
+     */
     @Override
     void jobExecutionVetoed(JobExecutionContext context) {
-        log.trace("jobExecutionVetoed");
-        String uuid = (String) context.mergedJobDataMap.uuid
-        if (uuid) {
-            jobSubmissionService.recentlyCompletedJobs[uuid] = context
-        }
-        else  {
-            log.warn("No uuid in job.")
-        }
+        log.trace("jobExecutionVetoed ${context.jobDetail.key}")
+        jobSubmissionService.observeJobVetoed(context)
     }
 
+    /**
+     * Observe a job that has was executed.
+     * @return
+     */
     @Override
     void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
-        log.trace("jobWasExecuted");
-        String uuid = (String) context.mergedJobDataMap.uuid
-        if (uuid) {
-            if (jobSubmissionService.runningJobs.containsKey(uuid)) {
-                jobSubmissionService.runningJobs.remove(uuid)
-            }
-            /**
-             * Should we do anything if there was an exception.
-             */
-            jobSubmissionService.recentlyCompletedJobs[uuid] = context
-        }
-        else {
-            log.warn("No uuid in job.")
-        }
+        log.trace("jobWasExecuted ${context.jobDetail.key}")
+        jobSubmissionService.observeJobCompleted(context)
     }
 
     /**

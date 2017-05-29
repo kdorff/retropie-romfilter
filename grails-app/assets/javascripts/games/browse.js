@@ -8,12 +8,12 @@ $(document).on('click', 'button.deleteRom', function (e) {
     var deleteUrl = button.data('delete-url');
     if (deleteUrl) {
         button.css("background", "yellow");
-        button.html('Attempting to Move ROM to Trash');
+        button.html('Queueing to Move ROM to Trash');
         $.ajax({
             url: deleteUrl,
             type: 'DELETE',
             success: function (result) {
-                button.html('ROM Moved To Trash');
+                button.html('ROM Queued to Move To Trash');
                 button.prop('disabled', true);
                 button.css("background", "chartreuse");
             },
