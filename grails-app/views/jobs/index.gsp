@@ -8,11 +8,11 @@
     <asset:javascript src="jobs/index.js" asset-defer="true" />
     <asset:stylesheet src="jobs/index.css"/>
     <g:javascript>
-       var runningJobsDataUrl = '<g:createLink action="runningJobsData"/>';
+       var jobsAndRomsData = '<g:createLink action="jobsAndRomsData"/>';
        var rescanAllUrl = '<g:createLink action="rescanAll"/>';
-       var systemToRomCountDataUrl = '<g:createLink action="systemToRomCountData"/>';
        var runningJobsDiv;
        var systemsAndCountsDiv;
+       var recentJobsDiv;
     </g:javascript>
 </head>
 <body>
@@ -28,6 +28,10 @@
     <p>&nbsp;</p>
     <p><strong>Running jobs</strong></p>
     <div id="runningJobs">
+    </div>
+    <p>&nbsp;</p>
+    <p><strong>Recent jobs</strong></p>
+    <div id="recentJobs">
     </div>
 </body>
 </html>

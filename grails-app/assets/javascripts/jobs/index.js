@@ -13,73 +13,72 @@ $(document).on('click', 'button#rescanAll', function (e) {
     });
 });
 
-function updateRunningJobs() {
+
+function updateJobsAndRomsData() {
     $.ajax({
-        url: runningJobsDataUrl,
+        url: jobsAndRomsData,
         success: function (result) {
-            var output = "";
-            var id;
-            var message;
-            for (id in result) {
-                message = result[id];
-                if (output) {
-                    output += "<br/>";
-                }
-                output += message;
-            }
-            if (output) {
-                console.log(output);
-                runningJobsDiv.html(output);
-            }
-            else {
-                runningJobsDiv.html("No running jobs.");
-            }
+            updateSystemsAndCounts(result.systemToCount, result.totalCount, systemsAndCountsDiv);
+            updateJobsDiv(result.runningJobs, runningJobsDiv);
+            updateJobsDiv(result.recentJobs, recentJobsDiv);
         },
         error: function (result) {
+            console.log('Error running updateJobsAndRomsData. Result is ...');
             console.log(result);
-            console.log('Error running updateRunningJobs.');
 
         }
     });
 }
 
-function updateSystems() {
-    $.ajax({
-        url: systemToRomCountDataUrl,
-        success: function (result) {
-            var output = "";
-            var id;
-            var message;
-            for (id in result.systemToCount) {
-                message = result.systemToCount[id];
-                if (output) {
-                    output += "<br/>";
-                }
-                output += message;
-            }
-            if (output) {
-                output += '<br/>';
-            }
-            output += "<strong>Total ROM count: </strong>";
-            output += result.totalCount;
-
-            systemsAndCountsDiv.html(output);
-        },
-        error: function (result) {
-            console.log('Error running updateSystems. Result is ...');
-            console.log(result);
-
+function updateSystemsAndCounts(systemToCount, totalCount, div) {
+    var output = "";
+    var id;
+    var message;
+    for (id in systemToCount) {
+        message = systemToCount[id];
+        if (output) {
+            output += "<br/>";
         }
-    });
+        output += message;
+    }
+    if (output) {
+        output += '<br/>';
+    }
+    output += "<strong>Total ROM count: </strong>";
+    output += totalCount;
+
+    div.html(output);
+}
+
+function updateJobsDiv(result, div) {
+    var output = "";
+    var id;
+    var message;
+    for (id in result) {
+        message = result[id];
+        if (output) {
+            output += "<br/>";
+        }
+        output += message;
+    }
+    if (output) {
+        console.log(output);
+        div.html(output);
+    }
+    else {
+        div.html("No jobs.");
+    }
 }
 
 $(document).ready(function() {
     runningJobsDiv = $("div#runningJobs");
     runningJobsDiv.html('Waiting for update...');
 
+    recentJobsDiv = $("div#recentJobs");
+    recentJobsDiv.html('Waiting for update...');
+
     systemsAndCountsDiv = $("div#systemsAndCounts");
     systemsAndCountsDiv.html('Waiting for update...');
 
-    setInterval("updateRunningJobs()", 2 * 1000);
-    setInterval("updateSystems()", 2 * 1000);
+    setInterval("updateJobsAndRomsData()", 2 * 1000);
 });

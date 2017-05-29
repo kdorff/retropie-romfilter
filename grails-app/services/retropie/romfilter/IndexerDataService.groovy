@@ -84,6 +84,11 @@ class IndexerDataService {
         return count
     }
 
+    Query createQueryForString(String queryStr) {
+        RomfilterQueryParser queryParser = new RomfilterQueryParser(queryAnalyzer)
+        return queryParser.parse(queryStr)
+    }
+
     /**
      * Return the count of documents for a specific system.
      *
@@ -406,6 +411,7 @@ class IndexerDataService {
     void deleteAllForQuery(Query query) {
         try {
             gamesIndexWriter.deleteDocuments(query)
+            log.trace("Deleted Game documents for query ${query.toString()}")
         }
         catch (Exception e) {
             log.error("Error deleting Game documents for query ${query.toString()}", e)

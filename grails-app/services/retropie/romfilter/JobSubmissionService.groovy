@@ -3,6 +3,7 @@ package retropie.romfilter
 import com.google.common.cache.CacheBuilder
 import grails.plugins.quartz.JobManagerService
 import org.apache.log4j.Logger
+import org.joda.time.DateTime
 import org.quartz.JobExecutionContext
 import org.quartz.Scheduler
 import org.quartz.impl.matchers.GroupMatcher
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentMap
 /**
  * Class to submit jobs to quarts and return the uuid of the job back.
  * The jobUuid value is created and used solely by this service.
+ * Works in concert with the RomfilterJobsListener.
  */
 class JobSubmissionService implements InitializingBean {
 
@@ -51,6 +53,10 @@ class JobSubmissionService implements InitializingBean {
         Map updatedParams = (Map) params?.clone() ?: [:]
         String newJobUuid = UUID.randomUUID().toString()
         updatedParams.uuid = newJobUuid
+        updatedParams.submitDateTime = new DateTime()
+        updatedParams.startDateTime = null
+        updatedParams.vetoeDateTime = null
+        updatedParams.finishDateTime = null
 
         if (jobClass == ScanAllSystemsJob) {
             // Submit the job
@@ -61,6 +67,11 @@ class JobSubmissionService implements InitializingBean {
             // Submit the job
             log.info("Submitting SystemScanJob")
             ScanSystemJob.triggerNow(updatedParams)
+        }
+        else if (jobClass == DeleteRomsForQueryJob) {
+            // Submit the job
+            log.info("Submitting DeleteRomsForQueryJob")
+            DeleteRomsForQueryJob.triggerNow(updatedParams)
         }
         else {
             // Could not submit the job
@@ -125,5 +136,55 @@ class JobSubmissionService implements InitializingBean {
             jobsListener,
             GroupMatcher.groupEquals('romfilter-jobs')
         )
+    }
+
+    /**
+     * Observe job is running.
+     */
+    void observeJobStarted(JobExecutionContext context) {
+        context.mergedJobDataMap.startDateTime = new DateTime()
+        moveJobToMap(context, runningJobs)
+    }
+
+    /**
+     * Observe job was vetoed.
+     */
+    void observeJobVetoed(JobExecutionContext context) {
+        context.mergedJobDataMap.vetoeDateTime = new DateTime()
+        moveJobToMap(context, recentlyCompletedJobs)
+    }
+
+    /**
+     * Observe job was completed.
+     */
+    void observeJobCompleted(JobExecutionContext context) {
+        context.mergedJobDataMap.finishDateTime = new DateTime()
+        moveJobToMap(context, recentlyCompletedJobs)
+    }
+
+    /**
+     * Move job to map.
+     *
+     * @param context
+     * @param dest
+     */
+    void moveJobToMap(JobExecutionContext context, Map dest) {
+        String uuid = (String) context.mergedJobDataMap.uuid
+        if (uuid) {
+            // Remove from all maps
+            if (runningJobs.containsKey(uuid)) {
+                runningJobs.remove(uuid)
+            }
+            if (recentlyCompletedJobs.containsKey(uuid)) {
+                recentlyCompletedJobs.remove(uuid)
+            }
+            /**
+             * Should we do anything if there was an exception.
+             */
+            // Place in correct map
+            dest[uuid] = context
+        } else {
+            log.warn("No uuid in job.")
+        }
     }
 }
