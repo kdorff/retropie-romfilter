@@ -8,10 +8,6 @@ import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.indexed.Game
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-
 class GamesController {
 
     /**
