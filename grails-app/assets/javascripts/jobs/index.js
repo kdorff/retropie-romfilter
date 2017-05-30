@@ -19,8 +19,7 @@ function updateJobsAndRomsData() {
         url: jobsAndRomsData,
         success: function (result) {
             updateSystemsAndCounts(result.systemToCount, result.totalCount, systemsAndCountsDiv);
-            updateJobsDiv(result.runningJobs, runningJobsDiv);
-            updateJobsDiv(result.recentJobs, recentJobsDiv);
+            updateJobsDiv(result.jobs, jobsDiv);
         },
         error: function (result) {
             console.log('Error running updateJobsAndRomsData. Result is ...');
@@ -71,14 +70,11 @@ function updateJobsDiv(result, div) {
 }
 
 $(document).ready(function() {
-    runningJobsDiv = $("div#runningJobs");
-    runningJobsDiv.html('Waiting for update...');
-
-    recentJobsDiv = $("div#recentJobs");
-    recentJobsDiv.html('Waiting for update...');
-
     systemsAndCountsDiv = $("div#systemsAndCounts");
     systemsAndCountsDiv.html('Waiting for update...');
+
+    jobsDiv = $("div#jobs");
+    jobsDiv.html('Waiting for update...');
 
     setInterval("updateJobsAndRomsData()", 2 * 1000);
 });

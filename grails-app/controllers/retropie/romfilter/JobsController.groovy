@@ -2,10 +2,10 @@ package retropie.romfilter
 
 import grails.converters.JSON
 import grails.core.GrailsApplication
-import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatter
 import org.joda.time.format.ISODateTimeFormat
 import org.quartz.JobExecutionContext
+import retropie.romfilter.jobs.JobSubmission
 
 class JobsController {
 
@@ -62,24 +62,22 @@ class JobsController {
             return "${system}: ${indexerDataService.getCountForSystem(system)} roms"
         }.sort()
 
-        List<String> runningJobs = jobSubmissionService.runningJobs.values().collect { JobExecutionContext runningJob ->
-            String fireTime = isoFormatter.print(new DateTime(runningJob.fireTime))
-            return "${fireTime} | ${runningJob.jobDetail.description} ${cleanDataMap(runningJob.mergedJobDataMap) ?: ""}"
-        }.sort()
-
-        List<String> recentJobs = jobSubmissionService.recentlyCompletedJobs.values().collect { JobExecutionContext finishedJob ->
-            long runTime = finishedJob.jobRunTime
-            DateTime fireStartDateTime = new DateTime(finishedJob.fireTime)
-            DateTime fireEndDateTime = fireStartDateTime.plusMillis(runTime as int)
-            String fireEndStr = isoFormatter.print(fireEndDateTime)
-            return "${fireEndStr} | ${finishedJob.jobDetail.description} ${cleanDataMap(finishedJob.mergedJobDataMap) ?: ""} took ${runTime}ms"
+        // Order the jobs, recent changes to queue state on top oldest.
+        // changes to the bottom.
+        List<String> jobs = jobSubmissionService.jobs.values().collect { JobSubmission job ->
+            JobExecutionContext context = job.context
+            JobSubmission.StateDateTime stateDateTime = job.currentStateDateTime()
+            String stateDateTimeStr = isoFormatter.print(stateDateTime.dateTime)
+            String desc = context?.jobDetail?.description ?: ""
+            Map dataMap = cleanDataMap(context?.mergedJobDataMap ?: [:])
+            String data = dataMap ? dataMap.toString() : ""
+            return "${stateDateTimeStr} | ${stateDateTime.state} | ${desc} ${data}"
         }.sort().reverse()
 
         render([
             systemToCount: romCounts,
             totalCount: indexerDataService.gamesCount,
-            runningJobs: runningJobs,
-            recentJobs: recentJobs,
+            jobs: jobs,
         ] as JSON)
     }
 

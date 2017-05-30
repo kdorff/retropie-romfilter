@@ -46,7 +46,14 @@ class JobSubmission {
     }
 
     /**
+     * Identifier of JobSubmission.
+     */
+    String uuid
+
+    /**
      * Job's execution context.
+     * This will be null for just submitted jobs. When the job moves to
+     * RUNNING it will get a context.
      */
     JobExecutionContext context
 
@@ -55,15 +62,9 @@ class JobSubmission {
      */
     List<StateDateTime> states
 
-    /**
-     * Constructor. A State of state is added to the job's states.
-     *
-     * @param state
-     * @param context
-     */
-    JobSubmission(JobExecutionContext context, State state = State.SUBMITTED) {
-        states = [new StateDateTime(state)]
-        this.context = context
+    JobSubmission() {
+        states = [new StateDateTime(State.SUBMITTED)]
+        uuid = UUID.randomUUID().toString()
     }
 
     /**
@@ -84,7 +85,7 @@ class JobSubmission {
     /**
      * Get the job's current State.
      */
-    State currentState() {
+    State getCurrentState() {
         // We always have at least one state (see constructor). Grab the last one.
         return states[-1].state
     }
