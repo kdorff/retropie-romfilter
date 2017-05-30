@@ -1,4 +1,4 @@
-package retropie.romfilter.jobsupport
+package retropie.romfilter.jobs
 
 import grails.util.Holders
 import org.apache.log4j.Logger

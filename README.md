@@ -29,7 +29,7 @@ still to come (I want to support the additional flags that
 
 The first time you run the application, the browse page will give you a Javascript alert.
 This is because you have no data in your romfilter index. You will need to scan your systems
-under Systems and Scan Jobs.
+under Systems and Jobs.
 
 ## A quick note about scraping
 
@@ -170,15 +170,15 @@ scrapeId, scrapeSource, hash
 
 **Q:** When I first start the app it takes forever before it responds.
 
-**A:** Update! The latest version of the application supports scanning on-demand under Systems and Scan Jobs.
+**A:** Update! The latest version of the application supports scanning on-demand under Systems and Jobs.
 
 **Q:** Things changed in the filesystem or I have re-scraped but I don't see the changes in romfilter
 
-**A:** Re-scan your systems under Systems and Scan Jobs.
+**A:** Re-scan your systems under Systems and Jobs.
 
 **Q:** I'm having a problem
 
-**A:** Wait for the app to become more stable. Try stopping the app, deleting the index folder in the app's directory (romfilter-games.index), and restarting the app. You will need to re-scan your systems (Systems and Scan Jobs).
+**A:** Wait for the app to become more stable. Try stopping the app, deleting the index folder in the app's directory (romfilter-games.index), and restarting the app. You will need to re-scan your systems (Systems and Jobs).
 
 **Q:** Should I open this port up in my router so I can browse my roms while I am away from home or let me cousin look at it?
 
@@ -229,5 +229,5 @@ on another system in your LAN
 Browsing filtered list of ROMS
 ![Filtered, highlighted list of ROMS](https://github.com/kdorff/retropie-romfilter/blob/master/grails-app/assets/images/screenshots/browse.png)
 
-Systems and Scan Jobs
+Systems and Jobs
 ![Filtered, highlighted list of ROMS](https://github.com/kdorff/retropie-romfilter/blob/master/grails-app/assets/images/screenshots/scanning.png)

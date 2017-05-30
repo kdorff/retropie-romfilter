@@ -14,7 +14,7 @@
 <body>
     <p>Navigation:
         <g:link controller="games" action="browse">Browse ROMs</g:link> |
-        <g:link controller="jobs" action="index">Systems and Scan Jobs</g:link>
+        <g:link controller="jobs" action="index">Systems and Jobs</g:link>
     </p>
     <p>&nbsp;</p>
     <div id="fieldsSpan">

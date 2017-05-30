@@ -8,15 +8,10 @@ import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.indexed.Game
 
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
-
 class GamesController {
 
     /**
      * High:
-     * TODO: Restore show game link
      * TODO: Add remaining file extensions to the various systems to config
      * TODO: Fancify name/path comparison
      * TODO: Option to rescan a single system
@@ -26,15 +21,13 @@ class GamesController {
      * TODO:        <kidgame>true</kidgame>
      * TODO:        <hidden>true</hidden>
      * TODO: / to games/browse doesn't show games/browse. Change to redirect.
-     * TODO: Make bulk deletion a job and have the ability to give status of the job?
-     * TODO: Show "recent" jobs and that they finished and how long they took?
      * TODO: When scanning all, remove any systems that are in the index but not on disc
      * TODO: Fix log levels. Everything is info. Most should be trace.
      * TODO: Log file location to configuration
-     * TODO: Combine the submision service and the listener to one class?
+     * TODO: How to set log level in configuration
      *
      * Lower:
-     * TODO: Make / go to /games/browse or to /games which already goes to /games/browse
+     * TODO: Restore show game link. Maybe not necessary with show / hide columns
      * TODO: How can I trigger an app restart of a spring boot app? such as if I re-write the index or ?
      * TODO: Change table rows to be ALL top justified
      * TODO: More search help
@@ -45,7 +38,6 @@ class GamesController {
      * TODO: More integration tests
      * TODO: Some common filters? (Unl), (World) (Beta) (Proto) (countries), etc.
      * TODO: Filtering should set the URL? And if you go there, apply the filter.
-     * TODO: How to stop the index to compress or ?? And restart. With Spring Beans.
      *
      * DONE: Indexing, move from database to Lucene.
      * DONE: Why is the gamelist.name field missing?
@@ -71,13 +63,16 @@ class GamesController {
      * DONE: What happened to the application header?
      * DONE: Column picker (and list of fields) (also shows if searchable and orderable).
      * DONE: When sorting, always put missing data at bottom.
-     * DONE: Delete button in name/path comparison field. Working. Some filenames cause it problems ('[', ']' ?). Good enough.
+     * DONE: Delete button in name/path comparison field. Working. Some filenames cause it problems ('[', ']' ?).
      * DONE: Bulk deletion. Delete everything that matches a query. BE CAREFUL!
      * DONE: Highlight with Lucene. The Datatables highligher won't cut it.
      * DONE: The quartz jobs now exist and work, one for submitting all systems for scanning, one for scanning a system.
      * DONE: On demand via the /quartz endpoint
      * DONE: Replace quartz-monitor with custom scanning systems and jobs page (allows for rescan of all)
      * WONT: Compresses index or re-write index function. [It compresses at startup, it seems.]
+     * DONE: Combined list of jobs, running or completed.
+     * DONE: Make / go to /games/browse or to /games which already goes to /games/browse
+     * DONE: Make bulk deletion a job and have the ability to give status of the job?
      */
 
     /**

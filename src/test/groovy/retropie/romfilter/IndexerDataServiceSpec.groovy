@@ -9,6 +9,7 @@ import retropie.romfilter.feed.GamesDataFeed
 import retropie.romfilter.feed.datatables.DatatablesRequest
 import retropie.romfilter.feed.datatables.RequestOrder
 import retropie.romfilter.indexed.Game
+import retropie.romfilter.jobs.JobSubmission
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Stepwise
@@ -123,8 +124,18 @@ class IndexerDataServiceSpec extends Specification {
 
         then:
         numGames == 3
-        jobSubmissionService.runningJobs.size() == 0
-        jobSubmissionService.recentlyCompletedJobs.size() == 2
+        jobSubmissionService.jobs.find { String foundUuid, JobSubmission foundJob ->
+            return foundJob.currentState in [
+                JobSubmission.State.VETOED,
+                JobSubmission.State.RUNNING,
+                JobSubmission.State.SUBMITTED,
+            ]
+        } == null
+        jobSubmissionService.jobs.findAll { String foundUuid, JobSubmission foundJob ->
+            return foundJob.currentState in [
+                JobSubmission.State.COMPLETE,
+            ]
+        }.size() == 2
     }
 
     @Unroll

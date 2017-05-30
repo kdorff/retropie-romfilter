@@ -3,14 +3,15 @@ package retropie.romfilter
 import com.google.common.cache.CacheBuilder
 import grails.plugins.quartz.JobManagerService
 import org.apache.log4j.Logger
-import org.joda.time.DateTime
 import org.quartz.JobExecutionContext
 import org.quartz.Scheduler
 import org.quartz.impl.matchers.GroupMatcher
 import org.springframework.beans.factory.InitializingBean
-import retropie.romfilter.jobsupport.RomfilterJobsListener
+import retropie.romfilter.jobs.JobSubmission
+import retropie.romfilter.jobs.RomfilterJobsListener
 
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.TimeUnit
 
 /**
  * Class to submit jobs to quarts and return the uuid of the job back.
@@ -30,16 +31,13 @@ class JobSubmissionService implements InitializingBean {
     JobManagerService jobManagerService
 
     /**
-     * List of running (or soon to be running?) jobs.
+     * Map of jobSubmission.uuid to JobSubmission for
+     * submitted, running, vetoed, or completed jobs from the last N minutes.
      */
-    ConcurrentMap<String, JobExecutionContext> runningJobs =
-        CacheBuilder.newBuilder().<String, JobExecutionContext>build().asMap();
-
-    /**
-     * List of recently finished or vetoed jobs.
-     */
-    ConcurrentMap<String, JobExecutionContext> recentlyCompletedJobs =
-        CacheBuilder.newBuilder().maximumSize(50).<String, JobExecutionContext>build().asMap();
+    ConcurrentMap<String, JobSubmission> jobs =
+        CacheBuilder.newBuilder().
+            expireAfterWrite(20, TimeUnit.MINUTES).
+            <String, JobSubmission>build().asMap()
 
     /**
      * Submit a job. Return a uuid identifier for the job.
@@ -50,14 +48,16 @@ class JobSubmissionService implements InitializingBean {
      */
     String submitJob(Class jobClass, Map params) throws IllegalArgumentException {
         // Insert a new uuid into the jobs params so we can find it again
+        // when the job starts running (or is vetoed?). See the RomfilterJobsListener.
         Map updatedParams = (Map) params?.clone() ?: [:]
-        String newJobUuid = UUID.randomUUID().toString()
-        updatedParams.uuid = newJobUuid
-        updatedParams.submitDateTime = new DateTime()
-        updatedParams.startDateTime = null
-        updatedParams.vetoeDateTime = null
-        updatedParams.finishDateTime = null
+        JobSubmission jobSubmission = new JobSubmission()
+        updatedParams.uuid = jobSubmission.uuid
+        jobs[jobSubmission.uuid] = jobSubmission
 
+        /**
+         * TODO: Wouldn't it be nice if I didn't have to do this for
+         * TODO: each individual kind of Job that I support?
+         */
         if (jobClass == ScanAllSystemsJob) {
             // Submit the job
             log.info("Submitting ScanAllSystemsJob")
@@ -77,7 +77,7 @@ class JobSubmissionService implements InitializingBean {
             // Could not submit the job
             throw new IllegalArgumentException("Specified jobClass parameter doesn't match a known Job class")
         }
-        return newJobUuid
+        return jobSubmission.uuid
     }
 
     /**
@@ -89,16 +89,16 @@ class JobSubmissionService implements InitializingBean {
      */
     JobExecutionContext waitForCompletedJob(String uuid, int secondsToWait = 60) {
         int remainingAttempts = secondsToWait
-        JobExecutionContext context = null
+        JobSubmission jobSubmission = null
         while (remainingAttempts--) {
-            context = recentlyCompletedJobs[uuid]
-            if (context) {
+            jobSubmission = jobs[uuid]
+            if (jobSubmission.currentState in [JobSubmission.State.COMPLETE, JobSubmission.State.VETOED]) {
                 break
             }
             Thread.sleep(1000)
         }
-        log.info("Waited for jobs.uuid ${uuid} and got ${context}")
-        return context
+        log.info("Waited for jobs.uuid ${uuid} and got ${jobSubmission}")
+        return jobSubmission?.context
     }
 
     /**
@@ -113,7 +113,11 @@ class JobSubmissionService implements InitializingBean {
         int remainingAttempts = secondsToWait
         boolean quiet = false
         while (remainingAttempts--) {
-            if (runningJobs.size() == 0) {
+            // Find the job that is running or waiting to run
+            JobSubmission runningOrWaiting = jobs.find { String uuid, JobSubmission jobSubmission ->
+                return (jobSubmission.currentState in [JobSubmission.State.RUNNING, JobSubmission.State.SUBMITTED])
+            }?.value
+            if (!runningOrWaiting) {
                 quiet = true
                 break
             }
@@ -142,49 +146,45 @@ class JobSubmissionService implements InitializingBean {
      * Observe job is running.
      */
     void observeJobStarted(JobExecutionContext context) {
-        context.mergedJobDataMap.startDateTime = new DateTime()
-        moveJobToMap(context, runningJobs)
+        observeStateChange(context, JobSubmission.State.RUNNING)
     }
 
     /**
      * Observe job was vetoed.
      */
     void observeJobVetoed(JobExecutionContext context) {
-        context.mergedJobDataMap.vetoeDateTime = new DateTime()
-        moveJobToMap(context, recentlyCompletedJobs)
+        observeStateChange(context, JobSubmission.State.VETOED)
     }
 
     /**
      * Observe job was completed.
      */
     void observeJobCompleted(JobExecutionContext context) {
-        context.mergedJobDataMap.finishDateTime = new DateTime()
-        moveJobToMap(context, recentlyCompletedJobs)
+        observeStateChange(context, JobSubmission.State.COMPLETE)
     }
 
     /**
      * Move job to map.
      *
      * @param context
-     * @param dest
+     * @param state
      */
-    void moveJobToMap(JobExecutionContext context, Map dest) {
+    void observeStateChange(JobExecutionContext context, JobSubmission.State state) {
         String uuid = (String) context.mergedJobDataMap.uuid
         if (uuid) {
-            // Remove from all maps
-            if (runningJobs.containsKey(uuid)) {
-                runningJobs.remove(uuid)
+            JobSubmission jobSubmission = jobs[uuid]
+            if (jobSubmission) {
+                if (!jobSubmission.context) {
+                    jobSubmission.context = context
+                }
+                jobSubmission.addState(state)
             }
-            if (recentlyCompletedJobs.containsKey(uuid)) {
-                recentlyCompletedJobs.remove(uuid)
+            else {
+                log.error("No JobSubmission found for uuid.")
             }
-            /**
-             * Should we do anything if there was an exception.
-             */
-            // Place in correct map
-            dest[uuid] = context
-        } else {
-            log.warn("No uuid in job.")
+        }
+        else {
+            log.error("No uuid in job.")
         }
     }
 }
