@@ -419,6 +419,14 @@ class IndexerDataService {
     }
 
     /**
+     * Delete all documents that match the specified query.
+     * @param query
+     */
+    void deleteAll() {
+        deleteAllForQuery(new MatchAllDocsQuery())
+    }
+
+    /**
      * Delete all documents for a specific system.
      * TODO: This can probably be done with a Term instead of a query
      * TODO: which will be even better.

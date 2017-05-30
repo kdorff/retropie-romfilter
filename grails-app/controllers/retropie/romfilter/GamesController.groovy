@@ -21,14 +21,12 @@ class GamesController {
      * TODO:        <kidgame>true</kidgame>
      * TODO:        <hidden>true</hidden>
      * TODO: / to games/browse doesn't show games/browse. Change to redirect.
-     * TODO: When scanning all, remove any systems that are in the index but not on disc
      * TODO: Fix log levels. Everything is info. Most should be trace.
      * TODO: Log file location to configuration
      * TODO: How to set log level in configuration
      *
      * Lower:
      * TODO: Restore show game link. Maybe not necessary with show / hide columns
-     * TODO: How can I trigger an app restart of a spring boot app? such as if I re-write the index or ?
      * TODO: Change table rows to be ALL top justified
      * TODO: More search help
      * TODO: How does recalbox webapp launch games? (the django code I worked on)
@@ -73,6 +71,7 @@ class GamesController {
      * DONE: Combined list of jobs, running or completed.
      * DONE: Make / go to /games/browse or to /games which already goes to /games/browse
      * DONE: Make bulk deletion a job and have the ability to give status of the job?
+     * DONE: When scanning all, delete ALL documents. Otherwise a deleted system could continue to live in the index.
      */
 
     /**

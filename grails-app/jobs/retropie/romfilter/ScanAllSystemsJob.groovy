@@ -34,12 +34,21 @@ class ScanAllSystemsJob {
     JobSubmissionService jobSubmissionService
 
     /**
+     * IndexerService (auto-injected).
+     */
+    IndexerDataService indexerDataService
+
+    /**
      * Startup or on demand. Scan all gamelist.xml files, up to one per system.
      */
     void execute(context) {
         long start = System.currentTimeMillis()
         log.info("Submitting scan jobs for all systems")
         Path gamelistsPath = Paths.get(configService.gamelistsPath)
+
+        // Delete all from the index for Scan All. Otherwise a deleted system could continue to live in the index.
+        indexerDataService.deleteAll()
+
         foldersContainedWithin(gamelistsPath).each { Path gamelistFolderPath ->
             jobSubmissionService.submitJob(ScanSystemJob, [
                 system: gamelistFolderPath.fileName,
