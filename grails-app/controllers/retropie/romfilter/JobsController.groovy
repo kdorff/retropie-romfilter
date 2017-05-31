@@ -16,16 +16,6 @@ class JobsController {
     ]
 
     /**
-     * Delete response code to text message
-     * for bulk deletes.
-     */
-    Map DELETE_RESPONSES = [
-        200: "Deletion successful",
-        404: "Index entry or ROM path not found",
-        500: "Exception deleting ROM."
-    ]
-
-    /**
      * GrailsApplication (auto-injected).
      */
     GrailsApplication grailsApplication
