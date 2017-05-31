@@ -25,11 +25,11 @@ twitter_username: KevinDorff
 github_username:  kdorff
 
 header_pages:
- - about.md
- - faq.md
+ - index.md
  - running.md
  - searching.md
  - screenshots.md
+ - faq.md
 
 # Build settings
 markdown: kramdown
