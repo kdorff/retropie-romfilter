@@ -78,3 +78,17 @@ $(document).ready(function() {
 
     setInterval("updateJobsAndRomsData()", 2 * 1000);
 });
+
+/*
+
+ https://stackoverflow.com/questions/27778389/how-to-manually-update-datatables-table-with-new-json-data
+
+ var datatable = $('#table').dataTable().api();
+
+ $.get('myUrl', function(newDataArray) {
+ datatable.clear();
+ datatable.rows.add(newDataArray);
+ datatable.draw();
+ });
+
+ */
